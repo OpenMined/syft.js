@@ -6,7 +6,7 @@ import { WorkQueue } from './WorkQueue'
 const verbose = true
 
 const identity = uuid.v4()
-const socket = zmq.socket(zmq.types.dealer)
+const socket = zmq.socket('dealer')
 
 socket.identity = identity
 socket.connect('tcp://localhost:5555')
@@ -34,17 +34,23 @@ export function cmd(
 
 const wq = new WorkQueue<string, string>(job => {
   // send the command
-  socket.send(job.id + JSON.stringify(job.data))
-}, 256)
+  socket.send(/*job.id + */JSON.stringify(job.data))
+}, 1)
 
 socket.on('message', (res) => {
-  let str = res.toString()
-  let id = str.slice(0, wq.idLength)
-  let result = str.slice(wq.idLength)
-  let job = wq.working[id]
+
+  //TODO: allow for mutiple request at once
+  // let str = res.toString()
+  // let id = str.slice(0, wq.idLength)
+  // let result = str.slice(wq.idLength)
+
+  let job;
+  for (let id in wq.working) {
+    job = wq.working[id]
+  }
 
   if (job) {
-    job.resolve(result)
+    job.resolve(res.toString())
   }
 })
 
@@ -203,7 +209,7 @@ export async function send_json(
 ) {
 
   // send the command
-  let res = await wq.queue(JSON.stringify(message))
+  let res = await wq.queue(message)
 
   if (res.startsWith('Unity Error:')) {
     // throw new Error(res)
