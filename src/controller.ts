@@ -204,12 +204,12 @@ export function no_params_func(
 }
 
 export async function send_json(
-  message: string,
+  message: any,
   response = true
 ) {
 
   // send the command
-  let res = await wq.queue(message)
+  let res = await wq.queue(JSON.stringify(message))
 
   if (res.startsWith('Unity Error:')) {
     // throw new Error(res)
