@@ -12,4 +12,4 @@ export declare function get_tensor(id: number): Tensor;
 export declare function __getitem__(id: number): Tensor;
 export declare function params_func(cmd: (name: string, params: any[]) => SocketCMD, name: string, params: any[], return_type?: string): Promise<any>;
 export declare function no_params_func(cmd: (name: string, params: any[]) => SocketCMD, name: string, return_type: string): Promise<any>;
-export declare function send_json(message: string, response?: boolean): Promise<string>;
+export declare function send_json(message: any, response?: boolean): Promise<string>;
