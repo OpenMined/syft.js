@@ -365,6 +365,70 @@ export class Tensor {
 
     return copy
   }
+
+  /*
+  * Returns a new Tensor with the arcsine of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async asin() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('asin', true)
+  }
+
+  /*
+  * Performs inplace arcsine operation of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async asin_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('asin_')
+  }
+
+  /*
+  * Returns a new Tensor with the arctangent of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async atan() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('atan', true)
+  }
+
+  /*
+  * Performs inplace arctangent operation of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async atan_() {
+    let self = this
+    await self.ready()
+    
+    return await self.no_params_func('atan_')
+  }
 }
 
 export class IntTensor extends Tensor {
@@ -407,53 +471,8 @@ class FloatTensor():
 
 
 
-    async asin(self):
-        ///
-        Returns a new Tensor with the arcsine of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('asin', return_response=true)
 
-    async asin_(self):
-        ///
-        Performs inplace arcsine operation of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('asin_')
 
-    async atan(self):
-        ///
-        Returns a new Tensor with the arctangent of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('atan', return_response=true)
-
-    async atan_(self):
-        ///
-        Performs inplace arctangent operation of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('atan_')
 
     async autograd(self, setter=None):
         if (setter is None):
