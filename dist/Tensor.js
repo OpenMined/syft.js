@@ -198,6 +198,34 @@ class Tensor {
             return copy;
         });
     }
+    asin() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('asin', true);
+        });
+    }
+    asin_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('asin_');
+        });
+    }
+    atan() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('atan', true);
+        });
+    }
+    atan_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('atan_');
+        });
+    }
 }
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {

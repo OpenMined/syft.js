@@ -34,6 +34,10 @@ export declare class Tensor {
     addmm(x: Tensor, y: Tensor): Promise<any>;
     addmv_(x: Tensor, y: Tensor): Promise<any>;
     addmv(x: Tensor, y: Tensor): Promise<any>;
+    asin(): Promise<any>;
+    asin_(): Promise<any>;
+    atan(): Promise<any>;
+    atan_(): Promise<any>;
 }
 export declare class IntTensor extends Tensor {
     constructor(data: string | any[], data_is_pointer?: boolean);
