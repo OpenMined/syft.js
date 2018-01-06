@@ -49,7 +49,7 @@ class Tensor {
             });
         });
     }
-    autograd() {
+    autograd(state) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
@@ -138,12 +138,82 @@ class Tensor {
             return `${tensor_str}\n[syft.IntTensor: ${self.id} size: ${type_str}]`;
         });
     }
+    abs() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('abs', true);
+        });
+    }
+    abs_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('abs_');
+        });
+    }
+    acos() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('acos', true);
+        });
+    }
+    acos_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('acos_');
+        });
+    }
+    addmm_(x, y) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('addmm_', [x.id, y.id]);
+        });
+    }
+    addmm(x, y) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            let copy = yield self.copy();
+            yield copy.params_func('addmm_', [x.id, y.id]);
+            return copy;
+        });
+    }
+    addmv_(x, y) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('addmv_', [x.id, y.id]);
+        });
+    }
+    addmv(x, y) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            let copy = yield self.copy();
+            yield copy.params_func('addmv_', [x.id, y.id]);
+            return copy;
+        });
+    }
 }
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {
+    constructor(data, data_is_pointer = false) {
+        super(data, data_is_pointer);
+    }
 }
 exports.IntTensor = IntTensor;
 class FloatTensor extends Tensor {
+    constructor(data, autograd = false, data_is_pointer = false) {
+        super(data, data_is_pointer);
+        let self = this;
+        if (autograd) {
+            self.autograd(true);
+        }
+    }
 }
 exports.FloatTensor = FloatTensor;
 //# sourceMappingURL=Tensor.js.map

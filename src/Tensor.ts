@@ -65,7 +65,7 @@ export class Tensor {
     })
   }
 
-  async autograd() {
+  async autograd(state: boolean) {
     let self = this
     await self.ready()
 
@@ -73,13 +73,13 @@ export class Tensor {
   }
 
   /*
-   * Returns the size of the self tensor as a List.
-   *
-   * Returns
-   * -------
-   * Iterable
-   * Output list
-   */
+  * Returns the size of the self tensor as a List.
+  *
+  * Returns
+  * -------
+  * Iterable
+  * Output list
+  */
   async shape() {
     let self = this
     await self.ready()
@@ -195,21 +195,203 @@ export class Tensor {
     return `${tensor_str}\n[syft.IntTensor: ${self.id} size: ${type_str}]`
   }
 
+
+  ///////////////////////////////////
+  // Tensor Manipulation Functions //
+  ///////////////////////////////////
+
+  /*
+  * Returns absolute value of tensor as a new tensor
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor:
+  *     Output tensor
+  */
+  async abs() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('abs', true)
+  }
+
+  /*
+  * Replaces tensor values with its absolute value
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async abs_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('abs_')
+  }
+
+  /*
+  * Returns a new Tensor with the arccosine of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async acos() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('acos', true)
+  }
+
+  /*
+  * Performs inplace arccosine operation of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async acos_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('acos_')
+  }
+
+  /*
+  * Performs a matrix multiplication of the matrices 'x' and 'y'.
+  * The caller matrix 'self' is added to the final result inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     First tensor for multiplication
+  * y : FloatTensor
+  *     Second tensor for multiplication
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async addmm_(
+    x: Tensor,
+    y: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('addmm_', [x.id, y.id])
+  }
+
+  /*
+  * Performs a matrix multiplication of the matrices 'x' and 'y'.
+  * The caller matrix 'self' is added to the final result.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     First tensor for multiplication
+  * y : FloatTensor
+  *     Second tensor for multiplication
+  * Returns
+  * -------
+  * copy : FloatTensor
+  *     Output tensor
+  */
+  async addmm(
+    x: Tensor,
+    y: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    let copy = await self.copy()
+    await copy.params_func('addmm_', [x.id, y.id])
+
+    return copy
+  }
+
+  /*
+  * Performs a matrix-vector product of the matrix x and the vector vec.
+  * The vector tensor is added to the final result inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     tensor for multiplication
+  * vec : FloatTensor
+  *     Vector for Matrix-Vector Product
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async addmv_(
+    x: Tensor,
+    y: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('addmv_', [x.id, y.id])
+  }
+
+  /*
+  * Performs a matrix-vector product of the matrix x and the vector vec.
+  * The vector tensor is added to the final result.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  * tensor for multiplication
+  * y : FloatTensor
+  * Vector for Matrix-Vector Product
+  * Returns
+  * -------
+  * copy : FloatTensor
+  * Output tensor
+  */
+  async addmv(
+    x: Tensor,
+    y: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    let copy = await self.copy()
+    await copy.params_func('addmv_', [x.id, y.id])
+
+    return copy
+  }
 }
 
 export class IntTensor extends Tensor {
-
+  constructor(
+    data: string|any[],
+    data_is_pointer = false
+  ) {
+    super(data, data_is_pointer)
+  }
 }
 
 export class FloatTensor extends Tensor {
+  constructor(
+    data: string|any[],
+    autograd = false,
+    data_is_pointer = false
+  ) {
+    super(data, data_is_pointer)
 
+    let self = this
+
+    if (autograd) {
+      self.autograd(true)
+    }
+  }
 }
 /*
-import numpy as np
-
-import syft.controller
-
-class IntTensor():
 
 
 
@@ -219,150 +401,11 @@ class IntTensor():
 
 
 class FloatTensor():
-    async __init__(self, data, autograd=false, data_is_pointer=false):
-        controller = syft.controller
+  # async __del__(self):
+  #     self.delete_tensor()
 
-        if (data is not None and not data_is_pointer):
 
-            if (type(data) == list):
-                data = np.array(data)
-            data = data.astype('float')
 
-            self.data = data
-            self.id = int(controller.send_json({'objectType': 'FloatTensor',
-                                                     'functionCall': 'create',
-                                                     'data': list(data.flatten()),
-                                                     'shape': self.data.shape}))
-            # controller.log('FloatTensor.__init__: {}'.format(self.id))
-
-        elif (data_is_pointer):
-            self.id = int(data)
-
-        if (autograd):
-            self.autograd(true)
-
-            # async __del__(self):
-            # self.delete_tensor()
-
-    async abs(self):
-        ///
-        Returns absolute value of tensor as a new tensor
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor:
-            Output tensor
-        ///
-        return self.no_params_func('abs', return_response=true)
-
-    async abs_(self):
-        ///
-        Replaces tensor values with its absolute value
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('abs_')
-
-    async acos(self):
-        ///
-        Returns a new Tensor with the arccosine of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('acos', return_response=true)
-
-    async acos_(self):
-        ///
-        Performs inplace arccosine operation of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('acos_')
-
-    async addmm_(self, x, y):
-        ///
-        Performs a matrix multiplication of the matrices 'x' and 'y'.
-        The caller matrix 'self' is added to the final result inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            First tensor for multiplication
-        y : FloatTensor
-            Second tensor for multiplication
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.params_func('addmm_', [x.id, y.id])
-
-    async addmm(self, x, y):
-        ///
-        Performs a matrix multiplication of the matrices 'x' and 'y'.
-        The caller matrix 'self' is added to the final result.
-        Parameters
-        ----------
-        x : FloatTensor
-            First tensor for multiplication
-        y : FloatTensor
-            Second tensor for multiplication
-        Returns
-        -------
-        copy : FloatTensor
-            Output tensor
-        ///
-        copy = self.copy()
-        copy.params_func('addmm_', [x.id, y.id])
-        return copy
-
-    async addmv_(self, x, y):
-        ///
-        Performs a matrix-vector product of the matrix x and the vector vec.
-        The vector tensor is added to the final result inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            tensor for multiplication
-        vec : FloatTensor
-            Vector for Matrix-Vector Product
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.params_func('addmv_', [x.id, y.id])
-
-    async addmv(self, x, y):
-        ///
-        Performs a matrix-vector product of the matrix x and the vector vec.
-        The vector tensor is added to the final result.
-        Parameters
-        ----------
-        x : FloatTensor
-            tensor for multiplication
-        y : FloatTensor
-            Vector for Matrix-Vector Product
-        Returns
-        -------
-        copy : FloatTensor
-            Output tensor
-        ///
-        copy = self.copy()
-        copy.params_func('addmv_', [x.id, y.id])
-        return copy
 
     async asin(self):
         ///
