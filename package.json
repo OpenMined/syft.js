@@ -2,8 +2,8 @@
   "name": "syft",
   "version": "0.0.0",
   "description": "syft JavaScript interface for OpenMined.",
-  "main": "./dist/index.js",
-  "types": "./dist/main.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
