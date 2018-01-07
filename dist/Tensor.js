@@ -368,6 +368,426 @@ class Tensor {
             return self.no_params_func('exp_');
         });
     }
+    expand(...args) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('expand', args, true);
+        });
+    }
+    index_add(indices, dim, x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('index_add', [indices.id, dim, x.id], true);
+        });
+    }
+    index_add_(indices, dim, x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('index_add_', [indices.id, dim, x.id], true);
+        });
+    }
+    index_select(dim, indices) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('index_select', [indices.id, dim], true);
+        });
+    }
+    __truediv__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'div', false);
+        });
+    }
+    __itruediv__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'div', true);
+        });
+    }
+    keepgrad() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if ((yield self.get('keepgrad')) == '1') {
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+    }
+    __pow__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'pow', false);
+        });
+    }
+    __ipow__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'pow', true);
+        });
+    }
+    pow(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'pow', false);
+        });
+    }
+    pow_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'pow', true);
+        });
+    }
+    floor() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('floor', true);
+        });
+    }
+    floor_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('floor_');
+        });
+    }
+    round() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('round', true);
+        });
+    }
+    round_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('round_');
+        });
+    }
+    mm(other) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('mm', [other.id], true);
+        });
+    }
+    grad() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.get('grad', true);
+        });
+    }
+    __mod__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'remainder', false);
+        });
+    }
+    __imod__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.arithmetic_operation(x, 'remainder', true);
+        });
+    }
+    __mul__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'mul', false);
+        });
+    }
+    __imul__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.arithmetic_operation(x, 'mul', true);
+        });
+    }
+    __neg__() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.neg();
+        });
+    }
+    neg() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('neg', true);
+        });
+    }
+    neg_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('neg_');
+        });
+    }
+    relu() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('relu', true);
+        });
+    }
+    rsqrt() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('rsqrt', true);
+        });
+    }
+    save(filename) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('save', [filename], true, 'bool');
+        });
+    }
+    set(param_name = 'size', params = []) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('set', [...param_name, params], true, 'none');
+        });
+    }
+    sigmoid_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sigmoid_');
+        });
+    }
+    sigmoid() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sigmoid', true);
+        });
+    }
+    sign() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sign', true);
+        });
+    }
+    sign_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sign_');
+        });
+    }
+    sin() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sin', true);
+        });
+    }
+    sin_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sin_');
+        });
+    }
+    size() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.get('size');
+        });
+    }
+    shape(as_list = true) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if (as_list) {
+                return [];
+            }
+            else {
+                return yield self.no_params_func('shape', true);
+            }
+        });
+    }
+    softmax(dim = -1) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('softmax', [dim], true);
+        });
+    }
+    std(dim = -1) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('std', [dim], true);
+        });
+    }
+    stride(dim = -1) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if (dim == -1) {
+                return self.no_params_func('stride', true, 'none');
+            }
+            else {
+                let strides = self.params_func('stride', [dim], true, 'none');
+                return np.fromstring(strides, sep = ' ').astype('long');
+            }
+        });
+    }
+    sqrt() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sqrt', true);
+        });
+    }
+    sqrt_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('sqrt_');
+        });
+    }
+    trace() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('trace', true);
+        });
+    }
+    trunc() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('trunc', true);
+        });
+    }
+    to_numpy() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if (self.is_contiguous()) {
+                let res = yield controller.send_json({
+                    'functionCall': 'to_numpy',
+                    'objectType': 'FloatTensor',
+                    'objectIndex': self.id
+                });
+                return np.fromstring(res, sep = ' ').astype('float').reshape(self.shape());
+            }
+            else {
+                return '--- non-contiguous tensor ---';
+            }
+        });
+    }
+    __sub__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.arithmetic_operation(x, 'sub', false);
+        });
+    }
+    __isub__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.arithmetic_operation(x, 'sub', true);
+        });
+    }
+    view(...args) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('view', args, true);
+        });
+    }
+    view_(...args) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            yield self.params_func('view_', args, false);
+            return self;
+        });
+    }
+    view_as(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('view_as', [x.id], true);
+        });
+    }
+    view_as_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            self.params_func('view_as_', [x.id], false);
+            return self;
+        });
+    }
+    T() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('transpose', true);
+        });
+    }
+    triu(k = 0) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('triu', [k], true);
+        });
+    }
+    triu_(k = 0) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('triu_', [k]);
+        });
+    }
+    unsqueeze(dim) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('unsqueeze', [dim], true);
+        });
+    }
+    unsqueeze_(dim) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.params_func('unsqueeze_', [dim], true);
+        });
+    }
+    zero_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('zero_');
+        });
+    }
 }
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {

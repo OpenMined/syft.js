@@ -974,7 +974,1132 @@ export class Tensor {
     return await self.no_params_func('round_')
   }
 
+  /*
+  * Performs a matrix multiplication of two tensors.
+  * Parameters
+  * ----------
+  * other : FloatTensor
+  *     Second tensor to be multiplied with
+  * Returns
+  * -------
+  * FloatTensor
+  *     n x m Output tensor
+  */
+  async mm(
+    other: Tensor
+  ) {
+    let self = this
+    await self.ready()
 
+    return self.params_func('mm', [other.id], true)
+  }
+
+  async grad() {
+    let self = this
+    await self.ready()
+
+    return self.get('grad', true)
+  }
+
+  /*
+  * Performs Modulus arithmetic operation between two tensors.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Dividend tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __mod__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'remainder', false)
+  }
+
+  /*
+  * Performs Modulus arithmetic operation between two tensors inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Dividend tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __imod__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.arithmetic_operation(x, 'remainder', true)
+  }
+
+  /*
+  * Performs Multiplication arithmetic operation between two tensors.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Second tensor to be multiplied with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __mul__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'mul', false)
+  }
+
+  /*
+  * Performs Multiplication arithmetic operation between two tensors inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Second tensor to be multiplied with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __imul__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'mul', true)
+  }
+
+  async __neg__() {
+    let self = this
+    await self.ready()
+
+    return await self.neg()
+  }
+
+  /*
+  * Sets negative of the elements of tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async neg() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('neg', true)
+  }
+
+  /*
+  * Sets negative of the elements of tensor inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async neg_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('neg_')
+  }
+
+  async relu() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('relu', true)
+  }
+
+  /*
+  * Returns reciprocal of square root of tensor element wise.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async rsqrt() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('rsqrt', true)
+  }
+
+  async save(
+    filename: string
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('save', [filename], true, 'bool')
+  }
+
+  async set(
+    param_name = 'size',
+    params: any[] = []
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('set', [...param_name, params], true, 'none')
+  }
+
+  /*
+  * Performs inplace sigmoid function on the tensor element-wise.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace.
+  */
+  async sigmoid_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sigmoid_')
+  }
+
+  /*
+  * Returns a new tensor holding element wise values of Sigmoid function.
+  * Sigmoid(x) = 1 / 1+exp(-x)
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async sigmoid() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sigmoid', true)
+  }
+
+  /*
+  * Computes sign of each element of the tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async sign() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sign', true)
+  }
+
+  /*
+  * Computes the sign of each element of the tensor inplace
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async sign_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sign_')
+  }
+
+  /*
+  * Computes sin of each element of the tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async sin() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sin', true)
+  }
+
+  /*
+  * Computes the sine of each element of the tensor inplace
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async sin_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sin_')
+  }
+
+  /*
+  * Returns the size of tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * int
+  *     int with value of size
+  */
+  async size() {
+    let self = this
+    await self.ready()
+
+    return await self.get('size')
+  }
+
+  /*
+  * Returns the size of the self tensor as a FloatTensor (or as List).
+  * Note:
+  *     The returned value currently is a FloatTensor because it leverages
+  *     the messaging mechanism with Unity.
+  * Parameters
+  * ----------
+  * as_list : bool
+  *     Value retruned as list if true; else as tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  * (or)
+  * Iterable
+  *     Output list
+  */
+  async shape(
+    as_list = true
+  ) {
+    let self = this
+    await self.ready()
+
+    if (as_list) {
+      //TODO: figure this out
+      return [] //list(np.fromstring(self.get('shape')[:-1], sep=',').astype('int'))
+    } else {
+      return await self.no_params_func('shape', true)
+    }
+  }
+
+  async softmax(
+    dim = -1
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('softmax', [dim], true)
+  }
+
+  async std(
+    dim = -1
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('std', [dim], true)
+  }
+
+  /*
+  * Returns the stride of tensor.
+  * Parameters
+  * ----------
+  * dim : int
+  *     dimension of expected return
+
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor.
+  * (or)
+  * numpy.ndarray
+  *     NumPy Array as Long
+  */
+  async stride(
+    dim = -1
+  ) {
+    let self = this
+    await self.ready()
+
+    if (dim == -1) {
+      return self.no_params_func('stride', true, 'none')
+    } else {
+      //TODO: figure out this
+      let strides = self.params_func('stride', [dim], true, 'none')
+      return np.fromstring(strides, sep=' ').astype('long')
+    }
+  }
+
+  /*
+  * Returns a new tensor with the square-root of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor:
+  *     Output Tensor
+  */
+  async sqrt() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sqrt', true)
+  }
+
+  async sqrt_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('sqrt_')
+  }
+
+  /*
+  * Returns a new tensor with the sum along diagonals of a 2D tensor.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async trace() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('trace', true)
+  }
+
+  async trunc() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('trunc', true)
+  }
+
+  async to_numpy() {
+    let self = this
+    await self.ready()
+
+    if (self.is_contiguous()) {
+      let res = await controller.send_json({
+        'functionCall': 'to_numpy',
+        'objectType': 'FloatTensor',
+        'objectIndex': self.id
+      })
+
+      return np.fromstring(res, sep=' ').astype('float').reshape(self.shape())
+    } else {
+      return '--- non-contiguous tensor ---'
+    }
+  }
+
+  /*
+  * Performs element-wise substraction arithmetic between two tensors
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     The Second tensor to perform addition with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __sub__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.arithmetic_operation(x, 'sub', false)
+  }
+
+  /*
+  * Performs element-wise substraction arithmetic between two tensors
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     The Second tensor to perform addition with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __isub__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.arithmetic_operation(x, 'sub', true)
+  }
+
+  //TODO: figure this out (any)?
+  async view(...args: any[]) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('view', args, true)
+  }
+
+  //TODO: figure this out (any)?
+  async view_(...args: any[]) {
+    let self = this
+    await self.ready()
+
+    await self.params_func('view_', args, false)
+    return self
+  }
+
+  async view_as(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('view_as', [x.id], true)
+  }
+
+  async view_as_(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    self.params_func('view_as_', [x.id], false)
+    return self
+  }
+
+  /*
+  * Returns a tensor that is a transposed version of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async T() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('transpose', true)
+  }
+
+
+  async triu(k=0) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('triu', [k], true)
+  }
+
+  async triu_(k=0) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('triu_', [k])
+  }
+
+  async unsqueeze(
+    dim: number
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('unsqueeze', [dim], true)
+  }
+
+  async unsqueeze_(
+    dim: number
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.params_func('unsqueeze_', [dim], true)
+  }
+
+  /*
+  * Fills this tensor with zeros inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async zero_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('zero_')
+  }
+/*
+  async __repr__(verbose=true):
+
+      tensor_str = str(self.to_numpy())
+
+      type_str = ''
+      for dim in self.shape():
+          type_str += str(
+            dim: number
+          ) + 'x'
+
+      type_str = type_str[:-1]
+      grad = self.get('grad')
+      if (grad == ''):
+          grad = 'None'
+
+      co = str(self.creation_op())
+
+      desc = '[syft.FloatTensor:'+str(self.id)+' grad:' + grad + ' size:' + type_str + ' c:' + str(self.children()) + ' p:' + str(self.creators()) + ' init:' + co + ']' + '\n'
+
+      if (verbose):
+          children = self.children()
+          creators = self.creators()
+
+          if(len(children) > 0):
+              #tensor_str = '\n -------------------------------\n' + tensor_str
+              desc += '\n\t-----------children-----------\n'
+          for child_id in children:
+              desc += '\t' + syft.controller.get_tensor(child_id).__repr__(false)
+          if(len(children) > 0):
+              if(len(creators) > 0):
+
+                  desc += '\t------------------------------\n'
+              else:
+                  desc += '\t------------------------------\n\n\n'
+
+          if (len(creators) > 0):
+              # tensor_str = '\n -------------------------------\n' + tensor_str
+              desc += '\n\t-----------creators-----------\n'
+          for parent_id in creators:
+              desc += '\t' + syft.controller.get_tensor(parent_id).__repr__(false)
+          if (len(creators) > 0):
+              desc += '\t------------------------------\n\n\n'
+
+          return tensor_str + '\n' + desc
+      return desc
+
+  async __str__() {
+    let self = this
+    await self.ready()
+
+      tensor_str = str(self.to_numpy()).replace(']', ' ').replace('[', ' ')
+
+      return tensor_str
+
+  async get(param_name='size', response_as_tensor=false):
+      if(response_as_tensor):
+          return self.params_func(name='get', params=[param_name], true,
+                              return_type='FloatTensor', data_is_pointer=true)
+      else:
+          return self.params_func(name='get', params=[param_name], true,
+                              return_type='string', data_is_pointer=false)
+
+  async cpu() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns a CPU copy of this storage if it's not already on the CPU
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('cpu')
+
+  async gpu() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns a GPU copy of this storage if it's not already on the GPU
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('gpu')
+
+  async cmd(functionCall, tensorIndexParams=[]):
+      cmd = {
+          'functionCall': functionCall,
+          'objectType': 'FloatTensor',
+          'objectIndex': self.id,
+          'tensorIndexParams': tensorIndexParams}
+      return cmd
+
+  async params_func(name, params, false, return_type='FloatTensor', data_is_pointer=true,):
+      # send the command
+      res = controller.send_json(
+          self.cmd(name, tensorIndexParams=params))
+
+      controller.log(res)
+
+      if (return_response):
+          if (return_type == 'IntTensor'):
+              controller.log('IntTensor.__init__: {}'.format(res))
+              return IntTensor(data=int(res), data_is_pointer=data_is_pointer)
+          elif(return_type == 'FloatTensor'):
+              controller.log('FloatTensor.__init__: {}'.format(res))
+              if(res == ''):
+                  return None
+              return FloatTensor(data=int(res), data_is_pointer=data_is_pointer)
+          else:
+              return res
+      return self
+
+  async no_params_func(name, false, return_type='FloatTensor'):
+      return (self.params_func(name, [], return_response, return_type))
+
+  async arithmetic_operation(x, name, inline=false):
+
+      operation_cmd = name
+
+      if (type(x) == FloatTensor):
+          operation_cmd += '_elem'
+          parameter = x.id
+      else:
+          operation_cmd += '_scalar'
+          parameter = str(x)
+
+      if (inline):
+          operation_cmd += '_'
+
+      response = controller.send_json(
+          self.cmd(operation_cmd, [parameter]))  # sends the command
+      return FloatTensor(data=int(response), data_is_pointer=true)
+
+  async delete_tensor() {
+    let self = this
+    await self.ready()
+
+      /*
+      Deletes the input tensor.
+      Parameters
+      ----------
+      Returns
+      -------
+      * /
+      if (self.id is not None):
+          self.no_params_func('delete')
+      controller = None
+      self.id = None
+
+
+  async is_contiguous() {
+    let self = this
+    await self.ready()
+
+      txt = (self.no_params_func('is_contiguous', true, return_type=None))
+      if(txt == 'true'):
+          return true
+
+      else:
+          return false
+
+  async sinh() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the hyperbolic sine of the input.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('sinh', true)
+
+  async sinh_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the hyperbolic sine of the input inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace.
+      * /
+      return self.no_params_func('sinh_')
+
+  async log() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the logarithm of the input.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('log', true)
+
+  async log_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the logarithm of the input inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace.
+      * /
+      return self.no_params_func('log_')
+
+  async log1p_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the natural logarithm of (1 + input) inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace.
+      * /
+      return self.no_params_func('log1p_')
+
+  async log1p() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns a new tensor with the natural logarithm of (1 + 'self').
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('log1p', true)
+
+  async frac() {
+    let self = this
+    await self.ready()
+
+      /*
+      Computes the fractional portion of each element in tensor.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('frac', true)
+
+  async frac_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Computes the fractional portion of each element in tensor, inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.no_params_func('frac_')
+
+  async reciprocal() {
+    let self = this
+    await self.ready()
+
+      /*
+      Computes the reciprocal of the input tensor.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('reciprocal', true)
+
+  async reciprocal_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Computes reciprocal of input tensor with values inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.no_params_func('reciprocal_')
+
+  async rsqrt() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns a new tensor with the reciprocal of the square-root of each of
+      the elements of input.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('rsqrt', true)
+
+  async rsqrt_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Computes the reciprocal of the square-root of each of the elements of input,
+      inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.no_params_func('rsqrt_')
+
+  async remainder(divisor):
+      /*
+      Computes the element-wise remainder of division.
+      inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.arithmetic_operation(divisor, 'remainder')
+
+  async remainder_(divisor):
+      /*
+      Computes the element-wise remainder of division, inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.arithmetic_operation(divisor, 'remainder', 'FloatTensor')
+
+  async sample(
+    dim: number
+  ):
+      /*
+      Samples the current tensor uniformly assuming each value is a binary probability.
+      ----------
+      Returns
+      -------
+      IntTensor
+          Output tensor
+      * /
+      return self.params_func('sample', [dim], true, return_type='IntTensor')
+
+  async tan() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the tangent of the input.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('tan', true)
+
+  async tan_() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the tangent of the input inplace.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.no_params_func('tan_')
+
+  async tanh() {
+    let self = this
+    await self.ready()
+
+      /*
+      Returns the hyperbolic tangent of the input.
+      Parameters
+      ----------
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.no_params_func('tanh', true)
+
+  async squeeze(dim=-1):
+      /*
+      Returns a tensor with all the dimensions of input of size 1 removed.
+      Parameters
+      ----------
+      dim : int
+          When dim is given, a squeeze operation is done only in the given
+          dimension.
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('squeeze', [dim], true)
+
+  async squeeze_(dim=-1):
+      /*
+      Removes all the dimensions of input tensor of size 1, inplace.
+      Parameters
+      ----------
+      dim : int
+          When dim is given, a squeeze operation is done only in the given
+          dimension.
+      Returns
+      -------
+      FloatTensor
+          Caller with values inplace
+      * /
+      return self.params_func('squeeze_', [dim])
+
+  async min(dim=-1, keepdim=false):
+      /*
+      Returns the minimum value of all elements in the input tensor.
+      Parameters
+      ----------
+      dim : int
+          the dimension to reduce
+      keepdim : bool
+          whether the output tensors have dim retained or not
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('min', [dim, keepdim], true)
+
+  async max(dim=-1, keepdim=false):
+      /*
+      Returns the maximum value of all elements in the input tensor.
+      Parameters
+      ----------
+      dim : int
+          the dimension to reduce
+      keepdim : bool
+          whether the output tensors have dim retained or not
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('max', [dim, keepdim], true)
+
+  async sum(dim=-1, keepdim=false):
+      /*
+      Returns the sum of all elements in the input tensor.
+      Parameters
+      ----------
+      dim : int
+          the dimension to reduce
+      keepdim : bool
+          whether the output tensors have dim retained or not
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('sum', [dim, keepdim], true)
+
+  async prod(dim=-1, keepdim=false):
+      /*
+      Returns the product of all elements in the input tensor.
+      Parameters
+      ----------
+      dim : int
+          the dimension to reduce
+      keepdim : bool
+          whether the output tensors have dim retained or not
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('prod', [dim, keepdim], true)
+
+  async mean(dim=-1, keepdim=false):
+      /*
+      Returns the mean value of all elements in the input tensor.
+      Parameters
+      ----------
+      dim : int
+          the dimension to reduce
+      keepdim : bool
+          whether the output tensors have dim retained or not
+      Returns
+      -------
+      FloatTensor
+          Output tensor
+      * /
+      return self.params_func('mean', [dim, keepdim], true)
+*/
 }
 
 export class IntTensor extends Tensor {
@@ -1026,886 +2151,3 @@ export class FloatTensor extends Tensor {
     }
   }
 }
-/*
-
-
-
-
-
-
-
-
-class FloatTensor():
-  # async __del__(self):
-  #     self.delete_tensor()
-
-
-
-
-
-
-    async mm(self, other):
-        ///
-        Performs a matrix multiplication of two tensors.
-        Parameters
-        ----------
-        other : FloatTensor
-            Second tensor to be multiplied with
-        Returns
-        -------
-        FloatTensor
-            n x m Output tensor
-        ///
-        return self.params_func('mm', [other.id], true)
-
-    async grad(self):
-        return self.get('grad', response_as_tensor=true)
-
-    async __mod__(self, x):
-        ///
-        Performs Modulus arithmetic operation between two tensors.
-        Parameters
-        ----------
-        x : FloatTensor
-            Dividend tensor
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'remainder', false)
-
-    async __imod__(self, x):
-        ///
-        Performs Modulus arithmetic operation between two tensors inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            Dividend tensor
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'remainder', true)
-
-    async __mul__(self, x):
-        ///
-        Performs Multiplication arithmetic operation between two tensors.
-        Parameters
-        ----------
-        x : FloatTensor
-            Second tensor to be multiplied with.
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'mul', false)
-
-    async __imul__(self, x):
-        ///
-        Performs Multiplication arithmetic operation between two tensors inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            Second tensor to be multiplied with.
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'mul', true)
-
-    async __neg__(self):
-        return self.neg()
-
-    async neg(self):
-        ///
-        Sets negative of the elements of tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('neg', return_response=true)
-
-    async neg_(self):
-        ///
-        Sets negative of the elements of tensor inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('neg_')
-
-    async relu(self):
-
-        return self.no_params_func('relu', return_response=true)
-
-    async rsqrt(self):
-        ///
-        Returns reciprocal of square root of tensor element wise.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('rsqrt', return_response=true)
-
-    async save(self, filename):
-        return self.params_func(name='save', params=[filename], return_response=true, return_type=bool)
-
-    async set(self, param_name='size', params=[]):
-        return self.params_func(name='set', params=[param_name] + params, return_response=true, return_type=None)
-
-    async sigmoid_(self):
-        ///
-        Performs inplace sigmoid function on the tensor element-wise.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace.
-        ///
-        return self.no_params_func('sigmoid_')
-
-    async sigmoid(self):
-        ///
-        Returns a new tensor holding element wise values of Sigmoid function.
-        Sigmoid(x) = 1 / 1+exp(-x)
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('sigmoid', return_response=true)
-
-    async sign(self):
-        ///
-        Computes sign of each element of the tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('sign', return_response=true)
-
-    async sign_(self):
-        ///
-        Computes the sign of each element of the tensor inplace
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('sign_')
-
-    async sin(self):
-        ///
-        Computes sin of each element of the tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('sin', return_response=true)
-
-    async sin_(self):
-        ///
-        Computes the sine of each element of the tensor inplace
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('sin_')
-
-    async size(self):
-        ///
-        Returns the size of tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        int
-            int with value of size
-        ///
-        return int(self.get('size'))
-
-    async shape(self, as_list=true):
-        ///
-        Returns the size of the self tensor as a FloatTensor (or as List).
-        Note:
-            The returned value currently is a FloatTensor because it leverages
-            the messaging mechanism with Unity.
-        Parameters
-        ----------
-        as_list : bool
-            Value retruned as list if true; else as tensor
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        (or)
-        Iterable
-            Output list
-        ///
-        if (as_list):
-            return list(np.fromstring(self.get('shape')[:-1], sep=',').astype('int'))
-        else:
-            shape_tensor = self.no_params_func('shape', return_response=true)
-            return shape_tensor
-
-    async softmax(self, dim=-1):
-        return self.params_func('softmax', [dim], return_response=true)
-
-    async std(self, dim=-1):
-        return self.params_func('std', [dim], return_response=true)
-
-    async stride(self, dim=-1):
-        ///
-        Returns the stride of tensor.
-        Parameters
-        ----------
-        dim : int
-            dimension of expected return
-
-        Returns
-        -------
-        FloatTensor
-            Output tensor.
-        (or)
-        numpy.ndarray
-            NumPy Array as Long
-        ///
-        if dim == -1:
-            return self.no_params_func('stride', return_response=true, return_type=None)
-        else:
-            strides = self.params_func('stride', [dim], return_response=true, return_type=None)
-            return np.fromstring(strides, sep=' ').astype('long')
-
-    async sqrt(self):
-        ///
-        Returns a new tensor with the square-root of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor:
-            Output Tensor
-        ///
-        return self.no_params_func('sqrt', return_response=true)
-
-    async sqrt_(self):
-        return self.no_params_func('sqrt_')
-
-    async trace(self):
-        ///
-        Returns a new tensor with the sum along diagonals of a 2D tensor.
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('trace', return_response=true)
-
-    async trunc(self):
-        return self.no_params_func('trunc', return_response=true)
-
-    async to_numpy(self):
-        if(self.is_contiguous()):
-            res = controller.send_json({
-                'functionCall': 'to_numpy',
-                'objectType': 'FloatTensor',
-                'objectIndex': self.id
-            })
-
-            return np.fromstring(res, sep=' ').astype('float').reshape(self.shape())
-        else:
-            return '--- non-contiguous tensor ---'
-
-    async __sub__(self, x):
-        ///
-        Performs element-wise substraction arithmetic between two tensors
-        Parameters
-        ----------
-        x : FloatTensor
-            The Second tensor to perform addition with.
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'sub', false)
-
-    async __isub__(self, x):
-        ///
-        Performs element-wise substraction arithmetic between two tensors
-        Parameters
-        ----------
-        x : FloatTensor
-            The Second tensor to perform addition with.
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'sub', true)
-
-    async view(self, *args):
-        new_dim = list(args)
-        assert type(new_dim) == list
-        assert type(new_dim[0]) == int
-        return self.params_func('view', new_dim, return_response=true)
-
-    async view_(self, *args):
-        new_dim = list(args)
-        assert type(new_dim) == list
-        assert type(new_dim[0]) == int
-        self.params_func('view_', new_dim, return_response=false)
-        return self
-
-    async view_as(self, x):
-        assert type(x) == FloatTensor
-        return self.params_func('view_as', [x.id], return_response=true)
-
-    async view_as_(self, x):
-        assert type(x) == FloatTensor
-        self.params_func('view_as_', [x.id], return_response=false)
-        return self
-
-    async T(self):
-        ///
-        Returns a tensor that is a transposed version of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('transpose', return_response=true)
-
-    async triu(self, k=0):
-        return self.params_func('triu', [k], return_response=true)
-
-    async triu_(self, k=0):
-        return self.params_func('triu_', [k])
-
-    async unsqueeze(self,dim):
-        return self.params_func('unsqueeze', [dim], return_response=true)
-
-    async unsqueeze_(self,dim):
-        return self.params_func('unsqueeze_', [dim], return_response=true)
-
-    async zero_(self):
-        ///
-        Fills this tensor with zeros inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('zero_')
-
-    async __repr__(self, verbose=true):
-
-        tensor_str = str(self.to_numpy())
-
-        type_str = ''
-        for dim in self.shape():
-            type_str += str(dim) + 'x'
-
-        type_str = type_str[:-1]
-        grad = self.get('grad')
-        if (grad == ''):
-            grad = 'None'
-
-        co = str(self.creation_op())
-
-        desc = '[syft.FloatTensor:'+str(self.id)+' grad:' + grad + ' size:' + type_str + ' c:' + str(self.children()) + ' p:' + str(self.creators()) + ' init:' + co + ']' + '\n'
-
-        if (verbose):
-            children = self.children()
-            creators = self.creators()
-
-            if(len(children) > 0):
-                #tensor_str = '\n -------------------------------\n' + tensor_str
-                desc += '\n\t-----------children-----------\n'
-            for child_id in children:
-                desc += '\t' + syft.controller.get_tensor(child_id).__repr__(false)
-            if(len(children) > 0):
-                if(len(creators) > 0):
-
-                    desc += '\t------------------------------\n'
-                else:
-                    desc += '\t------------------------------\n\n\n'
-
-            if (len(creators) > 0):
-                # tensor_str = '\n -------------------------------\n' + tensor_str
-                desc += '\n\t-----------creators-----------\n'
-            for parent_id in creators:
-                desc += '\t' + syft.controller.get_tensor(parent_id).__repr__(false)
-            if (len(creators) > 0):
-                desc += '\t------------------------------\n\n\n'
-
-            return tensor_str + '\n' + desc
-        return desc
-
-    async __str__(self):
-        tensor_str = str(self.to_numpy()).replace(']', ' ').replace('[', ' ')
-
-        return tensor_str
-
-    async get(self, param_name='size', response_as_tensor=false):
-        if(response_as_tensor):
-            return self.params_func(name='get', params=[param_name], return_response=true,
-                                return_type='FloatTensor', data_is_pointer=true)
-        else:
-            return self.params_func(name='get', params=[param_name], return_response=true,
-                                return_type='string', data_is_pointer=false)
-
-    async cpu(self):
-        ///
-        Returns a CPU copy of this storage if it's not already on the CPU
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('cpu')
-
-    async gpu(self):
-        ///
-        Returns a GPU copy of this storage if it's not already on the GPU
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('gpu')
-
-    async cmd(self, functionCall, tensorIndexParams=[]):
-        cmd = {
-            'functionCall': functionCall,
-            'objectType': 'FloatTensor',
-            'objectIndex': self.id,
-            'tensorIndexParams': tensorIndexParams}
-        return cmd
-
-    async params_func(self, name, params, return_response=false, return_type='FloatTensor', data_is_pointer=true,):
-        # send the command
-        res = controller.send_json(
-            self.cmd(name, tensorIndexParams=params))
-
-        controller.log(res)
-
-        if (return_response):
-            if (return_type == 'IntTensor'):
-                controller.log('IntTensor.__init__: {}'.format(res))
-                return IntTensor(data=int(res), data_is_pointer=data_is_pointer)
-            elif(return_type == 'FloatTensor'):
-                controller.log('FloatTensor.__init__: {}'.format(res))
-                if(res == ''):
-                    return None
-                return FloatTensor(data=int(res), data_is_pointer=data_is_pointer)
-            else:
-                return res
-        return self
-
-    async no_params_func(self, name, return_response=false, return_type='FloatTensor'):
-        return (self.params_func(name, [], return_response, return_type))
-
-    async arithmetic_operation(self, x, name, inline=false):
-
-        operation_cmd = name
-
-        if (type(x) == FloatTensor):
-            operation_cmd += '_elem'
-            parameter = x.id
-        else:
-            operation_cmd += '_scalar'
-            parameter = str(x)
-
-        if (inline):
-            operation_cmd += '_'
-
-        response = controller.send_json(
-            self.cmd(operation_cmd, [parameter]))  # sends the command
-        return FloatTensor(data=int(response), data_is_pointer=true)
-
-    async delete_tensor(self):
-        ///
-        Deletes the input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        ///
-        if (self.id is not None):
-            self.no_params_func('delete')
-        controller = None
-        self.id = None
-
-
-    async is_contiguous(self):
-        txt = (self.no_params_func('is_contiguous', return_response=true, return_type=None))
-        if(txt == 'true'):
-            return true
-
-        else:
-            return false
-
-    async sinh(self):
-        ///
-        Returns the hyperbolic sine of the input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('sinh', return_response=true)
-
-    async sinh_(self):
-        ///
-        Returns the hyperbolic sine of the input inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace.
-        ///
-        return self.no_params_func('sinh_')
-
-    async log(self):
-        ///
-        Returns the logarithm of the input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('log', return_response=true)
-
-    async log_(self):
-        ///
-        Returns the logarithm of the input inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace.
-        ///
-        return self.no_params_func('log_')
-
-    async log1p_(self):
-        ///
-        Returns the natural logarithm of (1 + input) inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace.
-        ///
-        return self.no_params_func('log1p_')
-
-    async log1p(self):
-        ///
-        Returns a new tensor with the natural logarithm of (1 + 'self').
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('log1p', return_response=true)
-
-    async frac(self):
-        ///
-        Computes the fractional portion of each element in tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('frac', return_response=true)
-
-    async frac_(self):
-        ///
-        Computes the fractional portion of each element in tensor, inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('frac_')
-
-    async reciprocal(self):
-        ///
-        Computes the reciprocal of the input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('reciprocal', return_response=true)
-
-    async reciprocal_(self):
-        ///
-        Computes reciprocal of input tensor with values inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('reciprocal_')
-
-    async rsqrt(self):
-        ///
-        Returns a new tensor with the reciprocal of the square-root of each of
-        the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('rsqrt', return_response=true)
-
-    async rsqrt_(self):
-        ///
-        Computes the reciprocal of the square-root of each of the elements of input,
-        inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('rsqrt_')
-
-    async remainder(self, divisor):
-        ///
-        Computes the element-wise remainder of division.
-        inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(divisor, 'remainder')
-
-    async remainder_(self, divisor):
-        ///
-        Computes the element-wise remainder of division, inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(divisor, 'remainder', 'FloatTensor')
-
-    async sample(self,dim):
-        ///
-        Samples the current tensor uniformly assuming each value is a binary probability.
-        ----------
-        Returns
-        -------
-        IntTensor
-            Output tensor
-        ///
-        return self.params_func('sample', [dim], return_response=true, return_type='IntTensor')
-
-    async tan(self):
-        ///
-        Returns the tangent of the input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('tan', return_response=true)
-
-    async tan_(self):
-        ///
-        Returns the tangent of the input inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('tan_')
-
-    async tanh(self):
-        ///
-        Returns the hyperbolic tangent of the input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('tanh', return_response=true)
-
-    async squeeze(self, dim=-1):
-        ///
-        Returns a tensor with all the dimensions of input of size 1 removed.
-        Parameters
-        ----------
-        dim : int
-            When dim is given, a squeeze operation is done only in the given
-            dimension.
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('squeeze', [dim], return_response=true)
-
-    async squeeze_(self, dim=-1):
-        ///
-        Removes all the dimensions of input tensor of size 1, inplace.
-        Parameters
-        ----------
-        dim : int
-            When dim is given, a squeeze operation is done only in the given
-            dimension.
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.params_func('squeeze_', [dim])
-
-    async min(self, dim=-1, keepdim=false):
-        ///
-        Returns the minimum value of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('min', [dim, keepdim], return_response=true)
-
-    async max(self, dim=-1, keepdim=false):
-        ///
-        Returns the maximum value of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('max', [dim, keepdim], return_response=true)
-
-    async sum(self, dim=-1, keepdim=false):
-        ///
-        Returns the sum of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('sum', [dim, keepdim], return_response=true)
-
-    async prod(self, dim=-1, keepdim=false):
-        ///
-        Returns the product of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('prod', [dim, keepdim], return_response=true)
-
-    async mean(self, dim=-1, keepdim=false):
-        ///
-        Returns the mean value of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('mean', [dim, keepdim], return_response=true)
-*/
