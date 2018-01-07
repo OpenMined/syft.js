@@ -226,6 +226,148 @@ class Tensor {
             return yield self.no_params_func('atan_');
         });
     }
+    __add__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.arithmetic_operation(x, 'add', false);
+        });
+    }
+    __iadd__(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.arithmetic_operation(x, 'add', true);
+        });
+    }
+    backward(grad) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if (grad == void 0) {
+                self.no_params_func('backward');
+            }
+            else {
+                self.params_func('backward', [grad.id]);
+            }
+        });
+    }
+    ceil() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('ceil', true);
+        });
+    }
+    ceil_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('ceil_');
+        });
+    }
+    contiguous() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('contiguous', true);
+        });
+    }
+    copy() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('copy', true);
+        });
+    }
+    cos() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('cos', true);
+        });
+    }
+    cos_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('cos_');
+        });
+    }
+    cosh() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('cosh', true);
+        });
+    }
+    cosh_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('cosh_');
+        });
+    }
+    children() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            let res = yield self.get('children');
+            if (res.length > 0) {
+                return [];
+            }
+            return [];
+        });
+    }
+    creation_op() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.get('creation_op');
+        });
+    }
+    creators() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            let res = yield self.get('creators');
+            if (res.length > 0) {
+                return [];
+            }
+            return [];
+        });
+    }
+    cumsum(dim = 0) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.params_func('cumsum', [dim], true);
+        });
+    }
+    dataOnGpu() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            if ((yield self.get('dataOnGpu')) == '1') {
+                return true;
+            }
+            return false;
+        });
+    }
+    exp() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield self.no_params_func('exp', true);
+        });
+    }
+    exp_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return self.no_params_func('exp_');
+        });
+    }
 }
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {
@@ -241,6 +383,35 @@ class FloatTensor extends Tensor {
         if (autograd) {
             self.autograd(true);
         }
+    }
+    autograd(setter) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            let out;
+            if (setter == void 0) {
+                if ((yield self.get('autograd')) == '1') {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                if (setter) {
+                    out = yield self.set('autograd', ['1']);
+                }
+                else {
+                    out = yield self.set('autograd', ['0']);
+                }
+                if ((out == '1' && setter) || (out == '0' && !setter)) {
+                    return self;
+                }
+                else {
+                    return false;
+                }
+            }
+        });
     }
 }
 exports.FloatTensor = FloatTensor;
