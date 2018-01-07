@@ -426,9 +426,555 @@ export class Tensor {
   async atan_() {
     let self = this
     await self.ready()
-    
+
     return await self.no_params_func('atan_')
   }
+
+
+  /*
+  * Performs element-wise addition arithmetic between two tensors
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     The Second tensor to perform addition with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __add__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.arithmetic_operation(x, 'add', false)
+  }
+
+  /*
+  * Performs in place element-wise addition arithmetic between two tensors
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     The Second tensor to perform addition with.
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __iadd__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return self.arithmetic_operation(x, 'add', true)
+  }
+
+  //TODO: get the type of grad
+  async backward(grad?: any) {
+    let self = this
+    await self.ready()
+
+    if (grad == void 0) {
+      self.no_params_func('backward')
+    } else {
+      self.params_func('backward', [grad.id])
+    }
+  }
+
+  /*
+  * Performs the ceiling of the input tensor element-wise.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async ceil() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('ceil', true)
+  }
+
+  /*
+  * Performs the inplace ceiling of the input tensor element-wise.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async ceil_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('ceil_')
+  }
+
+  /*
+  * Returns a copy of the input
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async contiguous() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('contiguous', true)
+  }
+
+  /*
+  * Returns a copy of the input
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async copy() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('copy', true)
+  }
+
+  /*
+  * Returns a new Tensor with the cosine of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async cos() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('cos', true)
+  }
+
+  /*
+  * Performs the cosine of the input tensor inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async cos_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('cos_')
+  }
+
+  /*
+  * Returns a new Tensor with hyperbolic cosine of the elements of input.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async cosh() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('cosh', true)
+  }
+
+  /*
+  * Returns the hyperbolic cosine of the input inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async cosh_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('cosh_')
+  }
+
+  /*
+  * Returns an iterator over immediate children modules.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * Iterable
+  *     Returns a list of children
+  */
+  async children() {
+    let self = this
+    await self.ready()
+
+    let res = await self.get('children')
+    if (res.length > 0) {
+      //TODO: figure this out
+      return [] // list(map(lambda x: int(x), res.split(',')[0:-1]))
+    }
+    return []
+  }
+
+  async creation_op() {
+    let self = this
+    await self.ready()
+
+    return await self.get('creation_op')
+  }
+
+  /*
+  * Returns an iterator over immediate creators of input tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * Returns a list of creators
+  */
+  async creators() {
+    let self = this
+    await self.ready()
+
+    let res = await self.get('creators')
+    if (res.length > 0) {
+      //TODO: figure this out
+      return [] // list(map(lambda x: int(x), res.split(',')[0:-1]))
+    }
+    return []
+  }
+
+  /*
+  * Returns the sum of all elements in the input tensor.
+  * Parameters
+  * ----------
+  * dim : int
+  *     the dimension to reduce
+  * keepdim : bool
+  *     whether the output tensors have dim retained or not
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async cumsum(dim = 0) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('cumsum', [dim], true)
+  }
+
+  async dataOnGpu() {
+    let self = this
+    await self.ready()
+
+    if (await self.get('dataOnGpu') == '1') {
+      return true
+    }
+    return false
+  }
+
+  /*
+  * Computes the exponential of each element of input tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async exp() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('exp', true)
+  }
+
+  /*
+  * Computes the exponential of each element of input tensor inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async exp_() {
+    let self = this
+    await self.ready()
+
+    return self.no_params_func('exp_')
+  }
+
+  /*
+  * Returns the tensor, with values repeated across one dimension
+  * Parameters
+  * ----------
+  * args : list
+  *        the new, expanded size
+  * Returns
+  * -------
+  * FloatTensor
+  *     the new, expanded tensor.
+  */
+  async expand(
+    ...args: number[]
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('expand', args, true)
+  }
+
+  //TODO: figure this out
+  async index_add(
+    indices: ?,
+    dim: number,
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('index_add', [indices.id, dim, x.id], true)
+  }
+
+  //TODO: figure this out
+  async index_add_(
+    indices: ?,
+    dim: number,
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('index_add_', [indices.id, dim, x.id], true)
+  }
+
+  //TODO: figure this out
+  async index_select(
+    dim: number,
+    indices: ?
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func('index_select', [indices.id, dim], true)
+  }
+
+  /*
+  * Performs division arithmetic between two tensors
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Second divident tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __truediv__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'div', false)
+  }
+
+  /*
+  * Performs division arithmetic between two tensors inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Second divident tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __itruediv__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'div', true)
+  }
+
+  async keepgrad() {
+    let self = this
+    await self.ready()
+
+    if (await self.get('keepgrad') == '1') {
+        return true
+    } else {
+      return false
+    }
+  }
+
+  /*
+  * Takes the power of each element in input ('self') with 'x' and
+  * returns a tensor with the result.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Exponent tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async __pow__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'pow', false)
+  }
+
+  /*
+  * Takes the power of each element in input ('self') with 'x' and
+  * returns a tensor with the result inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Exponent tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async __ipow__(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'pow', true)
+  }
+
+  /*
+  * Takes the power of each element in input ('self') with 'x' and
+  * returns a tensor with the result.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Exponent tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async pow(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'pow', false)
+  }
+
+  /*
+  * Takes the power of each element in input ('self') with 'x', inplace.
+  * Parameters
+  * ----------
+  * x : FloatTensor
+  *     Exponent tensor
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async pow_(
+    x: Tensor
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.arithmetic_operation(x, 'pow', true)
+  }
+
+  /*
+  * Performs the floor of the input tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async floor() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('floor', true)
+  }
+
+  /*
+  * Performs the inplace floor of the input tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async floor_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('floor_')
+  }
+
+  /*
+  * Performs Round-ing to the nearest decimal,
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  async round() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('round', true)
+  }
+
+  /*
+  * Performs Round-ing to the nearest decimal inplace.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async round_() {
+    let self = this
+    await self.ready()
+
+    return await self.no_params_func('round_')
+  }
+
+
 }
 
 export class IntTensor extends Tensor {
@@ -454,6 +1000,31 @@ export class FloatTensor extends Tensor {
       self.autograd(true)
     }
   }
+
+  async autograd(setter: boolean) {
+    let self = this
+    await self.ready()
+    let out
+
+    if (setter == void 0) {
+      if (await self.get('autograd') == '1') {
+        return true
+      } else {
+        return false
+      }
+    } else {
+      if (setter) {
+        out = await self.set('autograd', ['1'])
+      } else {
+        out = await self.set('autograd', ['0'])
+      }
+      if ((out == '1' && setter) || (out == '0' && !setter)) {
+        return self
+      } else {
+        return false
+      }
+    }
+  }
 }
 /*
 
@@ -472,397 +1043,6 @@ class FloatTensor():
 
 
 
-
-
-    async autograd(self, setter=None):
-        if (setter is None):
-            if (self.get('autograd') == '1'):
-                return true
-            else:
-                return false
-        else:
-            if (setter):
-                out = self.set('autograd', ['1'])
-            else:
-                out = self.set('autograd', ['0'])
-
-            if (out == '1' and setter) or (out == '0' and not setter):
-                return self
-            else:
-                return false
-
-    async __add__(self, x):
-        ///
-        Performs element-wise addition arithmetic between two tensors
-        Parameters
-        ----------
-        x : FloatTensor
-            The Second tensor to perform addition with.
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'add', false)
-
-    async __iadd__(self, x):
-        ///
-        Performs in place element-wise addition arithmetic between two tensors
-        Parameters
-        ----------
-        x : FloatTensor
-            The Second tensor to perform addition with.
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'add', true)
-
-    async backward(self, grad=None):
-        if (grad is None):
-            self.no_params_func('backward')
-        else:
-            self.params_func(name='backward', params=[grad.id])
-
-    async ceil(self):
-        ///
-        Performs the ceiling of the input tensor element-wise.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('ceil', return_response=true)
-
-    async ceil_(self):
-        ///
-        Performs the inplace ceiling of the input tensor element-wise.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('ceil_')
-
-    async contiguous(self):
-        ///
-        Returns a copy of the input
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('contiguous', return_response=true)
-
-    async copy(self):
-        ///
-        Returns a copy of the input
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('copy', return_response=true)
-
-    async cos(self):
-        ///
-        Returns a new Tensor with the cosine of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('cos', return_response=true)
-
-    async cos_(self):
-        ///
-        Performs the cosine of the input tensor inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('cos_')
-
-    async cosh(self):
-        ///
-        Returns a new Tensor with hyperbolic cosine of the elements of input.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('cosh', return_response=true)
-
-    async cosh_(self):
-        ///
-        Returns the hyperbolic cosine of the input inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('cosh_')
-
-    async children(self):
-        ///
-        Returns an iterator over immediate children modules.
-        Parameters
-        ----------
-        Returns
-        -------
-        Iterable
-            Returns a list of children
-        ///
-        res = self.get('children')
-        if (len(res) > 0):
-            return list(map(lambda x: int(x), res.split(',')[0:-1]))
-        return []
-
-    async creation_op(self):
-        return self.get('creation_op')
-
-    async creators(self):
-        ///
-        Returns an iterator over immediate creators of input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        Returns a list of creators
-        ///
-        res = self.get('creators')
-        if (len(res) > 0):
-            return list(map(lambda x: int(x), res.split(',')[0:-1]))
-        return []
-
-    async cumsum(self, dim=0):
-        ///
-        Returns the sum of all elements in the input tensor.
-        Parameters
-        ----------
-        dim : int
-            the dimension to reduce
-        keepdim : bool
-            whether the output tensors have dim retained or not
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.params_func('cumsum', [dim], return_response=true)
-
-    async dataOnGpu(self):
-        if (self.get('dataOnGpu') == '1'):
-            return true
-        return false
-
-    async exp(self):
-        ///
-        Computes the exponential of each element of input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('exp', return_response=true)
-
-    async exp_(self):
-        ///
-        Computes the exponential of each element of input tensor inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('exp_')
-
-    async expand(self,*args):
-        ///
-        Returns the tensor, with values repeated across one dimension
-        Parameters
-        ----------
-        args : list
-               the new, expanded size
-        Returns
-        -------
-        FloatTensor
-            the new, expanded tensor.
-        ///
-        new_dim = list(args)
-        assert type(new_dim[0]) == int
-        return self.params_func('expand', new_dim, return_response=true)
-
-    async index_add(self, indices, dim, x):
-        return self.params_func('index_add', [indices.id, dim, x.id], return_response=true)
-
-    async index_add_(self, indices, dim, x):
-        return self.params_func('index_add_', [indices.id, dim, x.id], return_response=true)
-
-    async index_select(self, dim, indices):
-        return self.params_func('index_select', [indices.id, dim], return_response=true)
-
-    async __truediv__(self, x):
-        ///
-        Performs division arithmetic between two tensors
-        Parameters
-        ----------
-        x : FloatTensor
-            Second divident tensor
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'div', false)
-
-    async __itruediv__(self, x):
-        ///
-        Performs division arithmetic between two tensors inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            Second divident tensor
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'div', true)
-
-    async keepgrad(self):
-        if (self.get('keepgrad') == '1'):
-            return true
-        else:
-            return false
-
-    async __pow__(self, x):
-        ///
-        Takes the power of each element in input ('self') with 'x' and
-        returns a tensor with the result.
-        Parameters
-        ----------
-        x : FloatTensor
-            Exponent tensor
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'pow', false)
-
-    async __ipow__(self, x):
-        ///
-        Takes the power of each element in input ('self') with 'x' and
-        returns a tensor with the result inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            Exponent tensor
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'pow', true)
-
-    async pow(self, x):
-        ///
-        Takes the power of each element in input ('self') with 'x' and
-        returns a tensor with the result.
-        Parameters
-        ----------
-        x : FloatTensor
-            Exponent tensor
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.arithmetic_operation(x, 'pow', false)
-
-    async pow_(self, x):
-        ///
-        Takes the power of each element in input ('self') with 'x', inplace.
-        Parameters
-        ----------
-        x : FloatTensor
-            Exponent tensor
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.arithmetic_operation(x, 'pow', true)
-
-    async floor(self):
-        ///
-        Performs the floor of the input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('floor', true)
-
-    async floor_(self):
-        ///
-        Performs the inplace floor of the input tensor.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('floor_')
-
-    async round(self):
-        ///
-        Performs Round-ing to the nearest decimal,
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Output tensor
-        ///
-        return self.no_params_func('round', return_response=true)
-
-    async round_(self):
-        ///
-        Performs Round-ing to the nearest decimal inplace.
-        Parameters
-        ----------
-        Returns
-        -------
-        FloatTensor
-            Caller with values inplace
-        ///
-        return self.no_params_func('round_')
 
     async mm(self, other):
         ///

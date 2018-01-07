@@ -38,10 +38,29 @@ export declare class Tensor {
     asin_(): Promise<any>;
     atan(): Promise<any>;
     atan_(): Promise<any>;
+    __add__(x: Tensor): Promise<any>;
+    __iadd__(x: Tensor): Promise<any>;
+    backward(grad?: any): Promise<void>;
+    ceil(): Promise<any>;
+    ceil_(): Promise<any>;
+    contiguous(): Promise<any>;
+    copy(): Promise<any>;
+    cos(): Promise<any>;
+    cos_(): Promise<any>;
+    cosh(): Promise<any>;
+    cosh_(): Promise<any>;
+    children(): Promise<never[]>;
+    creation_op(): Promise<any>;
+    creators(): Promise<never[]>;
+    cumsum(dim?: number): Promise<any>;
+    dataOnGpu(): Promise<boolean>;
+    exp(): Promise<any>;
+    exp_(): Promise<any>;
 }
 export declare class IntTensor extends Tensor {
     constructor(data: string | any[], data_is_pointer?: boolean);
 }
 export declare class FloatTensor extends Tensor {
     constructor(data: string | any[], autograd?: boolean, data_is_pointer?: boolean);
+    autograd(setter: boolean): Promise<boolean | this>;
 }
