@@ -1,16 +1,16 @@
 # syft.js
 
-## install
+## install from github
 ```
-$ npm install --save OpenMined/syft.js
+$ npm install --save OpenMined/syft.js#master
 ```
 
 TypeScript example:
 ```javascript
-import * as syft from 'OpenMined/syft.js'
+import * as syft from 'syft'
 ```
 
 JavaScript example:
 ```javascript
-const syft = require('OpenMined/syft.js')
+const syft = require('syft')
 ```
