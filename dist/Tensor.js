@@ -3,9 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const controller = require("./controller");
 const DimArray_1 = require("./DimArray");
+const TENSOR_SUPER = {};
 class Tensor {
-    constructor() {
-        throw new Error('Cannot Contruct Tensor');
+    constructor($) {
+        this.__waits__ = [];
+        if ($ !== TENSOR_SUPER) {
+            throw new Error('Cannot Contruct Tensor');
+        }
     }
     __finish__(res) {
         let self = this;
@@ -1072,7 +1076,8 @@ class Tensor {
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {
     constructor(data, data_is_pointer = false) {
-        super();
+        super(TENSOR_SUPER);
+        this.type = 'IntTensor';
         let self = this;
         if (!data) {
             throw Error('Invalid Data');
@@ -1083,8 +1088,8 @@ class IntTensor extends Tensor {
             controller.send_json({
                 'objectType': self.type,
                 'functionCall': 'create',
-                'data': self.data.data,
-                'shape': self.data.shape
+                'data': Array.from(self.data.data),
+                'shape': Array.from(self.data.shape)
             }).then(res => self.__finish__(res));
         }
         else if (data_is_pointer) {
@@ -1097,7 +1102,8 @@ class IntTensor extends Tensor {
 exports.IntTensor = IntTensor;
 class FloatTensor extends Tensor {
     constructor(data, autograd = false, data_is_pointer = false) {
-        super();
+        super(TENSOR_SUPER);
+        this.type = 'FloatTensor';
         let self = this;
         if (!data) {
             throw Error('Invalid Data');
@@ -1111,8 +1117,8 @@ class FloatTensor extends Tensor {
             controller.send_json({
                 'objectType': self.type,
                 'functionCall': 'create',
-                'data': self.data.data,
-                'shape': self.data.shape
+                'data': Array.from(self.data.data),
+                'shape': Array.from(self.data.shape)
             }).then(res => self.__finish__(res));
         }
         else if (data_is_pointer) {

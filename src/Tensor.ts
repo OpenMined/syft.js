@@ -5,18 +5,22 @@ import {
   FloatDimArray
 } from './DimArray'
 
+const TENSOR_SUPER = {}
+
 export class Tensor {
   __error__: Error
   __ready__: boolean
-  __waits__: {res: (val?: any)=>void, rej: (val?: any)=>void}[]
+  __waits__: {res: (val?: any)=>void, rej: (val?: any)=>void}[] = []
 
   id: string
   data: DimArray
   data_is_pointer: boolean
   type: string
 
-  constructor() {
-    throw new Error('Cannot Contruct Tensor')
+  constructor($?: any) {
+    if ($ !== TENSOR_SUPER) {
+      throw new Error('Cannot Contruct Tensor')
+    }
   }
 
   __finish__(res: string) {
@@ -2179,11 +2183,12 @@ export class Tensor {
 
 export class IntTensor extends Tensor {
   data: IntDimArray
+  type = 'IntTensor'
   constructor(
     data: string|any[],
     data_is_pointer = false
   ) {
-    super()
+    super(TENSOR_SUPER)
 
     let self = this
 
@@ -2198,8 +2203,8 @@ export class IntTensor extends Tensor {
       controller.send_json({
         'objectType': self.type,
         'functionCall': 'create',
-        'data': self.data.data,
-        'shape': self.data.shape
+        'data': Array.from(self.data.data),
+        'shape': Array.from(self.data.shape)
       }).then(res => self.__finish__(res))
     } else if (data_is_pointer) {
       self.id = data
@@ -2212,13 +2217,14 @@ export class IntTensor extends Tensor {
 
 export class FloatTensor extends Tensor {
   data: FloatDimArray
+  type = 'FloatTensor'
 
   constructor(
     data: string|any[],
     autograd = false,
     data_is_pointer = false
   ) {
-    super()
+    super(TENSOR_SUPER)
 
     let self = this
 
@@ -2237,8 +2243,8 @@ export class FloatTensor extends Tensor {
       controller.send_json({
         'objectType': self.type,
         'functionCall': 'create',
-        'data': self.data.data,
-        'shape': self.data.shape
+        'data': Array.from(self.data.data),
+        'shape': Array.from(self.data.shape)
       }).then(res => self.__finish__(res))
     } else if (data_is_pointer) {
       self.id = data
