@@ -26,7 +26,7 @@ function cmd(functionCall, params = []) {
 }
 exports.cmd = cmd;
 const wq = new WorkQueue_1.WorkQueue(job => {
-    socket.send(JSON.stringify(job.data));
+    socket.send(job.data);
 }, 1);
 socket.on('message', (res) => {
     let job;
@@ -34,7 +34,13 @@ socket.on('message', (res) => {
         job = wq.working[id];
     }
     if (job) {
-        job.resolve(res.toString());
+        let r = res.toString();
+        if (r.startsWith('Unity Error:')) {
+            job.reject(new Error(r));
+        }
+        else {
+            job.resolve(r);
+        }
     }
 });
 function num_models() {
@@ -85,9 +91,6 @@ exports.__getitem__ = __getitem__;
 function params_func(cmd, name, params, return_type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let res = yield wq.queue(JSON.stringify(cmd(name, params)));
-        if (res.startsWith('Unity Error:')) {
-            console.error(new Error(res));
-        }
         if (verbose) {
             console.log(res);
         }
@@ -162,11 +165,7 @@ function send_json(message, response = true) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let data = JSON.stringify(message);
         console.log(data);
-        let res = yield wq.queue(data);
-        if (res.startsWith('Unity Error:')) {
-            console.error(new Error(res));
-        }
-        return res;
+        return yield wq.queue(data);
     });
 }
 exports.send_json = send_json;
