@@ -1,51 +1,33 @@
 import * as controller from './controller'
+import {
+  DimArray,
+  IntDimArray,
+  FloatDimArray
+} from './DimArray'
 
 export class Tensor {
   __error__: Error
   __ready__: boolean
-  __waits__: {res: ()=>void, rej: ()=>void}[]
+  __waits__: {res: (val?: any)=>void, rej: (val?: any)=>void}[]
 
   id: string
-  data: Float64Array|Int32Array
+  data: DimArray
   data_is_pointer: boolean
   type: string
 
-  constructor(
-    data: string|any[],
-    data_is_pointer = false
-  ) {
-    let self = this
-
-    if (data != void 0 && !data_is_pointer) {
-
-    }
-
-    if (Array.isArray(data)) {
-      self.data = new Float64Array(np.array(data))
-      self.__ready__ = false
-
-      controller.send_json({
-        'objectType': 'IntTensor',
-        'functionCall': 'create',
-        'data': list(data.flatten()),
-        'shape': self.data.shape
-      }).then(res => self.__finish__(res))
-    } else if (data_is_pointer) {
-      self.id = data
-      self.data_is_pointer = true
-      self.__ready__ = true
-    }
+  constructor() {
+    throw new Error('Cannot Contruct Tensor')
   }
 
   __finish__(res: string) {
     let self = this
-    if (/*res*/ true) {
+    if (/*res*/ 1 == 1) {
+      //TODO: record id
       self.__waits__.forEach(wait => wait.res());
     } else {
       let err = new Error(res)
       self.__error__ = err
       self.__waits__.forEach(wait => wait.rej(err));
-
     }
 
     self.__waits__ = []
@@ -72,21 +54,6 @@ export class Tensor {
     // do nothing
   }
 
-  /*
-  * Returns the size of the self tensor as a List.
-  *
-  * Returns
-  * -------
-  * Iterable
-  * Output list
-  */
-  async shape() {
-    let self = this
-    await self.ready()
-
-    return [1,2,3] //list(np.fromstring(self.get('shape')[:-1], sep=',').astype('int'))
-  }
-
   async params_func(
     name: string,
     params: any[],
@@ -105,10 +72,10 @@ export class Tensor {
 
     if (return_response) {
       if (return_type == 'IntTensor') {
-        controller.log('IntTensor.__init__: {}'.format(res))
+        controller.log('IntTensor.__init__: {}' + res)
         return new IntTensor(Number(res), true)
       } else if (return_type == 'FloatTensor') {
-        controller.log('IntTensor.__init__: {}'.format(res))
+        controller.log('IntTensor.__init__: {}' + res)
         return new FloatTensor(Number(res), true)
       }
     }
@@ -116,15 +83,48 @@ export class Tensor {
     return res
   }
 
-  async no_params_func(
+  async params_func(
     name: string,
+    params: any[],
     return_response = false,
-    return_type = 'IntTensor'
+    return_type = 'FloatTensor',
+    data_is_pointer = true
   ) {
     let self = this
     await self.ready()
 
-    return await self.params_func(name, [], return_response, return_type)
+    // send the command
+    let res = await controller.send_json(
+    self.cmd(name, params))
+
+    controller.log(res)
+
+    if (return_response) {
+      if (return_type == 'IntTensor'){
+        controller.log('IntTensor.__init__: {}'.format(res))
+        return new IntTensor(Number(res), data_is_pointer)
+      } else if(return_type == 'FloatTensor') {
+        controller.log('FloatTensor.__init__: {}'.format(res))
+        if(res == '') {
+          return null
+        }
+        return new FloatTensor(Number(res), data_is_pointer)
+      } else {
+        return res
+      }
+    }
+    return self
+  }
+
+  async no_params_func(
+    name: string,
+    return_response = false,
+    return_type?: string
+  ) {
+    let self = this
+    await self.ready()
+
+    return await self.params_func(name, [], return_response, return_type || self.type)
   }
 
   async get(
@@ -141,6 +141,32 @@ export class Tensor {
       true,
       'string'
     )
+  }
+
+  async get(
+    param_name = 'size',
+    response_as_tensor = false
+  ) {
+    let self = this
+    await self.ready()
+
+    if (response_as_tensor) {
+      return await self.params_func(
+        'get',
+        [param_name],
+        true,
+        self.type,
+        true
+      )
+    } else {
+      return await self.params_func(
+        'get',
+        [param_name],
+        true,
+        'string',
+        false
+      )
+    }
   }
 
   protected cmd(
@@ -162,6 +188,19 @@ export class Tensor {
     await self.ready()
 
     return true
+  }
+
+  async is_contiguous() {
+    let self = this
+    await self.ready()
+
+    let txt = (await self.no_params_func('is_contiguous', true))
+
+    if(txt == 'true') {
+      return true
+    } else {
+      return false
+    }
   }
 
   async to_numpy() {
@@ -193,6 +232,59 @@ export class Tensor {
     let type_str = (await self.shape()).join('x')
 
     return `${tensor_str}\n[syft.IntTensor: ${self.id} size: ${type_str}]`
+  }
+
+  async __repr__(
+    verbose = true
+  ) {
+    let self = this
+    await self.ready()
+
+    let tensor_str = String(self.to_numpy())
+
+    let type_str = (await self.shape()).join('x')
+
+    let grad = await self.get('grad')
+    if (grad == '') {
+      grad = 'None'
+    }
+
+    let co = String(self.creation_op())
+
+    let desc = '[syft.FloatTensor:'+String(self.id)+' grad:' + grad + ' size:' + type_str + ' c:' + String(self.children()) + ' p:' + String(self.creators()) + ' init:' + co + ']' + '\n'
+
+    if (verbose) {
+      let children = await self.children()
+      let creators = await self.creators()
+
+      if(children.length > 0) {
+        //tensor_str = '\n -------------------------------\n' + tensor_str
+        desc += '\n\t-----------children-----------\n'
+      }
+      for (let child_id of children) {
+        desc += '\t' + await (await controller.get_tensor(child_id)).__repr__(false)
+      }
+      if(children.length > 0){
+        if(creators.length > 0){
+
+          desc += '\t------------------------------\n'
+        } else {
+          desc += '\t------------------------------\n\n\n'
+        }
+      }
+      if (creators.length > 0) {
+        // tensor_str = '\n -------------------------------\n' + tensor_str
+        desc += '\n\t-----------creators-----------\n'
+      }
+      for (let parent_id of creators) {
+        desc += '\t' + await (await controller.get_tensor(parent_id)).__repr__(false)
+      }
+      if (creators.length > 0) {
+        desc += '\t------------------------------\n\n\n'
+      }
+      return tensor_str + '\n' + desc
+    }
+    return desc
   }
 
 
@@ -429,7 +521,6 @@ export class Tensor {
 
     return await self.no_params_func('atan_')
   }
-
 
   /*
   * Performs element-wise addition arithmetic between two tensors
@@ -1127,22 +1218,6 @@ export class Tensor {
     return self.no_params_func('relu', true)
   }
 
-  /*
-  * Returns reciprocal of square root of tensor element wise.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async rsqrt() {
-    let self = this
-    await self.ready()
-
-    return self.no_params_func('rsqrt', true)
-  }
-
   async save(
     filename: string
   ) {
@@ -1306,6 +1381,21 @@ export class Tensor {
     }
   }
 
+  /*
+  * Returns the size of the self tensor as a List.
+  *
+  * Returns
+  * -------
+  * Iterable
+  * Output list
+  */
+  async shape() {
+    let self = this
+    await self.ready()
+
+    return (await self.get('shape')).split(',')
+  }
+
   async softmax(
     dim = -1
   ) {
@@ -1349,8 +1439,8 @@ export class Tensor {
       return self.no_params_func('stride', true, 'none')
     } else {
       //TODO: figure out this
-      let strides = self.params_func('stride', [dim], true, 'none')
-      return np.fromstring(strides, sep=' ').astype('long')
+      let strides = await self.params_func('stride', [dim], true, 'none')
+      return strides.split(' ')
     }
   }
 
@@ -1396,23 +1486,6 @@ export class Tensor {
     await self.ready()
 
     return self.no_params_func('trunc', true)
-  }
-
-  async to_numpy() {
-    let self = this
-    await self.ready()
-
-    if (self.is_contiguous()) {
-      let res = await controller.send_json({
-        'functionCall': 'to_numpy',
-        'objectType': 'FloatTensor',
-        'objectIndex': self.id
-      })
-
-      return np.fromstring(res, ' ').astype('float').reshape(self.shape())
-    } else {
-      return '--- non-contiguous tensor ---'
-    }
   }
 
   /*
@@ -1508,14 +1581,18 @@ export class Tensor {
   }
 
 
-  async triu(k=0) {
+  async triu(
+    k = 0
+  ) {
     let self = this
     await self.ready()
 
     return self.params_func('triu', [k], true)
   }
 
-  async triu_(k=0) {
+  async triu_(
+    k = 0
+  ) {
     let self = this
     await self.ready()
 
@@ -1556,97 +1633,11 @@ export class Tensor {
     return self.no_params_func('zero_')
   }
 
-  async __repr__(
-    verbose = true
-  ) {
-    let self = this
-    await self.ready()
-
-    let tensor_str = String(self.to_numpy())
-
-    let type_str = ''
-    for (let dim of await self.shape()) {
-
-      type_str += String(
-        dim
-      ) + 'x'
-    }
-
-    type_str = type_str[:-1]
-    let grad = await self.get('grad')
-    if (grad == '') {
-      grad = 'None'
-    }
-
-    let co = String(self.creation_op())
-
-    let desc = '[syft.FloatTensor:'+String(self.id)+' grad:' + grad + ' size:' + type_str + ' c:' + String(self.children()) + ' p:' + String(self.creators()) + ' init:' + co + ']' + '\n'
-
-    if (verbose) {
-      let children = await self.children()
-      let creators = await self.creators()
-
-      if(children.length > 0) {
-        //tensor_str = '\n -------------------------------\n' + tensor_str
-        desc += '\n\t-----------children-----------\n'
-      }
-      for (let child_id of children) {
-        desc += '\t' + await (await controller.get_tensor(child_id)).__repr__(false)
-      }
-      if(children.length > 0){
-        if(creators.length > 0){
-
-          desc += '\t------------------------------\n'
-        } else {
-          desc += '\t------------------------------\n\n\n'
-        }
-      }
-      if (creators.length > 0) {
-        // tensor_str = '\n -------------------------------\n' + tensor_str
-        desc += '\n\t-----------creators-----------\n'
-      }
-      for (let parent_id of creators) {
-        desc += '\t' + await (await controller.get_tensor(parent_id)).__repr__(false)
-      }
-      if (creators.length > 0) {
-        desc += '\t------------------------------\n\n\n'
-      }
-      return tensor_str + '\n' + desc
-    }
-    return desc
-  }
-
   async __str__() {
     let self = this
     await self.ready()
 
     return String(await self.to_numpy()).replace(']', ' ').replace('[', ' ')
-  }
-
-  async get(
-    param_name = 'size',
-    response_as_tensor = false
-  ) {
-    let self = this
-    await self.ready()
-
-    if (response_as_tensor) {
-      return await self.params_func(
-        'get',
-        [param_name],
-        true,
-        'FloatTensor',
-        true
-      )
-    } else {
-      return await self.params_func(
-        'get',
-        [param_name],
-        true,
-        'string',
-        false
-      )
-    }
   }
 
   /*
@@ -1681,64 +1672,6 @@ export class Tensor {
     return await self.no_params_func('gpu')
   }
 
-  cmd(
-    functionCall: string,
-    tensorIndexParams: any[] = []
-  ) {
-    let self = this
-
-    let cmd = {
-      'functionCall': functionCall,
-      'objectType': 'FloatTensor',
-      'objectIndex': self.id,
-      'tensorIndexParams': tensorIndexParams}
-      return cmd
-  }
-
-  async params_func(
-    name: string,
-    params: any[],
-    return_response = false,
-    return_type = 'FloatTensor',
-    data_is_pointer = true
-  ) {
-    let self = this
-    await self.ready()
-
-    // send the command
-    let res = await controller.send_json(
-    self.cmd(name, params))
-
-    controller.log(res)
-
-    if (return_response) {
-      if (return_type == 'IntTensor'){
-        controller.log('IntTensor.__init__: {}'.format(res))
-        return new IntTensor(Number(res), data_is_pointer)
-      } else if(return_type == 'FloatTensor') {
-        controller.log('FloatTensor.__init__: {}'.format(res))
-        if(res == '') {
-          return null
-        }
-        return new FloatTensor(Number(res), data_is_pointer)
-      } else {
-        return res
-      }
-    }
-    return self
-  }
-
-  async no_params_func(
-    name: string,
-    return_response = false,
-    return_type = 'FloatTensor'
-  ) {
-    let self = this
-    await self.ready()
-
-    return (self.params_func(name, [], return_response, return_type))
-  }
-
   async arithmetic_operation(
     x: number|Tensor,
     name: string,
@@ -1765,7 +1698,9 @@ export class Tensor {
     let response = await controller.send_json(
       self.cmd(operation_cmd, [parameter])
     )
-    return FloatTensor(Number(response), true)
+
+    // TODO: IntTensor as well
+    return new FloatTensor(String(response), true)
   }
 
   /*
@@ -1784,19 +1719,6 @@ export class Tensor {
     }
 
     delete self.id
-  }
-
-  async is_contiguous() {
-    let self = this
-    await self.ready()
-
-    let txt = (await self.no_params_func('is_contiguous', true))
-
-    if(txt == 'true') {
-      return true
-    } else {
-      return false
-    }
   }
 
   /*
@@ -2027,6 +1949,7 @@ export class Tensor {
     let self = this
     await self.ready()
 
+    // TODO: 'FloatTensor'
     return self.arithmetic_operation(divisor, 'remainder', 'FloatTensor')
   }
 
@@ -2130,7 +2053,7 @@ export class Tensor {
   *     Caller with values inplace
   */
   async squeeze_(
-  dim = -1
+    dim = -1
   ) {
     let self = this
     await self.ready()
@@ -2179,7 +2102,8 @@ export class Tensor {
     keepdim = false
   ) {
     let self = this
-    await self.dyeay()
+    await self.ready()
+
     return self.params_func('max', [dim, keepdim], true)
   }
 
@@ -2202,6 +2126,7 @@ export class Tensor {
   ) {
     let self = this
     await self.ready()
+
     return self.params_func('sum', [dim, keepdim], true)
   }
 
@@ -2224,6 +2149,7 @@ export class Tensor {
   ) {
     let self = this
     await self.ready()
+
     return self.params_func('prod', [dim, keepdim], true)
   }
 
@@ -2246,34 +2172,82 @@ export class Tensor {
   ) {
     let self = this
     await self.ready()
+
     return self.params_func('mean', [dim, keepdim], true)
   }
 }
 
 export class IntTensor extends Tensor {
+  data: IntDimArray
   constructor(
     data: string|any[],
     data_is_pointer = false
   ) {
-    super(data, data_is_pointer)
+    super()
+
+    let self = this
+
+    if (!data) {
+      throw Error('Invalid Data')
+    }
+
+    if (Array.isArray(data)) {
+      self.data = new IntDimArray(data)
+      self.__ready__ = false
+
+      controller.send_json({
+        'objectType': self.type,
+        'functionCall': 'create',
+        'data': self.data.data,
+        'shape': self.data.shape
+      }).then(res => self.__finish__(res))
+    } else if (data_is_pointer) {
+      self.id = data
+      self.data_is_pointer = true
+      self.__ready__ = true
+    }
   }
+
 }
 
 export class FloatTensor extends Tensor {
+  data: FloatDimArray
+
   constructor(
     data: string|any[],
     autograd = false,
     data_is_pointer = false
   ) {
-    super(data, data_is_pointer)
+    super()
 
     let self = this
+
+    if (!data) {
+      throw Error('Invalid Data')
+    }
 
     if (autograd) {
       self.autograd(true)
     }
+
+    if (Array.isArray(data)) {
+      self.data = new FloatDimArray(data)
+      self.__ready__ = false
+
+      controller.send_json({
+        'objectType': self.type,
+        'functionCall': 'create',
+        'data': self.data.data,
+        'shape': self.data.shape
+      }).then(res => self.__finish__(res))
+    } else if (data_is_pointer) {
+      self.id = data
+      self.data_is_pointer = true
+      self.__ready__ = true
+    }
   }
 
+  // TODO: figure this out
   async autograd(setter: boolean) {
     let self = this
     await self.ready()
