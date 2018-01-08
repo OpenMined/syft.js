@@ -15,7 +15,8 @@ function test() {
             ]
         ]);
         yield a.ready();
+        return a;
     });
 }
-test().then(val => console.log('done'), err => console.log('error', err));
+test().then(val => console.log('done', val), err => console.log('error', err));
 //# sourceMappingURL=test.js.map

@@ -14,11 +14,13 @@ async function test() {
   ])
 
   await a.ready()
+
+  return a
 }
 
 
 
 test().then(
-  val => console.log('done'),
+  val => console.log('done', val),
   err => console.log('error', err)
 )

@@ -34,7 +34,7 @@ export function cmd(
 
 const wq = new WorkQueue<string, string>(job => {
   // send the command
-  socket.send(/*job.id + */JSON.stringify(job.data))
+  socket.send(/*job.id + */job.data)
 }, 1)
 
 socket.on('message', (res) => {
@@ -50,7 +50,13 @@ socket.on('message', (res) => {
   }
 
   if (job) {
-    job.resolve(res.toString())
+    let r = res.toString()
+
+    if (r.startsWith('Unity Error:')) {
+      job.reject(new Error(r))
+    } else {
+      job.resolve(r)
+    }
   }
 })
 
@@ -72,7 +78,7 @@ export function load(
 }
 
 export function save(
-  x,
+  x: Tensor,
   filename: string
 ) {
   return x.save(filename)
@@ -126,11 +132,6 @@ export async function params_func(
 ) {
   // send the command
   let res = await wq.queue(JSON.stringify(cmd(name, params)))
-
-  if (res.startsWith('Unity Error:')) {
-    // throw new Error(res)
-    console.error(new Error(res))
-  }
 
   if (verbose) {
     console.log(res)
@@ -212,11 +213,5 @@ export async function send_json(
   console.log(data)
 
   // send the command
-  let res = await wq.queue(data)
-
-  if (res.startsWith('Unity Error:')) {
-    // throw new Error(res)
-    console.error(new Error(res))
-  }
-  return res
+  return await wq.queue(data)
 }

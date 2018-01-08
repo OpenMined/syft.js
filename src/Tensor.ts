@@ -25,11 +25,13 @@ export class Tensor {
 
   __finish__(res: string) {
     let self = this
-    if (/*res*/ 1 == 1) {
-      //TODO: record id
+
+    if (res) {
+      self.id = res
+      self.__ready__ = true
       self.__waits__.forEach(wait => wait.res());
     } else {
-      let err = new Error(res)
+      let err = new Error('Network Tensor Contruction Failed')
       self.__error__ = err
       self.__waits__.forEach(wait => wait.rej(err));
     }
