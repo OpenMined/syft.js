@@ -1,15 +1,16 @@
+import { DimArray, IntDimArray, FloatDimArray } from './DimArray';
 export declare class Tensor {
     __error__: Error;
     __ready__: boolean;
     __waits__: {
-        res: () => void;
-        rej: () => void;
+        res: (val?: any) => void;
+        rej: (val?: any) => void;
     }[];
     id: string;
-    data: Float64Array | Int32Array;
+    data: DimArray;
     data_is_pointer: boolean;
     type: string;
-    constructor(data: string | any[], data_is_pointer?: boolean);
+    constructor($?: any);
     __finish__(res: string): void;
     ready(): Promise<void>;
     autograd(state: boolean): Promise<void>;
@@ -23,6 +24,7 @@ export declare class Tensor {
         'tensorIndexParams': any[];
     };
     is_contiguous(): Promise<boolean>;
+    to_numpy(): Promise<"" | " - non-contiguous - ">;
     __repr__(verbose?: boolean): Promise<string>;
     abs(): Promise<any>;
     abs_(): Promise<any>;
@@ -36,8 +38,8 @@ export declare class Tensor {
     asin_(): Promise<any>;
     atan(): Promise<any>;
     atan_(): Promise<any>;
-    __add__(x: Tensor): Promise<any>;
-    __iadd__(x: Tensor): Promise<any>;
+    __add__(x: Tensor): Promise<FloatTensor>;
+    __iadd__(x: Tensor): Promise<FloatTensor>;
     backward(grad?: any): Promise<void>;
     ceil(): Promise<any>;
     ceil_(): Promise<any>;
@@ -58,28 +60,27 @@ export declare class Tensor {
     index_add(indices: , dim: number, x: Tensor): Promise<any>;
     index_add_(indices: , dim: number, x: Tensor): Promise<any>;
     index_select(dim: number, indices: ): Promise<any>;
-    __truediv__(x: Tensor): Promise<any>;
-    __itruediv__(x: Tensor): Promise<any>;
+    __truediv__(x: Tensor): Promise<FloatTensor>;
+    __itruediv__(x: Tensor): Promise<FloatTensor>;
     keepgrad(): Promise<boolean>;
-    __pow__(x: Tensor): Promise<any>;
-    __ipow__(x: Tensor): Promise<any>;
-    pow(x: Tensor): Promise<any>;
-    pow_(x: Tensor): Promise<any>;
+    __pow__(x: Tensor): Promise<FloatTensor>;
+    __ipow__(x: Tensor): Promise<FloatTensor>;
+    pow(x: Tensor): Promise<FloatTensor>;
+    pow_(x: Tensor): Promise<FloatTensor>;
     floor(): Promise<any>;
     floor_(): Promise<any>;
     round(): Promise<any>;
     round_(): Promise<any>;
     mm(other: Tensor): Promise<any>;
     grad(): Promise<any>;
-    __mod__(x: Tensor): Promise<any>;
-    __imod__(x: Tensor): Promise<any>;
-    __mul__(x: Tensor): Promise<any>;
-    __imul__(x: Tensor): Promise<any>;
+    __mod__(x: Tensor): Promise<FloatTensor>;
+    __imod__(x: Tensor): Promise<FloatTensor>;
+    __mul__(x: Tensor): Promise<FloatTensor>;
+    __imul__(x: Tensor): Promise<FloatTensor>;
     __neg__(): Promise<any>;
     neg(): Promise<any>;
     neg_(): Promise<any>;
     relu(): Promise<any>;
-    rsqrt(): Promise<any>;
     save(filename: string): Promise<any>;
     set(param_name?: string, params?: any[]): Promise<any>;
     sigmoid_(): Promise<any>;
@@ -89,6 +90,7 @@ export declare class Tensor {
     sin(): Promise<any>;
     sin_(): Promise<any>;
     size(): Promise<any>;
+    shape(as_list?: boolean): Promise<any>;
     softmax(dim?: number): Promise<any>;
     std(dim?: number): Promise<any>;
     stride(dim?: number): Promise<any>;
@@ -96,8 +98,8 @@ export declare class Tensor {
     sqrt_(): Promise<any>;
     trace(): Promise<any>;
     trunc(): Promise<any>;
-    __sub__(x: Tensor): Promise<any>;
-    __isub__(x: Tensor): Promise<any>;
+    __sub__(x: Tensor): Promise<FloatTensor>;
+    __isub__(x: Tensor): Promise<FloatTensor>;
     view(...args: any[]): Promise<any>;
     view_(...args: any[]): Promise<this>;
     view_as(x: Tensor): Promise<any>;
@@ -108,11 +110,43 @@ export declare class Tensor {
     unsqueeze(dim: number): Promise<any>;
     unsqueeze_(dim: number): Promise<any>;
     zero_(): Promise<any>;
+    __str__(): Promise<string>;
+    cpu(): Promise<any>;
+    gpu(): Promise<any>;
+    arithmetic_operation(x: number | Tensor, name: string, inline?: boolean): Promise<FloatTensor>;
+    delete_tensor(): Promise<void>;
+    sinh(): Promise<any>;
+    sinh_(): Promise<any>;
+    log(): Promise<any>;
+    log_(): Promise<any>;
+    log1p_(): Promise<any>;
+    log1p(): Promise<any>;
+    frac(): Promise<any>;
+    frac_(): Promise<any>;
+    reciprocal(): Promise<any>;
+    reciprocal_(): Promise<any>;
+    rsqrt(): Promise<any>;
+    rsqrt_(): Promise<any>;
+    remainder(divisor: number): Promise<FloatTensor>;
+    remainder_(divisor: number): Promise<any>;
+    sample(dim: number): Promise<any>;
+    tan(): Promise<any>;
+    tan_(): Promise<any>;
+    tanh(): Promise<any>;
+    squeeze(dim?: number): Promise<any>;
+    squeeze_(dim?: number): Promise<any>;
+    min(dim?: number, keepdim?: boolean): Promise<any>;
+    max(dim?: number, keepdim?: boolean): Promise<any>;
+    sum(dim?: number, keepdim?: boolean): Promise<any>;
+    prod(dim?: number, keepdim?: boolean): Promise<any>;
+    mean(dim?: number, keepdim?: boolean): Promise<any>;
 }
 export declare class IntTensor extends Tensor {
+    data: IntDimArray;
     constructor(data: string | any[], data_is_pointer?: boolean);
 }
 export declare class FloatTensor extends Tensor {
+    data: FloatDimArray;
     constructor(data: string | any[], autograd?: boolean, data_is_pointer?: boolean);
     autograd(setter: boolean): Promise<boolean | this>;
 }

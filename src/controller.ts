@@ -207,9 +207,12 @@ export async function send_json(
   message: any,
   response = true
 ) {
+  let data = JSON.stringify(message)
+
+  console.log(data)
 
   // send the command
-  let res = await wq.queue(JSON.stringify(message))
+  let res = await wq.queue(data)
 
   if (res.startsWith('Unity Error:')) {
     // throw new Error(res)

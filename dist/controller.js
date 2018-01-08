@@ -160,7 +160,9 @@ function no_params_func(cmd, name, return_type) {
 exports.no_params_func = no_params_func;
 function send_json(message, response = true) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let res = yield wq.queue(JSON.stringify(message));
+        let data = JSON.stringify(message);
+        console.log(data);
+        let res = yield wq.queue(data);
         if (res.startsWith('Unity Error:')) {
             console.error(new Error(res));
         }
