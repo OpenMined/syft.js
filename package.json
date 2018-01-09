@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "dependencies": {
+    "tslib": "^1.8.1",
     "uuid": "^3.1.0",
     "zmq": "^2.15.3"
   },
