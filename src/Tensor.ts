@@ -381,7 +381,11 @@ export class Tensor {
     y: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready(),
+      y.ready()
+    ])
 
     return await self.params_func('addmm_', [x.id, y.id])
   }
@@ -405,7 +409,12 @@ export class Tensor {
     y: Tensor
   ) {
     let self = this
-    await self.ready()
+
+    await Promise.all([
+      self.ready(),
+      x.ready(),
+      y.ready()
+    ])
 
     let copy = await self.copy()
     await copy.params_func('addmm_', [x.id, y.id])
@@ -432,7 +441,11 @@ export class Tensor {
     y: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready(),
+      y.ready()
+    ])
 
     return await self.params_func('addmv_', [x.id, y.id])
   }
@@ -456,7 +469,11 @@ export class Tensor {
     y: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready(),
+      y.ready()
+    ])
 
     let copy = await self.copy()
     await copy.params_func('addmv_', [x.id, y.id])
@@ -543,7 +560,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.arithmetic_operation(x, 'add', false)
   }
@@ -563,7 +583,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.arithmetic_operation(x, 'add', true)
   }
@@ -845,7 +868,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.params_func('index_add', [indices.id, dim, x.id], true)
   }
@@ -857,7 +883,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.params_func('index_add_', [indices.id, dim, x.id], true)
   }
@@ -888,7 +917,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'div', false)
   }
@@ -908,7 +940,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'div', true)
   }
@@ -940,7 +975,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'pow', false)
   }
@@ -961,7 +999,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'pow', true)
   }
@@ -982,7 +1023,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'pow', false)
   }
@@ -1002,7 +1046,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'pow', true)
   }
@@ -1083,12 +1130,15 @@ export class Tensor {
   *     n x m Output tensor
   */
   async mm(
-    other: Tensor
+    x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
-    return self.params_func('mm', [other.id], true)
+    return self.params_func('mm', [x.id], true)
   }
 
   async grad() {
@@ -1113,7 +1163,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'remainder', false)
   }
@@ -1133,7 +1186,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.arithmetic_operation(x, 'remainder', true)
   }
@@ -1153,7 +1209,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'mul', false)
   }
@@ -1173,7 +1232,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return await self.arithmetic_operation(x, 'mul', true)
   }
@@ -1509,7 +1571,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.arithmetic_operation(x, 'sub', false)
   }
@@ -1529,7 +1594,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.arithmetic_operation(x, 'sub', true)
   }
@@ -1555,7 +1623,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     return self.params_func('view_as', [x.id], true)
   }
@@ -1564,7 +1635,10 @@ export class Tensor {
     x: Tensor
   ) {
     let self = this
-    await self.ready()
+    await Promise.all([
+      self.ready(),
+      x.ready()
+    ])
 
     self.params_func('view_as_', [x.id], false)
     return self

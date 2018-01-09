@@ -245,14 +245,22 @@ class Tensor {
     addmm_(x, y) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready(),
+                y.ready()
+            ]);
             return yield self.params_func('addmm_', [x.id, y.id]);
         });
     }
     addmm(x, y) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready(),
+                y.ready()
+            ]);
             let copy = yield self.copy();
             yield copy.params_func('addmm_', [x.id, y.id]);
             return copy;
@@ -261,14 +269,22 @@ class Tensor {
     addmv_(x, y) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready(),
+                y.ready()
+            ]);
             return yield self.params_func('addmv_', [x.id, y.id]);
         });
     }
     addmv(x, y) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready(),
+                y.ready()
+            ]);
             let copy = yield self.copy();
             yield copy.params_func('addmv_', [x.id, y.id]);
             return copy;
@@ -305,14 +321,20 @@ class Tensor {
     __add__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.arithmetic_operation(x, 'add', false);
         });
     }
     __iadd__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.arithmetic_operation(x, 'add', true);
         });
     }
@@ -454,14 +476,20 @@ class Tensor {
     index_add(indices, dim, x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.params_func('index_add', [indices.id, dim, x.id], true);
         });
     }
     index_add_(indices, dim, x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.params_func('index_add_', [indices.id, dim, x.id], true);
         });
     }
@@ -475,14 +503,20 @@ class Tensor {
     __truediv__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'div', false);
         });
     }
     __itruediv__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'div', true);
         });
     }
@@ -501,28 +535,40 @@ class Tensor {
     __pow__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'pow', false);
         });
     }
     __ipow__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'pow', true);
         });
     }
     pow(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'pow', false);
         });
     }
     pow_(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'pow', true);
         });
     }
@@ -554,11 +600,14 @@ class Tensor {
             return yield self.no_params_func('round_');
         });
     }
-    mm(other) {
+    mm(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
-            return self.params_func('mm', [other.id], true);
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
+            return self.params_func('mm', [x.id], true);
         });
     }
     grad() {
@@ -571,28 +620,40 @@ class Tensor {
     __mod__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'remainder', false);
         });
     }
     __imod__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.arithmetic_operation(x, 'remainder', true);
         });
     }
     __mul__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'mul', false);
         });
     }
     __imul__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return yield self.arithmetic_operation(x, 'mul', true);
         });
     }
@@ -764,14 +825,20 @@ class Tensor {
     __sub__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.arithmetic_operation(x, 'sub', false);
         });
     }
     __isub__(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.arithmetic_operation(x, 'sub', true);
         });
     }
@@ -793,14 +860,20 @@ class Tensor {
     view_as(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             return self.params_func('view_as', [x.id], true);
         });
     }
     view_as_(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
+            yield Promise.all([
+                self.ready(),
+                x.ready()
+            ]);
             self.params_func('view_as_', [x.id], false);
             return self;
         });
