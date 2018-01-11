@@ -1,6 +1,10 @@
 import * as uuid from 'uuid'
 import * as zmq from 'zmq'
-import { Tensor } from './Tensor'
+import {
+  Tensor,
+  FloatTensor,
+  IntTensor
+} from './Tensor'
 import { WorkQueue } from './WorkQueue'
 
 const verbose = true
@@ -52,6 +56,8 @@ socket.on('message', (res) => {
   if (job) {
     let r = res.toString()
 
+    console.log(r)
+
     if (r.startsWith('Unity Error:')) {
       job.reject(new Error(r))
     } else {
@@ -91,7 +97,7 @@ export function concatenate(
 
   let ids = tensors.map(t => t.id)
 
-  ids.unshift(axis)
+  ids.unshift(String(axis))
 
   return params_func(cmd, 'concatenate', ids, 'FloatTensor')
 }
@@ -113,13 +119,13 @@ export function new_tensors_allowed(
 }
 
 export function get_tensor(
-  id: number
+  id: string
 ): Tensor {
-  return new Tensor(id, true)
+  return new FloatTensor(id, true)
 }
 
 export function __getitem__(
-  id: number
+  id: string
 ) {
   return get_tensor(id)
 }
@@ -144,7 +150,7 @@ export async function params_func(
         if(verbose) {
           console.log('FloatTensor.__init__: ' +  res)
         }
-        return new FloatTensor(Number(res), true)
+        return new FloatTensor(res, true)
       }
       return
   } else if (return_type == 'IntTensor') {
@@ -152,7 +158,7 @@ export async function params_func(
       if(verbose) {
         console.log('IntTensor.__init__: ' +  res)
       }
-      return new IntTensor(Number(res), true)
+      return new IntTensor(res, true)
     }
     return
   } else if (return_type == 'FloatTensor_list') {
@@ -162,7 +168,7 @@ export async function params_func(
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
-          tensors.push(get_tensor(Number(str_id)))
+          tensors.push(get_tensor(str_id))
         }
       }
     }

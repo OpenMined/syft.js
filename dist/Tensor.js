@@ -4,9 +4,102 @@ const tslib_1 = require("tslib");
 const controller = require("./controller");
 const DimArray_1 = require("./DimArray");
 const TENSOR_SUPER = {};
+var TSTypes;
+(function (TSTypes) {
+    TSTypes[TSTypes["int8"] = 0] = "int8";
+    TSTypes[TSTypes["int16"] = 1] = "int16";
+    TSTypes[TSTypes["int32"] = 2] = "int32";
+    TSTypes[TSTypes["int64"] = 3] = "int64";
+    TSTypes[TSTypes["int128"] = 4] = "int128";
+    TSTypes[TSTypes["float16"] = 5] = "float16";
+    TSTypes[TSTypes["float32"] = 6] = "float32";
+    TSTypes[TSTypes["float64"] = 7] = "float64";
+    TSTypes[TSTypes["float12"] = 8] = "float12";
+})(TSTypes || (TSTypes = {}));
+class TensorSerializer {
+    encodeType(props) {
+        return props.shapeLengthSetting +
+            props.dataShapeLengthSetting * 25 +
+            props.dataLengthSetting * 125 +
+            props.shapeTypeSetting * 625 +
+            props.dataShapeTypeSetting * 3125 +
+            props.dataTypeSetting * 15625;
+    }
+    decodeType(type) {
+        return {
+            shapeLengthSetting: type % 5,
+            dataShapeLengthSetting: type / 25 % 5,
+            dataLengthSetting: type / 125 % 5,
+            shapeTypeSetting: type / 625 % 5,
+            dataShapeTypeSetting: type / 3125 % 5,
+            dataTypeSetting: type / 15625 % 9
+        };
+    }
+    dataType(data) {
+        let max = data[0];
+        let min = data[0];
+        let len = data.length;
+        for (let i = 1; i < len; i++) {
+            let val = data[i];
+            max = max > val ? max : val;
+            min = min < val ? min : val;
+        }
+        if (-128 <= min && max <= 127) {
+            return TSTypes.int8;
+        }
+        if (-32768 <= min && max <= 32767) {
+            return TSTypes.int16;
+        }
+        return TSTypes.int32;
+    }
+    lenType(data) {
+        let max = -1;
+        if (typeof data == 'number') {
+            max = data;
+        }
+        else {
+            max = data[0];
+            let len = data.length;
+            for (let i = 1; i < len; i++) {
+                let val = data[i];
+                max = max > val ? max : val;
+            }
+        }
+        if (max < 256) {
+            return TSTypes.int8;
+        }
+        if (max < 65536) {
+            return TSTypes.int16;
+        }
+        return TSTypes.int32;
+    }
+    serialize(t, optimizeStorage = false) {
+        let self = this;
+        let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32;
+        let props = {
+            shapeLengthSetting: TSTypes.int32,
+            dataShapeLengthSetting: TSTypes.int32,
+            dataLengthSetting: TSTypes.int32,
+            shapeTypeSetting: TSTypes.int32,
+            dataShapeTypeSetting: TSTypes.int32,
+            dataTypeSetting: dataType
+        };
+        if (optimizeStorage) {
+            props.shapeLengthSetting = self.lenType(t.data.shape.length);
+            props.dataShapeLengthSetting = self.lenType(t.data.shape.length);
+            props.dataLengthSetting = self.lenType(t.data.data.length);
+            props.shapeTypeSetting = self.lenType(t.data.shape);
+            props.dataShapeTypeSetting = self.lenType(t.data.shape);
+            if (t.type == 'IntTensor') {
+                props.dataTypeSetting = self.dataType(t.data.data);
+            }
+        }
+    }
+}
 class Tensor {
     constructor($) {
         this.__waits__ = [];
+        this.__evict__ = false;
         if ($ !== TENSOR_SUPER) {
             throw new Error('Cannot Contruct Tensor');
         }
@@ -31,6 +124,9 @@ class Tensor {
             if (self.__error__) {
                 throw self.__error__;
             }
+            else if (self.__evict__) {
+                throw new Error('This Tensor Has Been Deleted');
+            }
             else if (self.__ready__) {
                 return;
             }
@@ -39,29 +135,20 @@ class Tensor {
             });
         });
     }
+    delete() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            self.__evict__ = true;
+            yield self.ready();
+            if (self.id) {
+                self.no_params_func('delete');
+            }
+        });
+    }
     autograd(state) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-        });
-    }
-    params_func(name, params, return_response = false, return_type = 'IntTensor') {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let res = yield controller.send_json(self.cmd(name, params));
-            controller.log(res);
-            if (return_response) {
-                if (return_type == 'IntTensor') {
-                    controller.log('IntTensor.__init__: {}' + res);
-                    return new IntTensor(Number(res), true);
-                }
-                else if (return_type == 'FloatTensor') {
-                    controller.log('IntTensor.__init__: {}' + res);
-                    return new FloatTensor(Number(res), true);
-                }
-            }
-            return res;
         });
     }
     params_func(name, params, return_response = false, return_type = 'FloatTensor', data_is_pointer = true) {
@@ -72,15 +159,15 @@ class Tensor {
             controller.log(res);
             if (return_response) {
                 if (return_type == 'IntTensor') {
-                    controller.log('IntTensor.__init__: {}'.format(res));
-                    return new IntTensor(Number(res), data_is_pointer);
+                    controller.log(`IntTensor.__init__: ${res}`);
+                    return new IntTensor(res, data_is_pointer);
                 }
                 else if (return_type == 'FloatTensor') {
-                    controller.log('FloatTensor.__init__: {}'.format(res));
+                    controller.log(`FloatTensor.__init__: ${res}`);
                     if (res == '') {
                         return null;
                     }
-                    return new FloatTensor(Number(res), data_is_pointer);
+                    return new FloatTensor(res, data_is_pointer);
                 }
                 else {
                     return res;
@@ -94,13 +181,6 @@ class Tensor {
             let self = this;
             yield self.ready();
             return yield self.params_func(name, [], return_response, return_type || self.type);
-        });
-    }
-    get(param_name = 'size', response_as_tensor = false, return_type = 'IntTensor') {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return yield self.params_func('get', [param_name], true, 'string');
         });
     }
     get(param_name = 'size', response_as_tensor = false) {
@@ -128,14 +208,7 @@ class Tensor {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return true;
-        });
-    }
-    is_contiguous() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let txt = (yield self.no_params_func('is_contiguous', true));
+            let txt = yield self.no_params_func('is_contiguous', true);
             if (txt == 'true') {
                 return true;
             }
@@ -155,7 +228,7 @@ class Tensor {
                     'objectType': self.type,
                     'objectIndex': self.id
                 });
-                return '';
+                return res;
             }
             else {
                 return ' - non-contiguous - ';
@@ -166,23 +239,14 @@ class Tensor {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let tensor_str = String(self.to_numpy());
-            let type_str = (yield self.shape()).join('x');
-            return `${tensor_str}\n[syft.IntTensor: ${self.id} size: ${type_str}]`;
-        });
-    }
-    __repr__(verbose = true) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let tensor_str = String(self.to_numpy());
+            let tensor_str = yield self.to_numpy();
             let type_str = (yield self.shape()).join('x');
             let grad = yield self.get('grad');
             if (grad == '') {
                 grad = 'None';
             }
-            let co = String(self.creation_op());
-            let desc = '[syft.FloatTensor:' + String(self.id) + ' grad:' + grad + ' size:' + type_str + ' c:' + String(self.children()) + ' p:' + String(self.creators()) + ' init:' + co + ']' + '\n';
+            let co = String(yield self.creation_op());
+            let desc = `[syft.${self.type}: ${self.id} grad: ${grad} size: ${type_str} init: ${co}]\n`;
             if (verbose) {
                 let children = yield self.children();
                 let creators = yield self.creators();
@@ -375,7 +439,11 @@ class Tensor {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('copy', true);
+            let t = yield self.no_params_func('copy', true);
+            if (t instanceof Tensor) {
+                return t;
+            }
+            throw new Error('Failed To Copy Tensor');
         });
     }
     cos() {
@@ -753,18 +821,11 @@ class Tensor {
             let self = this;
             yield self.ready();
             if (as_list) {
-                return [];
+                return ((yield self.get('shape')) || '').split(',').map(a => Number(a));
             }
             else {
                 return yield self.no_params_func('shape', true);
             }
-        });
-    }
-    shape() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return (yield self.get('shape')).split(',');
         });
     }
     softmax(dim = -1) {
@@ -786,10 +847,10 @@ class Tensor {
             let self = this;
             yield self.ready();
             if (dim == -1) {
-                return self.no_params_func('stride', true, 'none');
+                return self.no_params_func('stride', true);
             }
             else {
-                let strides = yield self.params_func('stride', [dim], true, 'none');
+                let strides = yield self.params_func('stride', [dim], true);
                 return strides.split(' ');
             }
         });
@@ -960,16 +1021,6 @@ class Tensor {
             }
             let response = yield controller.send_json(self.cmd(operation_cmd, [parameter]));
             return new FloatTensor(String(response), true);
-        });
-    }
-    delete_tensor() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            if (self.id) {
-                self.no_params_func('delete');
-            }
-            delete self.id;
         });
     }
     sinh() {
@@ -1148,6 +1199,7 @@ class Tensor {
         });
     }
 }
+Tensor.__tensor__ = {};
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {
     constructor(data, data_is_pointer = false) {
@@ -1201,35 +1253,6 @@ class FloatTensor extends Tensor {
             self.data_is_pointer = true;
             self.__ready__ = true;
         }
-    }
-    autograd(setter) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let out;
-            if (setter == void 0) {
-                if ((yield self.get('autograd')) == '1') {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-            else {
-                if (setter) {
-                    out = yield self.set('autograd', ['1']);
-                }
-                else {
-                    out = yield self.set('autograd', ['0']);
-                }
-                if ((out == '1' && setter) || (out == '0' && !setter)) {
-                    return self;
-                }
-                else {
-                    return false;
-                }
-            }
-        });
     }
 }
 exports.FloatTensor = FloatTensor;

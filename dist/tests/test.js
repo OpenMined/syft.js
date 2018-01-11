@@ -1,21 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const __1 = require("..");
+const syft = require("..");
 function test() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let a = new __1.FloatTensor([
+        let a = new syft.FloatTensor([
             [
-                [1, 2, 3],
-                [4, 5, 6]
+                [1, 1, 1],
+                [1, 1, 1]
             ],
             [
-                [7, 8, 9],
-                [10, 11, 12]
+                [1, 1, 1],
+                [1, 1, 1]
             ]
         ]);
-        yield a.ready();
-        return a;
+        let b = new syft.FloatTensor([
+            [
+                [2, 2, 2],
+                [2, 2, 2]
+            ],
+            [
+                [2, 2, 2],
+                [2, 2, 2]
+            ]
+        ]);
+        let c = yield a.__add__(b);
+        return c;
     });
 }
 test().then(val => console.log('done', val), err => console.log('error', err));
