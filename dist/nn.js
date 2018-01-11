@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const promasync_1 = require("promasync");
+const Async = require("promasync");
 const controller = require("./controller");
 const Tensor_1 = require("./Tensor");
 const AsyncInit_1 = require("./AsyncInit");
@@ -284,7 +284,7 @@ class Model extends AsyncInit_1.AsyncInit {
 exports.Model = Model;
 class Policy extends Model {
     constructor(model, optimizer, state_type = 'discrete') {
-        super(, 'policy', [model.id, optimizer.id]);
+        super(void 0, 'policy', [model.id, optimizer.id]);
         let self = this;
         self.state_type = state_type;
         self.optimizer = optimizer;
@@ -363,7 +363,7 @@ class Policy extends Model {
 exports.Policy = Policy;
 class Sequential extends Model {
     constructor(layers) {
-        super(, 'sequential');
+        super(void 0, 'sequential');
         if (Array.isArray(layers)) {
             for (let layer of layers) {
                 self.add(layer);
@@ -386,7 +386,7 @@ class Sequential extends Model {
             let double = '=================================================================\n';
             let non_trainable_params = 'Non-trainable params: 0' + '\n';
             let output = single + header + double;
-            let mods = promasync_1.default.forEach(yield self.models(), (m) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let mods = Async.forEach(yield self.models(), (m) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return yield m.summary(false, true);
             }));
             output += mods.join(single);
@@ -415,7 +415,7 @@ class Sequential extends Model {
 exports.Sequential = Sequential;
 class Linear extends Model {
     constructor(input_dim = 0, output_dim = 0, id, initializer = 'Xavier') {
-        super(, 'linear', [input_dim, output_dim, initializer]);
+        super(void 0, 'linear', [input_dim, output_dim, initializer]);
     }
     finish(id) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {

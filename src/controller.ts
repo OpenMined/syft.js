@@ -109,9 +109,9 @@ export function num_tensors() {
 export function new_tensors_allowed(
   allowed?: boolean
 ) {
-    if(allowed == void 0) {
+    if (allowed == void 0) {
       return no_params_func(cmd, 'new_tensors_allowed', 'bool')
-    } else if(allowed) {
+    } else if (allowed) {
       return params_func(cmd, 'new_tensors_allowed', ['True'], 'bool')
     } else {
       return params_func(cmd, 'new_tensors_allowed', ['False'], 'bool')
@@ -145,17 +145,17 @@ export async function params_func(
 
   if (return_type == void 0) {
     return
-  } else if(return_type == 'FloatTensor') {
-      if(res != '-1' && res != '') {
-        if(verbose) {
+  } else if (return_type == 'FloatTensor') {
+      if (res != '-1' && res != '') {
+        if (verbose) {
           console.log('FloatTensor.__init__: ' +  res)
         }
         return new FloatTensor(res, true)
       }
       return
   } else if (return_type == 'IntTensor') {
-    if(res != '-1' && res != '') {
-      if(verbose) {
+    if (res != '-1' && res != '') {
+      if (verbose) {
         console.log('IntTensor.__init__: ' +  res)
       }
       return new IntTensor(res, true)
@@ -164,7 +164,7 @@ export async function params_func(
   } else if (return_type == 'FloatTensor_list') {
     let tensors: Tensor[] = []
 
-    if(res != '') {
+    if (res != '') {
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
@@ -177,7 +177,7 @@ export async function params_func(
   } else if (return_type == 'Model_list') {
     let models: any[] = []
 
-    if(res != '') {
+    if (res != '') {
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {

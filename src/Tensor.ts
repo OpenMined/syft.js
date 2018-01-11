@@ -200,12 +200,12 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     controller.log(res)
 
     if (return_response) {
-      if (return_type == 'IntTensor'){
+      if (return_type == 'IntTensor') {
         controller.log(`IntTensor.__init__: ${res}`)
         return new IntTensor(res, data_is_pointer)
-      } else if(return_type == 'FloatTensor') {
+      } else if (return_type == 'FloatTensor') {
         controller.log(`FloatTensor.__init__: ${res}`)
-        if(res == '') {
+        if (res == '') {
           return null
         }
         return new FloatTensor(res, data_is_pointer)
@@ -322,15 +322,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       let children = await self.children()
       let creators = await self.creators()
 
-      if(children.length > 0) {
+      if (children.length > 0) {
         //tensor_str = '\n -------------------------------\n' + tensor_str
         desc += '\n\t-----------children-----------\n'
       }
       for (let child_id of children) {
         desc += '\t' + await (await controller.get_tensor(child_id)).__repr__(false)
       }
-      if(children.length > 0){
-        if(creators.length > 0){
+      if (children.length > 0) {
+        if (creators.length > 0) {
 
           desc += '\t------------------------------\n'
         } else {

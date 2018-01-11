@@ -1,4 +1,4 @@
-import Async from 'promasync'
+import * as Async from 'promasync'
 import * as controller from './controller'
 // from syft.utils import Progress
 import {
@@ -289,7 +289,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     return (await self.parameters())[idx]
   }
 
-  async activation()  {
+  async activation() {
     let self = this
     await self.ready()
 
@@ -357,7 +357,7 @@ export class Policy extends Model {
     optimizer: any,
     state_type='discrete'
   ) {
-    super(, 'policy', [model.id, optimizer.id])
+    super(void 0, 'policy', [model.id, optimizer.id])
     let self = this
 
     self.state_type = state_type
@@ -386,8 +386,8 @@ export class Policy extends Model {
       let self = this
       await self.ready()
 
-    if (self.state_type == 'discrete'){
-      if (args.length == 1){
+    if (self.state_type == 'discrete') {
+      if (args.length == 1) {
         return self.sample(args[0])
       } else if (args.length == 2) {
         return self.sample(args[0], args[1])
@@ -395,8 +395,8 @@ export class Policy extends Model {
         return self.sample(args[0], args[1], args[2])
       }
 
-    } else if (self.state_type == 'continuous'){
-      if (args.length == 1){
+    } else if (self.state_type == 'continuous') {
+      if (args.length == 1) {
         return self.forward(args[0])
       } else if (args.length == 2) {
         return self.forward(args[0], args[1])
@@ -404,7 +404,7 @@ export class Policy extends Model {
         return self.forward(args[0], args[1], args[2])
       }
 
-    }else{
+    } else {
       console.log(`Error: State type ${self.state_type} unknown`)
     }
   }
@@ -421,12 +421,12 @@ export class Policy extends Model {
     for (let loss, reward of history_idx) {
       if (loss != -1) {
         losses.push(await controller.get_tensor(loss))
-      }else{
+      } else {
         losses.push(void 0)
       }
-      if (reward != -1){
+      if (reward != -1) {
         rewards.push(await controller.get_tensor(reward))
-      }else{
+      } else {
         rewards.push(void 0)
       }
     }
@@ -440,10 +440,10 @@ export class Sequential extends Model {
   constructor(
     layers?: Model[] //TODO: what type is this
   ) {
-    super(, 'sequential')
+    super(void 0, 'sequential')
 
     if (Array.isArray(layers)) {
-      for (let layer of layers){
+      for (let layer of layers) {
         self.add(layer)
       }
     }
@@ -458,7 +458,7 @@ export class Sequential extends Model {
     await controller.params_func(self.cmd, 'add', [model.id], delete_after_use=false)
   }
 
-  async summary(){
+  async summary() {
     let self = this
     await self.ready()
 
@@ -480,7 +480,7 @@ export class Sequential extends Model {
     console.log(output)
 }
 
-  async __repr__(){
+  async __repr__() {
     let self = this
     await self.ready()
 
@@ -492,7 +492,7 @@ export class Sequential extends Model {
 
   async __getitem__(
     idx: number
-  ){
+  ) {
     let self = this
     await self.ready()
 
@@ -509,7 +509,7 @@ export class Linear extends Model {
     initializer = 'Xavier'
   ) {
 
-    super(, 'linear',[input_dim, output_dim, initializer])
+    super(void 0, 'linear',[input_dim, output_dim, initializer])
   }
 
   async finish(
@@ -532,7 +532,7 @@ export class Linear extends Model {
 export class ReLU extends Model {
   constructor(
     id?: string
-  ){
+  ) {
     super(id,'relu')
   }
 }
@@ -541,7 +541,7 @@ export class Dropout extends Model {
   constructor(
     id?: string,
     rate = 0.5
-  ){
+  ) {
     super(id, 'dropout', [rate])
   }
 }
@@ -580,20 +580,20 @@ export class Log extends Model {
 }
 
 export class Tanh extends Model {
-  constructor(id?: string){
+  constructor(id?: string) {
     super(id, 'tanh')
   }
 }
 
 export class MSELoss extends Model {
-  constructor(id?: string){
+  constructor(id?: string) {
     super(id, 'mseloss')
   }
 
   async forward(
     input: Tensor,
     target: Tensor
-  ){
+  ) {
     let self = this
     await self.ready()
 
@@ -611,7 +611,7 @@ export class NLLLoss extends Model {
   async forward(
     input: Tensor,
     target: Tensor
-  ){
+  ) {
     let self = this
     await self.ready()
 
@@ -626,15 +626,15 @@ export class CrossEntropyLoss extends Model {
 
   constructor(
     id?: string,
-    dim=1
-  ){
+    dim = 1
+  ) {
     super(id, 'crossentropyloss', [dim])
   }
 
   async forward(
     input: Tensor,
     target: Tensor
-  ){
+  ) {
     let self = this
     await self.ready()
 
