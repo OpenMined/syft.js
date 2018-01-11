@@ -4,13 +4,137 @@ import {
   IntDimArray,
   FloatDimArray
 } from './DimArray'
+import {
+  AsyncInit,
+  IAsyncInit
+} from './AsyncInit'
 
 const TENSOR_SUPER = {}
+enum TSTypes {
+  int8,
+  int16,
+  int32,
+  int64,
+  int128,
+  float16,
+  float32,
+  float64,
+  float12
+}
+class TensorSerializer {
+  encodeType(
+    props: {
+      shapeLengthSetting     : number
+      dataShapeLengthSetting : number
+      dataLengthSetting      : number
+      shapeTypeSetting       : number
+      dataShapeTypeSetting   : number
+      dataTypeSetting        : number
+    }
+  ) {
+    return props.shapeLengthSetting +
+    props.dataShapeLengthSetting    * 25 +
+    props.dataLengthSetting         * 125 +
+    props.shapeTypeSetting          * 625 +
+    props.dataShapeTypeSetting      * 3125 +
+    props.dataTypeSetting           * 15625
+  }
 
-export class Tensor {
-  __error__: Error
-  __ready__: boolean
-  __waits__: {res: (val?: any)=>void, rej: (val?: any)=>void}[] = []
+  decodeType(
+    type: number
+  ) {
+    return {
+      shapeLengthSetting     : type % 5,
+      dataShapeLengthSetting : type / 25 % 5,
+      dataLengthSetting      : type / 125 % 5,
+      shapeTypeSetting       : type / 625 % 5,
+      dataShapeTypeSetting   : type / 3125 % 5,
+      dataTypeSetting        : type / 15625 % 9
+    }
+  }
+
+  dataType(data: ArrayLike<number>) {
+    let max = data[0]
+    let min = data[0]
+    let len = data.length
+
+    for (let i = 1; i < len; i++) {
+      let val = data[i]
+      max = max > val ? max : val
+      min = min < val ? min : val
+    }
+
+    if (-128 <= min && max <= 127) {
+      return TSTypes.int8
+    }
+
+    if (-32768 <= min && max <= 32767) {
+      return TSTypes.int16
+    }
+
+    return TSTypes.int32
+  }
+
+  lenType(data: number|ArrayLike<number>) {
+    let max = -1
+    if (typeof data == 'number') {
+      max = data
+    } else {
+      max = data[0]
+      let len = data.length
+
+      for (let i = 1; i < len; i++) {
+        let val = data[i]
+        max = max > val ? max : val
+      }
+    }
+
+    if (max < 256) {
+      return TSTypes.int8
+    }
+
+    if (max < 65536) {
+      return TSTypes.int16
+    }
+
+    return TSTypes.int32
+  }
+
+  serialize(
+    t: Tensor,
+    optimizeStorage = false
+  ) {
+    let self = this
+
+    let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32
+
+    let props = {
+      shapeLengthSetting     : TSTypes.int32,
+      dataShapeLengthSetting : TSTypes.int32,
+      dataLengthSetting      : TSTypes.int32,
+      shapeTypeSetting       : TSTypes.int32,
+      dataShapeTypeSetting   : TSTypes.int32,
+      dataTypeSetting        : dataType
+    }
+
+    if (optimizeStorage) {
+      props.shapeLengthSetting     = self.lenType(t.data.shape.length)
+      props.dataShapeLengthSetting = self.lenType(t.data.shape.length)
+      props.dataLengthSetting      = self.lenType(t.data.data.length)
+      props.shapeTypeSetting       = self.lenType(t.data.shape)
+      props.dataShapeTypeSetting   = self.lenType(t.data.shape)
+
+      if (t.type == 'IntTensor') {
+        props.dataTypeSetting = self.dataType(t.data.data)
+      }
+    }
+
+
+  }
+}
+
+export class Tensor extends AsyncInit implements IAsyncInit {
+  static __tensor__: {[id: string]: Tensor} = {}
 
   id: string
   data: DimArray
@@ -18,39 +142,38 @@ export class Tensor {
   type: string
 
   constructor($?: any) {
+    super()
+
     if ($ !== TENSOR_SUPER) {
       throw new Error('Cannot Contruct Tensor')
     }
   }
 
-  __finish__(res: string) {
+  finish(
+    id: string
+  ) {
     let self = this
 
-    if (res) {
-      self.id = res
-      self.__ready__ = true
-      self.__waits__.forEach(wait => wait.res());
-    } else {
-      let err = new Error('Network Tensor Contruction Failed')
-      self.__error__ = err
-      self.__waits__.forEach(wait => wait.rej(err));
-    }
-
-    self.__waits__ = []
+    self.id = id
   }
 
-  async ready() {
+  /*
+  * Deletes the input tensor.
+  * Parameters
+  * ----------
+  * Returns
+  * -------
+  */
+  async delete() {
     let self = this
 
-    if (self.__error__) {
-      throw self.__error__
-    } else if (self.__ready__) {
-      return
-    }
+    self.__delete__()
 
-    await new Promise((res, rej) => {
-      self.__waits__.push({res, rej})
-    })
+    await self.ready()
+
+    if (self.id) {
+      self.no_params_func('delete')
+    }
   }
 
   async autograd(state: boolean) {
@@ -58,35 +181,6 @@ export class Tensor {
     await self.ready()
 
     // do nothing
-  }
-
-  async params_func(
-    name: string,
-    params: any[],
-    return_response = false,
-    return_type = 'IntTensor'
-  ) {
-    let self = this
-    await self.ready()
-
-    // send the command
-    let res = await controller.send_json(
-      self.cmd(name, params)
-    )
-
-    controller.log(res)
-
-    if (return_response) {
-      if (return_type == 'IntTensor') {
-        controller.log('IntTensor.__init__: {}' + res)
-        return new IntTensor(Number(res), true)
-      } else if (return_type == 'FloatTensor') {
-        controller.log('IntTensor.__init__: {}' + res)
-        return new FloatTensor(Number(res), true)
-      }
-    }
-
-    return res
   }
 
   async params_func(
@@ -107,14 +201,14 @@ export class Tensor {
 
     if (return_response) {
       if (return_type == 'IntTensor'){
-        controller.log('IntTensor.__init__: {}'.format(res))
-        return new IntTensor(Number(res), data_is_pointer)
+        controller.log(`IntTensor.__init__: ${res}`)
+        return new IntTensor(res, data_is_pointer)
       } else if(return_type == 'FloatTensor') {
-        controller.log('FloatTensor.__init__: {}'.format(res))
+        controller.log(`FloatTensor.__init__: ${res}`)
         if(res == '') {
           return null
         }
-        return new FloatTensor(Number(res), data_is_pointer)
+        return new FloatTensor(res, data_is_pointer)
       } else {
         return res
       }
@@ -131,22 +225,6 @@ export class Tensor {
     await self.ready()
 
     return await self.params_func(name, [], return_response, return_type || self.type)
-  }
-
-  async get(
-    param_name = 'size',
-    response_as_tensor = false,
-    return_type = 'IntTensor'
-  ) {
-    let self = this
-    await self.ready()
-
-    return await self.params_func(
-      'get',
-      [param_name],
-      true,
-      'string'
-    )
   }
 
   async get(
@@ -193,22 +271,16 @@ export class Tensor {
     let self = this
     await self.ready()
 
-    return true
-  }
+    let txt = await self.no_params_func('is_contiguous', true)
 
-  async is_contiguous() {
-    let self = this
-    await self.ready()
-
-    let txt = (await self.no_params_func('is_contiguous', true))
-
-    if(txt == 'true') {
+    if (txt == 'true') {
       return true
     } else {
       return false
     }
   }
 
+  //TODO: figure this out
   async to_numpy() {
     let self = this
     await self.ready()
@@ -221,7 +293,7 @@ export class Tensor {
         'objectType': self.type,
         'objectIndex': self.id
       })
-      return '' // np.fromstring(res, sep=' ').astype('int').reshape(self.shape())
+      return res // np.fromstring(res, sep=' ').astype('int').reshape(self.shape())
     } else {
       return ' - non-contiguous - '
     }
@@ -233,31 +305,18 @@ export class Tensor {
     let self = this
     await self.ready()
 
-    let tensor_str = String(self.to_numpy())
+    let tensor_str = await self.to_numpy()
 
-    let type_str = (await self.shape()).join('x')
-
-    return `${tensor_str}\n[syft.IntTensor: ${self.id} size: ${type_str}]`
-  }
-
-  async __repr__(
-    verbose = true
-  ) {
-    let self = this
-    await self.ready()
-
-    let tensor_str = String(self.to_numpy())
-
-    let type_str = (await self.shape()).join('x')
+    let type_str = (await self.shape() as number[]).join('x')
 
     let grad = await self.get('grad')
     if (grad == '') {
       grad = 'None'
     }
 
-    let co = String(self.creation_op())
+    let co = String(await self.creation_op())
 
-    let desc = '[syft.FloatTensor:'+String(self.id)+' grad:' + grad + ' size:' + type_str + ' c:' + String(self.children()) + ' p:' + String(self.creators()) + ' init:' + co + ']' + '\n'
+    let desc = `[syft.${self.type}: ${self.id} grad: ${grad} size: ${type_str} init: ${co}]\n`
 
     if (verbose) {
       let children = await self.children()
@@ -660,11 +719,17 @@ export class Tensor {
   * FloatTensor
   *     Output tensor
   */
-  async copy() {
+  async copy(): Promise<Tensor> {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('copy', true)
+    let t = await self.no_params_func('copy', true)
+
+    if (t instanceof Tensor) {
+      return t
+    }
+
+    throw new Error('Failed To Copy Tensor')
   }
 
   /*
@@ -772,9 +837,10 @@ export class Tensor {
     await self.ready()
 
     let res = await self.get('creators')
-    if (res.length > 0) {
+    if (typeof res == 'string' && res.length > 0) {
       //TODO: figure this out
-      return [] // list(map(lambda x: Number(x), res.split(',')[0:-1]))
+      // list(map(lambda x: Number(x), res.split(',')[0:-1]))
+      return res.split(',').slice(0, -1).map(a => Number(a))
     }
     return []
   }
@@ -863,7 +929,7 @@ export class Tensor {
 
   //TODO: figure this out
   async index_add(
-    indices: ?,
+    indices: any, // what type is this?
     dim: number,
     x: Tensor
   ) {
@@ -878,7 +944,7 @@ export class Tensor {
 
   //TODO: figure this out
   async index_add_(
-    indices: ?,
+    indices: any, // what type is this?
     dim: number,
     x: Tensor
   ) {
@@ -894,7 +960,7 @@ export class Tensor {
   //TODO: figure this out
   async index_select(
     dim: number,
-    indices: ?
+    indices: any // what type is this?
   ) {
     let self = this
     await self.ready()
@@ -1443,25 +1509,10 @@ export class Tensor {
 
     if (as_list) {
       //TODO: figure this out
-      return [] //list(np.fromstring(self.get('shape')[:-1], sep=',').astype('int'))
+      return (await self.get('shape') as string || '').split(',').map(a => Number(a))
     } else {
       return await self.no_params_func('shape', true)
     }
-  }
-
-  /*
-  * Returns the size of the self tensor as a List.
-  *
-  * Returns
-  * -------
-  * Iterable
-  * Output list
-  */
-  async shape() {
-    let self = this
-    await self.ready()
-
-    return (await self.get('shape')).split(',')
   }
 
   async softmax(
@@ -1504,11 +1555,11 @@ export class Tensor {
     await self.ready()
 
     if (dim == -1) {
-      return self.no_params_func('stride', true, 'none')
+      return self.no_params_func('stride', true)
     } else {
       //TODO: figure out this
-      let strides = await self.params_func('stride', [dim], true, 'none')
-      return strides.split(' ')
+      let strides = await self.params_func('stride', [dim], true)
+      return (strides as string).split(' ')
     }
   }
 
@@ -1755,7 +1806,7 @@ export class Tensor {
   async arithmetic_operation(
     x: number|Tensor,
     name: string,
-    inline=false
+    inline = false
   ) {
     let self = this
     await self.ready()
@@ -1781,24 +1832,6 @@ export class Tensor {
 
     // TODO: IntTensor as well
     return new FloatTensor(String(response), true)
-  }
-
-  /*
-  * Deletes the input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  */
-  async delete_tensor() {
-    let self = this
-    await self.ready()
-
-    if (self.id) {
-      self.no_params_func('delete')
-    }
-
-    delete self.id
   }
 
   /*
@@ -2119,7 +2152,6 @@ export class Tensor {
     return self.params_func('squeeze', [dim], true)
   }
 
-
   /*
   * Removes all the dimensions of input tensor of size 1, inplace.
   * Parameters
@@ -2274,21 +2306,21 @@ export class IntTensor extends Tensor {
 
     if (Array.isArray(data)) {
       self.data = new IntDimArray(data)
-      self.__ready__ = false
 
       controller.send_json({
         'objectType': self.type,
         'functionCall': 'create',
         'data': Array.from(self.data.data),
         'shape': Array.from(self.data.shape)
-      }).then(res => self.__finish__(res))
+      })
+        .then(res => self.__finish__(res))
+        .catch(err => self.__error__(err))
     } else if (data_is_pointer) {
       self.id = data
       self.data_is_pointer = true
-      self.__ready__ = true
+      self.__finish__(data)
     }
   }
-
 }
 
 export class FloatTensor extends Tensor {
@@ -2314,44 +2346,45 @@ export class FloatTensor extends Tensor {
 
     if (Array.isArray(data)) {
       self.data = new FloatDimArray(data)
-      self.__ready__ = false
 
       controller.send_json({
         'objectType': self.type,
         'functionCall': 'create',
         'data': Array.from(self.data.data),
         'shape': Array.from(self.data.shape)
-      }).then(res => self.__finish__(res))
+      })
+        .then(res => self.__finish__(res))
+        .catch(err => self.__error__(err))
     } else if (data_is_pointer) {
       self.id = data
       self.data_is_pointer = true
-      self.__ready__ = true
+      self.__finish__(data)
     }
   }
 
   // TODO: figure this out
-  async autograd(setter: boolean) {
-    let self = this
-    await self.ready()
-    let out
-
-    if (setter == void 0) {
-      if (await self.get('autograd') == '1') {
-        return true
-      } else {
-        return false
-      }
-    } else {
-      if (setter) {
-        out = await self.set('autograd', ['1'])
-      } else {
-        out = await self.set('autograd', ['0'])
-      }
-      if ((out == '1' && setter) || (out == '0' && !setter)) {
-        return self
-      } else {
-        return false
-      }
-    }
-  }
+  // async autograd(setter: boolean) {
+  //   let self = this
+  //   await self.ready()
+  //   let out
+  //
+  //   if (setter == void 0) {
+  //     if (await self.get('autograd') == '1') {
+  //       return true
+  //     } else {
+  //       return false
+  //     }
+  //   } else {
+  //     if (setter) {
+  //       out = await self.set('autograd', ['1'])
+  //     } else {
+  //       out = await self.set('autograd', ['0'])
+  //     }
+  //     if ((out == '1' && setter) || (out == '0' && !setter)) {
+  //       return self
+  //     } else {
+  //       return false
+  //     }
+  //   }
+  // }
 }

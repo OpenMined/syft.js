@@ -1,21 +1,32 @@
-import {FloatTensor} from '..'
+import * as syft from '..'
 
 async function test() {
 
-  let a = new FloatTensor([
+  let a = new syft.FloatTensor([
     [
-      [1,2,3],
-      [4,5,6]
+      [1,1,1],
+      [1,1,1]
     ],
     [
-      [7,8,9],
-      [10, 11, 12]
+      [1,1,1],
+      [1,1,1]
     ]
   ])
 
-  await a.ready()
+  let b = new syft.FloatTensor([
+    [
+      [2,2,2],
+      [2,2,2]
+    ],
+    [
+      [2,2,2],
+      [2,2,2]
+    ]
+  ])
 
-  return a
+  let c = await a.__add__(b)
+
+  return c
 }
 
 

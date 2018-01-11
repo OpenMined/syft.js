@@ -60,7 +60,7 @@ function save(x, filename) {
 exports.save = save;
 function concatenate(tensors, axis = 0) {
     let ids = tensors.map(t => t.id);
-    ids.unshift(axis);
+    ids.unshift(String(axis));
     return params_func(cmd, 'concatenate', ids, 'FloatTensor');
 }
 exports.concatenate = concatenate;
@@ -81,7 +81,7 @@ function new_tensors_allowed(allowed) {
 }
 exports.new_tensors_allowed = new_tensors_allowed;
 function get_tensor(id) {
-    return new Tensor_1.Tensor(id, true);
+    return new Tensor_1.FloatTensor(id, true);
 }
 exports.get_tensor = get_tensor;
 function __getitem__(id) {
@@ -102,7 +102,7 @@ function params_func(cmd, name, params, return_type) {
                 if (verbose) {
                     console.log('FloatTensor.__init__: ' + res);
                 }
-                return new FloatTensor(Number(res), true);
+                return new Tensor_1.FloatTensor(res, true);
             }
             return;
         }
@@ -111,7 +111,7 @@ function params_func(cmd, name, params, return_type) {
                 if (verbose) {
                     console.log('IntTensor.__init__: ' + res);
                 }
-                return new IntTensor(Number(res), true);
+                return new Tensor_1.IntTensor(res, true);
             }
             return;
         }
@@ -121,7 +121,7 @@ function params_func(cmd, name, params, return_type) {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
-                        tensors.push(get_tensor(Number(str_id)));
+                        tensors.push(get_tensor(str_id));
                     }
                 }
             }
