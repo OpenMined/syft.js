@@ -6,8 +6,9 @@ import {
   IntTensor
 } from './Tensor'
 import { WorkQueue } from './WorkQueue'
+import {Model} from './Model'
 
-const verbose = true
+const verbose = false
 
 const identity = uuid.v4()
 const socket = zmq.socket('dealer')
@@ -38,6 +39,7 @@ export function cmd(
 
 const wq = new WorkQueue<string, string>(job => {
   // send the command
+  console.log('sending:', job.data)
   socket.send(/*job.id + */job.data)
 }, 1)
 
@@ -56,7 +58,7 @@ socket.on('message', (res) => {
   if (job) {
     let r = res.toString()
 
-    console.log(r)
+    console.log('receiving:', r)
 
     if (r.startsWith('Unity Error:')) {
       job.reject(new Error(r))
@@ -67,20 +69,20 @@ socket.on('message', (res) => {
 })
 
 // Introspection
-export function num_models() {
+export async function num_models() {
   return no_params_func(cmd, 'num_models','int')
 }
 
-export function get_model(
-  id: number
+export async function get_model(
+  id: string
 ) {
-  // return nn.Model(id).discover()
+  return await Model.getModel(id)
 }
 
-export function load(
+export async function load(
   filename: string
 ) {
-  return params_func(cmd,'load_floattensor', [filename], 'FloatTensor')
+  return params_func(cmd, 'load_floattensor', [filename], 'FloatTensor')
 }
 
 export function save(
@@ -139,25 +141,19 @@ export async function params_func(
   // send the command
   let res = await wq.queue(JSON.stringify(cmd(name, params)))
 
-  if (verbose) {
-    console.log(res)
-  }
+  log(res)
 
   if (return_type == void 0) {
     return
   } else if (return_type == 'FloatTensor') {
       if (res != '-1' && res != '') {
-        if (verbose) {
-          console.log('FloatTensor.__init__: ' +  res)
-        }
+        log('FloatTensor.__init__: ' +  res)
         return new FloatTensor(res, true)
       }
       return
   } else if (return_type == 'IntTensor') {
     if (res != '-1' && res != '') {
-      if (verbose) {
-        console.log('IntTensor.__init__: ' +  res)
-      }
+      log('IntTensor.__init__: ' +  res)
       return new IntTensor(res, true)
     }
     return
@@ -181,7 +177,7 @@ export async function params_func(
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
-          models.push(get_model(Number(str_id)))
+          models.push(await get_model(str_id))
         }
       }
     }
@@ -210,13 +206,11 @@ export function no_params_func(
   return params_func(cmd, name, [], return_type)
 }
 
-export async function send_json(
+export async function sendJSON(
   message: any,
   response = true
 ) {
   let data = JSON.stringify(message)
-
-  console.log(data)
 
   // send the command
   return await wq.queue(data)

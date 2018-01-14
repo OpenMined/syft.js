@@ -1,3 +1,5 @@
 export * from './controller'
 export * from './Tensor'
-// export * from './nn'
+export * from './TensorSerializer'
+export * from './Optimizer'
+export * from './Model'

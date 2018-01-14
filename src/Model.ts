@@ -1,5 +1,6 @@
 import * as Async from 'promasync'
 import * as controller from './controller'
+import {Optimizer} from './Optimizer'
 // from syft.utils import Progress
 import {
   Tensor,
@@ -19,29 +20,63 @@ import {
 } from './AsyncInit'
 
 export class Model extends AsyncInit implements IAsyncInit {
+  type = 'model'
+  layerType = '(unknown)'
   id?: string
   params: boolean
-  type: string
-  output_shape?: string // TODO: what type is this
-  _layer_type: string
+  outputShape?: string = '(dynamic)'
+
+  static async getModel(
+    id: string
+  ) {
+    let layerType = await controller.sendJSON({
+      functionCall: 'model_type',
+      objectType: 'model',
+      objectIndex: id,
+      tensorIndexParams: []
+    })
+
+    switch (layerType) {
+    case 'linear':
+      return new Linear(id)
+    case 'sigmoid':
+      return new Sigmoid(id)
+    case 'crossentropyloss':
+      return new CrossEntropyLoss(id)
+    case 'tanh':
+      return new Tanh(id)
+    case 'dropout':
+      return new Dropout(id)
+    case 'softmax':
+      return new Softmax(id)
+    case 'logsoftmax':
+      return new LogSoftmax(id)
+    case 'relu':
+      return new ReLU(id)
+    case 'log':
+      return new Log(id)
+    case 'policy':
+      return new Policy(id)
+    default:
+      throw new Error(
+        `Unsupported Layer Type: '${layerType}'.`
+      )
+
+    }
+  }
 
   constructor(
     id?: string,
-    layer_type: string,
     params: any[] = []
   ) {
     super()
 
     let self = this
-    self.params = false
-    self._layer_type = layer_type
-    self.type = 'model'
-    self.output_shape = '(dynamic)'
 
     if (id) {
       self.__finish__(id)
     } else {
-      controller.send_json(self.cmd('create', [self._layer_type, ...params]))
+      controller.sendJSON(self.cmd('create', [self.layerType, ...params]))
         .then(res => self.__finish__(res))
         .catch(err => self.__error__(err))
     }
@@ -53,40 +88,6 @@ export class Model extends AsyncInit implements IAsyncInit {
     let self = this
 
     self.id = id
-  }
-
-  async discover() {
-    let self = this
-    await self.ready()
-
-    self._layer_type = await self.layer_type()
-
-    if (self._layer_type == 'linear') {
-      return new Linear(self.id)
-    } else if (self._layer_type == 'sigmoid') {
-      return new Sigmoid(self.id)
-    } else if (self._layer_type == 'crossentropyloss') {
-      return new CrossEntropyLoss(self.id)
-    } else if (self._layer_type == 'tanh') {
-      return new Tanh(self.id)
-    } else if (self._layer_type == 'dropout') {
-      return new Dropout(self.id)
-    } else if (self._layer_type == 'softmax') {
-      return new Softmax(self.id)
-    } else if (self._layer_type == 'logsoftmax') {
-      return new LogSoftmax(self.id)
-    } else if (self._layer_type == 'relu') {
-      return new ReLU(self.id)
-    } else if (self._layer_type == 'log') {
-      return new Log(self.id)
-    } else if (self._layer_type == 'policy') {
-      return new Policy(self.id)
-    } else {
-      console.log(
-        'Attempted to discover the type - but it wasn\'t supported. Has the layer type '
-        + self._layer_type + ' been added to the discover() method in nn.js?'
-      )
-    }
   }
 
   async __call__(...args: any[]) {
@@ -137,12 +138,12 @@ export class Model extends AsyncInit implements IAsyncInit {
   async fit(
     input: number[]|Tensor,
     target: number[]|Tensor,
-    criterion,
-    optim,
+    criterion, // TODO: what type is this
+    optim, // TODO: what type is this
     batch_size: number,
     iters = 15,
     log_interval = 200,
-    metrics=[],
+    metrics = [],
     verbose = true
   ) {
     let self = this
@@ -245,17 +246,17 @@ export class Model extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    // let layer_type = await self.layer_type() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
-    let layer_type = `${await self.layer_type()}_${self.id} (${self.type})`
-    let output_shape = ''
-    if (typeof self.output_shape == 'number') {
-      output_shape = String(self.output_shape)
+    // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
+    let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
+    let outputShape = ''
+    if (typeof self.outputShape == 'number') {
+      outputShape = String(self.outputShape)
     } else {
-      output_shape = String(self.output_shape)
+      outputShape = String(self.outputShape)
     }
 
     let n_param = String(await self.num_parameters())
-    let output = layer_type + ' '.repeat(29 - layer_type.length) + output_shape + ' '.repeat(26 - output_shape.length) + n_param + '\n'
+    let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n'
     if (verbose) {
       let single = '_________________________________________________________________\n'
       let header = 'Layer (type)                 Output Shape              Param #   \n'
@@ -296,7 +297,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     return controller.no_params_func(self.cmd, 'activation', 'FloatTensor', delete_after_use=false)
   }
 
-  async layer_type() {
+  async getLayerType() {
     let self = this
     await self.ready()
 
@@ -344,23 +345,24 @@ export class Model extends AsyncInit implements IAsyncInit {
       }
       return output
     } else {
-      return `<syft.nn.${self._layer_type} at ${self.id}>`
+      return `<syft.nn.${self.layerType} at ${self.id}>`
     }
   }
 }
 
 export class Policy extends Model {
-  state_type: any // TODO: what type is this
-  optimizer: any  // TODO: what type is this
+  layerType = 'policy'
+  stateType: any // TODO: what type is this
+  optimizer: Optimizer
   constructor(
     model: any, // TODO: what type is this
-    optimizer: any,
-    state_type='discrete'
+    optimizer: Optimizer,
+    stateType = 'discrete'
   ) {
-    super(void 0, 'policy', [model.id, optimizer.id])
+    super(void 0, [model.id, optimizer.id])
     let self = this
 
-    self.state_type = state_type
+    self.stateType = stateType
     self.optimizer = optimizer
   }
 
@@ -370,7 +372,7 @@ export class Policy extends Model {
     let self = this
     await self.ready()
 
-    return controller.params_func(self.cmd,'sample',[input.id],return_type='IntTensor')
+    return controller.params_func(self.cmd, 'sample', [input.id], 'IntTensor')
   }
 
   async parameters() {
@@ -386,7 +388,7 @@ export class Policy extends Model {
       let self = this
       await self.ready()
 
-    if (self.state_type == 'discrete') {
+    if (self.stateType == 'discrete') {
       if (args.length == 1) {
         return self.sample(args[0])
       } else if (args.length == 2) {
@@ -395,7 +397,7 @@ export class Policy extends Model {
         return self.sample(args[0], args[1], args[2])
       }
 
-    } else if (self.state_type == 'continuous') {
+    } else if (self.stateType == 'continuous') {
       if (args.length == 1) {
         return self.forward(args[0])
       } else if (args.length == 2) {
@@ -405,7 +407,7 @@ export class Policy extends Model {
       }
 
     } else {
-      console.log(`Error: State type ${self.state_type} unknown`)
+      console.log(`Error: State type ${self.stateType} unknown`)
     }
   }
 
@@ -413,12 +415,12 @@ export class Policy extends Model {
       let self = this
       await self.ready()
 
-    let raw_history = await controller.params_func(self.cmd,'get_history',[],return_type='string')
-    let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
+    // TODO: let raw_history = await controller.params_func(self.cmd,'get_history',[],return_type='string')
+    // TODO: let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
     let losses = []
     let rewards = []
 
-    for (let loss, reward of history_idx) {
+    for (let {loss, reward} of history_idx) {
       if (loss != -1) {
         losses.push(await controller.get_tensor(loss))
       } else {
@@ -436,11 +438,13 @@ export class Policy extends Model {
 }
 
 export class Sequential extends Model {
+  layerType = 'sequential'
 
   constructor(
     layers?: Model[] //TODO: what type is this
   ) {
-    super(void 0, 'sequential')
+    super(void 0)
+    let self = this
 
     if (Array.isArray(layers)) {
       for (let layer of layers) {
@@ -470,8 +474,9 @@ export class Sequential extends Model {
     let non_trainable_params = 'Non-trainable params: 0' + '\n'
 
     let output = single + header + double
+    Async.each
 
-    let mods = Async.forEach(await self.models(), async (m) => {
+    let mods = await Async.map(await self.models(), async (m) => {
       return await m.summary(false, true)
     })
     output += mods.join(single)
@@ -485,8 +490,9 @@ export class Sequential extends Model {
     await self.ready()
 
     let output = ''
-    for (let m of await self.models()):
+    for (let m of await self.models()) {
       output += m.__repr__()
+    }
     return output
   }
 
@@ -501,6 +507,7 @@ export class Sequential extends Model {
 }
 
 export class Linear extends Model {
+  layerType = 'linear'
 
   constructor(
     input_dim = 0,
@@ -509,7 +516,7 @@ export class Linear extends Model {
     initializer = 'Xavier'
   ) {
 
-    super(void 0, 'linear',[input_dim, output_dim, initializer])
+    super(void 0,[input_dim, output_dim, initializer])
   }
 
   async finish(
@@ -523,71 +530,86 @@ export class Linear extends Model {
 
     let params = await self.parameters()
 
-    // TODO: self.output_shape = Number(params[0].shape()[-1])
+    // TODO: self.outputShape = Number(params[0].shape()[-1])
     // TODO: self.input_shape = Number(params[0].shape()[0])
   }
 
 }
 
 export class ReLU extends Model {
+  layerType = 'relu'
+
   constructor(
     id?: string
   ) {
-    super(id,'relu')
+    super(id)
   }
 }
 
 export class Dropout extends Model {
+  layerType = 'dropout'
+
   constructor(
     id?: string,
     rate = 0.5
   ) {
-    super(id, 'dropout', [rate])
+    super(id, [rate])
   }
 }
 
 export class Sigmoid extends Model {
+  layerType = 'sigmoid'
   constructor(
     id?: string
   ) {
-    super(id, 'sigmoid')
+    super(id)
   }
 }
 
 export class Softmax extends Model {
+  layerType = 'softmax'
+
   constructor(
     id?: string,
     dim=1
   ) {
-    super(id, 'softmax', [dim])
+    super(id, [dim])
   }
 }
 
 export class LogSoftmax extends Model {
+  layerType = 'logsoftmax'
+
   constructor(
     id?: string,
     dim=1
   ) {
-    super(id, 'logsoftmax', [dim])
+    super(id, [dim])
   }
 
 }
 
 export class Log extends Model {
+  layerType = 'log'
+
   constructor(id?: string) {
-    super(id, 'log')
+    super(id)
   }
 }
 
 export class Tanh extends Model {
+  layerType = 'tanh'
+
   constructor(id?: string) {
-    super(id, 'tanh')
+    super(id)
   }
 }
 
 export class MSELoss extends Model {
+  layerType = 'mseloss'
+
   constructor(id?: string) {
-    super(id, 'mseloss')
+    super(id)
   }
 
   async forward(
@@ -603,8 +625,10 @@ export class MSELoss extends Model {
 }
 
 export class NLLLoss extends Model {
+  layerType = 'nllloss'
+
   constructor(id?: string) {
-    super(id, 'nllloss')
+    super(id)
   }
 
 
@@ -620,6 +644,7 @@ export class NLLLoss extends Model {
 }
 
 export class CrossEntropyLoss extends Model {
+  layerType: 'crossentropyloss'
 
   // TODO: backward() to be implemented: grad = target - prediction
   // TODO: backward(): until IntegerTensor is available assume a one-hot vector is passed in.
@@ -628,7 +653,7 @@ export class CrossEntropyLoss extends Model {
     id?: string,
     dim = 1
   ) {
-    super(id, 'crossentropyloss', [dim])
+    super(id, [dim])
   }
 
   async forward(
