@@ -5,7 +5,8 @@ const uuid = require("uuid");
 const zmq = require("zmq");
 const Tensor_1 = require("./Tensor");
 const WorkQueue_1 = require("./WorkQueue");
-const verbose = true;
+const Model_1 = require("./Model");
+const verbose = false;
 const identity = uuid.v4();
 const socket = zmq.socket('dealer');
 socket.identity = identity;
@@ -26,6 +27,7 @@ function cmd(functionCall, params = []) {
 }
 exports.cmd = cmd;
 const wq = new WorkQueue_1.WorkQueue(job => {
+    console.log('sending:', job.data);
     socket.send(job.data);
 }, 1);
 socket.on('message', (res) => {
@@ -35,6 +37,7 @@ socket.on('message', (res) => {
     }
     if (job) {
         let r = res.toString();
+        console.log('receiving:', r);
         if (r.startsWith('Unity Error:')) {
             job.reject(new Error(r));
         }
@@ -44,14 +47,21 @@ socket.on('message', (res) => {
     }
 });
 function num_models() {
-    return no_params_func(cmd, 'num_models', 'int');
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return no_params_func(cmd, 'num_models', 'int');
+    });
 }
 exports.num_models = num_models;
 function get_model(id) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return yield Model_1.Model.getModel(id);
+    });
 }
 exports.get_model = get_model;
 function load(filename) {
-    return params_func(cmd, 'load_floattensor', [filename], 'FloatTensor');
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return params_func(cmd, 'load_floattensor', [filename], 'FloatTensor');
+    });
 }
 exports.load = load;
 function save(x, filename) {
@@ -91,26 +101,20 @@ exports.__getitem__ = __getitem__;
 function params_func(cmd, name, params, return_type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let res = yield wq.queue(JSON.stringify(cmd(name, params)));
-        if (verbose) {
-            console.log(res);
-        }
+        log(res);
         if (return_type == void 0) {
             return;
         }
         else if (return_type == 'FloatTensor') {
             if (res != '-1' && res != '') {
-                if (verbose) {
-                    console.log('FloatTensor.__init__: ' + res);
-                }
+                log('FloatTensor.__init__: ' + res);
                 return new Tensor_1.FloatTensor(res, true);
             }
             return;
         }
         else if (return_type == 'IntTensor') {
             if (res != '-1' && res != '') {
-                if (verbose) {
-                    console.log('IntTensor.__init__: ' + res);
-                }
+                log('IntTensor.__init__: ' + res);
                 return new Tensor_1.IntTensor(res, true);
             }
             return;
@@ -133,7 +137,7 @@ function params_func(cmd, name, params, return_type) {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
-                        models.push(get_model(Number(str_id)));
+                        models.push(yield get_model(str_id));
                     }
                 }
             }
@@ -161,12 +165,11 @@ function no_params_func(cmd, name, return_type) {
     return params_func(cmd, name, [], return_type);
 }
 exports.no_params_func = no_params_func;
-function send_json(message, response = true) {
+function sendJSON(message, response = true) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let data = JSON.stringify(message);
-        console.log(data);
         return yield wq.queue(data);
     });
 }
-exports.send_json = send_json;
+exports.sendJSON = sendJSON;
 //# sourceMappingURL=controller.js.map

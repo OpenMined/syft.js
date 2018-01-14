@@ -10,128 +10,10 @@ import {
 } from './AsyncInit'
 
 const TENSOR_SUPER = {}
-enum TSTypes {
-  int8,
-  int16,
-  int32,
-  int64,
-  int128,
-  float16,
-  float32,
-  float64,
-  float12
-}
-class TensorSerializer {
-  encodeType(
-    props: {
-      shapeLengthSetting     : number
-      dataShapeLengthSetting : number
-      dataLengthSetting      : number
-      shapeTypeSetting       : number
-      dataShapeTypeSetting   : number
-      dataTypeSetting        : number
-    }
-  ) {
-    return props.shapeLengthSetting +
-    props.dataShapeLengthSetting    * 25 +
-    props.dataLengthSetting         * 125 +
-    props.shapeTypeSetting          * 625 +
-    props.dataShapeTypeSetting      * 3125 +
-    props.dataTypeSetting           * 15625
-  }
 
-  decodeType(
-    type: number
-  ) {
-    return {
-      shapeLengthSetting     : type % 5,
-      dataShapeLengthSetting : type / 25 % 5,
-      dataLengthSetting      : type / 125 % 5,
-      shapeTypeSetting       : type / 625 % 5,
-      dataShapeTypeSetting   : type / 3125 % 5,
-      dataTypeSetting        : type / 15625 % 9
-    }
-  }
+import {TensorSerializer} from './TensorSerializer'
 
-  dataType(data: ArrayLike<number>) {
-    let max = data[0]
-    let min = data[0]
-    let len = data.length
-
-    for (let i = 1; i < len; i++) {
-      let val = data[i]
-      max = max > val ? max : val
-      min = min < val ? min : val
-    }
-
-    if (-128 <= min && max <= 127) {
-      return TSTypes.int8
-    }
-
-    if (-32768 <= min && max <= 32767) {
-      return TSTypes.int16
-    }
-
-    return TSTypes.int32
-  }
-
-  lenType(data: number|ArrayLike<number>) {
-    let max = -1
-    if (typeof data == 'number') {
-      max = data
-    } else {
-      max = data[0]
-      let len = data.length
-
-      for (let i = 1; i < len; i++) {
-        let val = data[i]
-        max = max > val ? max : val
-      }
-    }
-
-    if (max < 256) {
-      return TSTypes.int8
-    }
-
-    if (max < 65536) {
-      return TSTypes.int16
-    }
-
-    return TSTypes.int32
-  }
-
-  serialize(
-    t: Tensor,
-    optimizeStorage = false
-  ) {
-    let self = this
-
-    let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32
-
-    let props = {
-      shapeLengthSetting     : TSTypes.int32,
-      dataShapeLengthSetting : TSTypes.int32,
-      dataLengthSetting      : TSTypes.int32,
-      shapeTypeSetting       : TSTypes.int32,
-      dataShapeTypeSetting   : TSTypes.int32,
-      dataTypeSetting        : dataType
-    }
-
-    if (optimizeStorage) {
-      props.shapeLengthSetting     = self.lenType(t.data.shape.length)
-      props.dataShapeLengthSetting = self.lenType(t.data.shape.length)
-      props.dataLengthSetting      = self.lenType(t.data.data.length)
-      props.shapeTypeSetting       = self.lenType(t.data.shape)
-      props.dataShapeTypeSetting   = self.lenType(t.data.shape)
-
-      if (t.type == 'IntTensor') {
-        props.dataTypeSetting = self.dataType(t.data.data)
-      }
-    }
-
-
-  }
-}
+const tensorSerializer = new TensorSerializer
 
 export class Tensor extends AsyncInit implements IAsyncInit {
   static __tensor__: {[id: string]: Tensor} = {}
@@ -147,6 +29,18 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     if ($ !== TENSOR_SUPER) {
       throw new Error('Cannot Contruct Tensor')
     }
+  }
+
+  static deserialize(
+    str: string
+  ) {
+    return tensorSerializer.deserialize(str)
+  }
+
+  serialize(
+    optimizeStorage = false
+  ) {
+    return tensorSerializer.serialize(this, optimizeStorage)
   }
 
   finish(
@@ -194,7 +88,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     // send the command
-    let res = await controller.send_json(
+    let res = await controller.sendJSON(
     self.cmd(name, params))
 
     controller.log(res)
@@ -288,7 +182,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let res
 
     if (self.is_contiguous()) {
-      res = await controller.send_json({
+      res = await controller.sendJSON({
         'functionCall': 'to_numpy',
         'objectType': self.type,
         'objectIndex': self.id
@@ -1826,7 +1720,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       operation_cmd += '_'
     }
     // sends the command
-    let response = await controller.send_json(
+    let response = await controller.sendJSON(
       self.cmd(operation_cmd, [parameter])
     )
 
@@ -2293,7 +2187,7 @@ export class IntTensor extends Tensor {
   data: IntDimArray
   type = 'IntTensor'
   constructor(
-    data: string|any[],
+    data: string|any[]|IntDimArray,
     data_is_pointer = false
   ) {
     super(TENSOR_SUPER)
@@ -2304,10 +2198,21 @@ export class IntTensor extends Tensor {
       throw Error('Invalid Data')
     }
 
-    if (Array.isArray(data)) {
+    if (data instanceof IntDimArray) {
+      self.data = data
+
+      controller.sendJSON({
+        'objectType': self.type,
+        'functionCall': 'create',
+        'data': Array.from(self.data.data),
+        'shape': Array.from(self.data.shape)
+      })
+        .then(res => self.__finish__(res))
+        .catch(err => self.__error__(err))
+    } else if (Array.isArray(data)) {
       self.data = new IntDimArray(data)
 
-      controller.send_json({
+      controller.sendJSON({
         'objectType': self.type,
         'functionCall': 'create',
         'data': Array.from(self.data.data),
@@ -2328,7 +2233,7 @@ export class FloatTensor extends Tensor {
   type = 'FloatTensor'
 
   constructor(
-    data: string|any[],
+    data: string|any[]|FloatDimArray,
     autograd = false,
     data_is_pointer = false
   ) {
@@ -2344,10 +2249,21 @@ export class FloatTensor extends Tensor {
       self.autograd(true)
     }
 
-    if (Array.isArray(data)) {
+    if (data instanceof FloatDimArray) {
+      self.data = data
+
+      controller.sendJSON({
+        'objectType': self.type,
+        'functionCall': 'create',
+        'data': Array.from(self.data.data),
+        'shape': Array.from(self.data.shape)
+      })
+        .then(res => self.__finish__(res))
+        .catch(err => self.__error__(err))
+    } else if (Array.isArray(data)) {
       self.data = new FloatDimArray(data)
 
-      controller.send_json({
+      controller.sendJSON({
         'objectType': self.type,
         'functionCall': 'create',
         'data': Array.from(self.data.data),

@@ -3,142 +3,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const controller = require("./controller");
 const DimArray_1 = require("./DimArray");
+const AsyncInit_1 = require("./AsyncInit");
 const TENSOR_SUPER = {};
-var TSTypes;
-(function (TSTypes) {
-    TSTypes[TSTypes["int8"] = 0] = "int8";
-    TSTypes[TSTypes["int16"] = 1] = "int16";
-    TSTypes[TSTypes["int32"] = 2] = "int32";
-    TSTypes[TSTypes["int64"] = 3] = "int64";
-    TSTypes[TSTypes["int128"] = 4] = "int128";
-    TSTypes[TSTypes["float16"] = 5] = "float16";
-    TSTypes[TSTypes["float32"] = 6] = "float32";
-    TSTypes[TSTypes["float64"] = 7] = "float64";
-    TSTypes[TSTypes["float12"] = 8] = "float12";
-})(TSTypes || (TSTypes = {}));
-class TensorSerializer {
-    encodeType(props) {
-        return props.shapeLengthSetting +
-            props.dataShapeLengthSetting * 25 +
-            props.dataLengthSetting * 125 +
-            props.shapeTypeSetting * 625 +
-            props.dataShapeTypeSetting * 3125 +
-            props.dataTypeSetting * 15625;
-    }
-    decodeType(type) {
-        return {
-            shapeLengthSetting: type % 5,
-            dataShapeLengthSetting: type / 25 % 5,
-            dataLengthSetting: type / 125 % 5,
-            shapeTypeSetting: type / 625 % 5,
-            dataShapeTypeSetting: type / 3125 % 5,
-            dataTypeSetting: type / 15625 % 9
-        };
-    }
-    dataType(data) {
-        let max = data[0];
-        let min = data[0];
-        let len = data.length;
-        for (let i = 1; i < len; i++) {
-            let val = data[i];
-            max = max > val ? max : val;
-            min = min < val ? min : val;
-        }
-        if (-128 <= min && max <= 127) {
-            return TSTypes.int8;
-        }
-        if (-32768 <= min && max <= 32767) {
-            return TSTypes.int16;
-        }
-        return TSTypes.int32;
-    }
-    lenType(data) {
-        let max = -1;
-        if (typeof data == 'number') {
-            max = data;
-        }
-        else {
-            max = data[0];
-            let len = data.length;
-            for (let i = 1; i < len; i++) {
-                let val = data[i];
-                max = max > val ? max : val;
-            }
-        }
-        if (max < 256) {
-            return TSTypes.int8;
-        }
-        if (max < 65536) {
-            return TSTypes.int16;
-        }
-        return TSTypes.int32;
-    }
-    serialize(t, optimizeStorage = false) {
-        let self = this;
-        let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32;
-        let props = {
-            shapeLengthSetting: TSTypes.int32,
-            dataShapeLengthSetting: TSTypes.int32,
-            dataLengthSetting: TSTypes.int32,
-            shapeTypeSetting: TSTypes.int32,
-            dataShapeTypeSetting: TSTypes.int32,
-            dataTypeSetting: dataType
-        };
-        if (optimizeStorage) {
-            props.shapeLengthSetting = self.lenType(t.data.shape.length);
-            props.dataShapeLengthSetting = self.lenType(t.data.shape.length);
-            props.dataLengthSetting = self.lenType(t.data.data.length);
-            props.shapeTypeSetting = self.lenType(t.data.shape);
-            props.dataShapeTypeSetting = self.lenType(t.data.shape);
-            if (t.type == 'IntTensor') {
-                props.dataTypeSetting = self.dataType(t.data.data);
-            }
-        }
-    }
-}
-class Tensor {
+const TensorSerializer_1 = require("./TensorSerializer");
+const tensorSerializer = new TensorSerializer_1.TensorSerializer;
+class Tensor extends AsyncInit_1.AsyncInit {
     constructor($) {
-        this.__waits__ = [];
-        this.__evict__ = false;
+        super();
         if ($ !== TENSOR_SUPER) {
             throw new Error('Cannot Contruct Tensor');
         }
     }
-    __finish__(res) {
-        let self = this;
-        if (res) {
-            self.id = res;
-            self.__ready__ = true;
-            self.__waits__.forEach(wait => wait.res());
-        }
-        else {
-            let err = new Error('Network Tensor Contruction Failed');
-            self.__error__ = err;
-            self.__waits__.forEach(wait => wait.rej(err));
-        }
-        self.__waits__ = [];
+    static deserialize(str) {
+        return tensorSerializer.deserialize(str);
     }
-    ready() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            if (self.__error__) {
-                throw self.__error__;
-            }
-            else if (self.__evict__) {
-                throw new Error('This Tensor Has Been Deleted');
-            }
-            else if (self.__ready__) {
-                return;
-            }
-            yield new Promise((res, rej) => {
-                self.__waits__.push({ res, rej });
-            });
-        });
+    serialize(optimizeStorage = false) {
+        return tensorSerializer.serialize(this, optimizeStorage);
+    }
+    finish(id) {
+        let self = this;
+        self.id = id;
     }
     delete() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            self.__evict__ = true;
+            self.__delete__();
             yield self.ready();
             if (self.id) {
                 self.no_params_func('delete');
@@ -155,7 +44,7 @@ class Tensor {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let res = yield controller.send_json(self.cmd(name, params));
+            let res = yield controller.sendJSON(self.cmd(name, params));
             controller.log(res);
             if (return_response) {
                 if (return_type == 'IntTensor') {
@@ -223,7 +112,7 @@ class Tensor {
             yield self.ready();
             let res;
             if (self.is_contiguous()) {
-                res = yield controller.send_json({
+                res = yield controller.sendJSON({
                     'functionCall': 'to_numpy',
                     'objectType': self.type,
                     'objectIndex': self.id
@@ -497,8 +386,8 @@ class Tensor {
             let self = this;
             yield self.ready();
             let res = yield self.get('creators');
-            if (res.length > 0) {
-                return [];
+            if (typeof res == 'string' && res.length > 0) {
+                return res.split(',').slice(0, -1).map(a => Number(a));
             }
             return [];
         });
@@ -1019,7 +908,7 @@ class Tensor {
             if (inline) {
                 operation_cmd += '_';
             }
-            let response = yield controller.send_json(self.cmd(operation_cmd, [parameter]));
+            let response = yield controller.sendJSON(self.cmd(operation_cmd, [parameter]));
             return new FloatTensor(String(response), true);
         });
     }
@@ -1209,20 +1098,32 @@ class IntTensor extends Tensor {
         if (!data) {
             throw Error('Invalid Data');
         }
-        if (Array.isArray(data)) {
-            self.data = new DimArray_1.IntDimArray(data);
-            self.__ready__ = false;
-            controller.send_json({
+        if (data instanceof DimArray_1.IntDimArray) {
+            self.data = data;
+            controller.sendJSON({
                 'objectType': self.type,
                 'functionCall': 'create',
                 'data': Array.from(self.data.data),
                 'shape': Array.from(self.data.shape)
-            }).then(res => self.__finish__(res));
+            })
+                .then(res => self.__finish__(res))
+                .catch(err => self.__error__(err));
+        }
+        else if (Array.isArray(data)) {
+            self.data = new DimArray_1.IntDimArray(data);
+            controller.sendJSON({
+                'objectType': self.type,
+                'functionCall': 'create',
+                'data': Array.from(self.data.data),
+                'shape': Array.from(self.data.shape)
+            })
+                .then(res => self.__finish__(res))
+                .catch(err => self.__error__(err));
         }
         else if (data_is_pointer) {
             self.id = data;
             self.data_is_pointer = true;
-            self.__ready__ = true;
+            self.__finish__(data);
         }
     }
 }
@@ -1238,20 +1139,32 @@ class FloatTensor extends Tensor {
         if (autograd) {
             self.autograd(true);
         }
-        if (Array.isArray(data)) {
-            self.data = new DimArray_1.FloatDimArray(data);
-            self.__ready__ = false;
-            controller.send_json({
+        if (data instanceof DimArray_1.FloatDimArray) {
+            self.data = data;
+            controller.sendJSON({
                 'objectType': self.type,
                 'functionCall': 'create',
                 'data': Array.from(self.data.data),
                 'shape': Array.from(self.data.shape)
-            }).then(res => self.__finish__(res));
+            })
+                .then(res => self.__finish__(res))
+                .catch(err => self.__error__(err));
+        }
+        else if (Array.isArray(data)) {
+            self.data = new DimArray_1.FloatDimArray(data);
+            controller.sendJSON({
+                'objectType': self.type,
+                'functionCall': 'create',
+                'data': Array.from(self.data.data),
+                'shape': Array.from(self.data.shape)
+            })
+                .then(res => self.__finish__(res))
+                .catch(err => self.__error__(err));
         }
         else if (data_is_pointer) {
             self.id = data;
             self.data_is_pointer = true;
-            self.__ready__ = true;
+            self.__finish__(data);
         }
     }
 }

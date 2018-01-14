@@ -6,66 +6,58 @@ const controller = require("./controller");
 const Tensor_1 = require("./Tensor");
 const AsyncInit_1 = require("./AsyncInit");
 class Model extends AsyncInit_1.AsyncInit {
-    constructor(id, layer_type, params = []) {
+    constructor(id, params = []) {
         super();
+        this.type = 'model';
+        this.layerType = '(unknown)';
+        this.outputShape = '(dynamic)';
         let self = this;
-        self.params = false;
-        self._layer_type = layer_type;
-        self.type = 'model';
-        self.output_shape = '(dynamic)';
         if (id) {
             self.__finish__(id);
         }
         else {
-            controller.send_json(self.cmd('create', [self._layer_type, ...params]))
+            controller.sendJSON(self.cmd('create', [self.layerType, ...params]))
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
     }
+    static getModel(id) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let layerType = yield controller.sendJSON({
+                functionCall: 'model_type',
+                objectType: 'model',
+                objectIndex: id,
+                tensorIndexParams: []
+            });
+            switch (layerType) {
+                case 'linear':
+                    return new Linear(id);
+                case 'sigmoid':
+                    return new Sigmoid(id);
+                case 'crossentropyloss':
+                    return new CrossEntropyLoss(id);
+                case 'tanh':
+                    return new Tanh(id);
+                case 'dropout':
+                    return new Dropout(id);
+                case 'softmax':
+                    return new Softmax(id);
+                case 'logsoftmax':
+                    return new LogSoftmax(id);
+                case 'relu':
+                    return new ReLU(id);
+                case 'log':
+                    return new Log(id);
+                case 'policy':
+                    return new Policy(id);
+                default:
+                    throw new Error(`Unsupported Layer Type: '${layerType}'.`);
+            }
+        });
+    }
     finish(id) {
         let self = this;
         self.id = id;
-    }
-    discover() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            self._layer_type = yield self.layer_type();
-            if (self._layer_type == 'linear') {
-                return new Linear(self.id);
-            }
-            else if (self._layer_type == 'sigmoid') {
-                return new Sigmoid(self.id);
-            }
-            else if (self._layer_type == 'crossentropyloss') {
-                return new CrossEntropyLoss(self.id);
-            }
-            else if (self._layer_type == 'tanh') {
-                return new Tanh(self.id);
-            }
-            else if (self._layer_type == 'dropout') {
-                return new Dropout(self.id);
-            }
-            else if (self._layer_type == 'softmax') {
-                return new Softmax(self.id);
-            }
-            else if (self._layer_type == 'logsoftmax') {
-                return new LogSoftmax(self.id);
-            }
-            else if (self._layer_type == 'relu') {
-                return new ReLU(self.id);
-            }
-            else if (self._layer_type == 'log') {
-                return new Log(self.id);
-            }
-            else if (self._layer_type == 'policy') {
-                return new Policy(self.id);
-            }
-            else {
-                console.log('Attempted to discover the type - but it wasn\'t supported. Has the layer type '
-                    + self._layer_type + ' been added to the discover() method in nn.js?');
-            }
-        });
     }
     __call__(...args) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -192,16 +184,16 @@ class Model extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let layer_type = `${yield self.layer_type()}_${self.id} (${self.type})`;
-            let output_shape = '';
-            if (typeof self.output_shape == 'number') {
-                output_shape = String(self.output_shape);
+            let layerType = `${yield self.getLayerType()}_${self.id} (${self.type})`;
+            let outputShape = '';
+            if (typeof self.outputShape == 'number') {
+                outputShape = String(self.outputShape);
             }
             else {
-                output_shape = String(self.output_shape);
+                outputShape = String(self.outputShape);
             }
             let n_param = String(yield self.num_parameters());
-            let output = layer_type + ' '.repeat(29 - layer_type.length) + output_shape + ' '.repeat(26 - output_shape.length) + n_param + '\n';
+            let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n';
             if (verbose) {
                 let single = '_________________________________________________________________\n';
                 let header = 'Layer (type)                 Output Shape              Param #   \n';
@@ -236,7 +228,7 @@ class Model extends AsyncInit_1.AsyncInit {
             return controller.no_params_func(self.cmd, 'activation', 'FloatTensor', delete_after_use = false);
         });
     }
-    layer_type() {
+    getLayerType() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
@@ -276,24 +268,25 @@ class Model extends AsyncInit_1.AsyncInit {
                 return output;
             }
             else {
-                return `<syft.nn.${self._layer_type} at ${self.id}>`;
+                return `<syft.nn.${self.layerType} at ${self.id}>`;
             }
         });
     }
 }
 exports.Model = Model;
 class Policy extends Model {
-    constructor(model, optimizer, state_type = 'discrete') {
-        super(void 0, 'policy', [model.id, optimizer.id]);
+    constructor(model, optimizer, stateType = 'discrete') {
+        super(void 0, [model.id, optimizer.id]);
+        this.layerType = 'policy';
         let self = this;
-        self.state_type = state_type;
+        self.stateType = stateType;
         self.optimizer = optimizer;
     }
     sample(input) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.params_func(self.cmd, 'sample', [input.id], return_type = 'IntTensor');
+            return controller.params_func(self.cmd, 'sample', [input.id], 'IntTensor');
         });
     }
     parameters() {
@@ -307,7 +300,7 @@ class Policy extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (self.state_type == 'discrete') {
+            if (self.stateType == 'discrete') {
                 if (args.length == 1) {
                     return self.sample(args[0]);
                 }
@@ -318,7 +311,7 @@ class Policy extends Model {
                     return self.sample(args[0], args[1], args[2]);
                 }
             }
-            else if (self.state_type == 'continuous') {
+            else if (self.stateType == 'continuous') {
                 if (args.length == 1) {
                     return self.forward(args[0]);
                 }
@@ -330,7 +323,7 @@ class Policy extends Model {
                 }
             }
             else {
-                console.log(`Error: State type ${self.state_type} unknown`);
+                console.log(`Error: State type ${self.stateType} unknown`);
             }
         });
     }
@@ -338,11 +331,9 @@ class Policy extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let raw_history = yield controller.params_func(self.cmd, 'get_history', [], return_type = 'string');
-            let history_idx = list(map(lambda, x, list(map(lambda, y, int(y), x.split(','))), raw_history[2], -1, split('],[')));
             let losses = [];
             let rewards = [];
-            for (let loss, reward of history_idx) {
+            for (let { loss, reward } of history_idx) {
                 if (loss != -1) {
                     losses.push(yield controller.get_tensor(loss));
                 }
@@ -363,7 +354,9 @@ class Policy extends Model {
 exports.Policy = Policy;
 class Sequential extends Model {
     constructor(layers) {
-        super(void 0, 'sequential');
+        super(void 0);
+        this.layerType = 'sequential';
+        let self = this;
         if (Array.isArray(layers)) {
             for (let layer of layers) {
                 self.add(layer);
@@ -386,7 +379,8 @@ class Sequential extends Model {
             let double = '=================================================================\n';
             let non_trainable_params = 'Non-trainable params: 0' + '\n';
             let output = single + header + double;
-            let mods = Async.forEach(yield self.models(), (m) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            Async.each;
+            let mods = yield Async.map(yield self.models(), (m) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return yield m.summary(false, true);
             }));
             output += mods.join(single);
@@ -399,8 +393,9 @@ class Sequential extends Model {
             let self = this;
             yield self.ready();
             let output = '';
-            for (let m of yield self.models())
-                : output += m.__repr__();
+            for (let m of yield self.models()) {
+                output += m.__repr__();
+            }
             return output;
         });
     }
@@ -415,7 +410,8 @@ class Sequential extends Model {
 exports.Sequential = Sequential;
 class Linear extends Model {
     constructor(input_dim = 0, output_dim = 0, id, initializer = 'Xavier') {
-        super(void 0, 'linear', [input_dim, output_dim, initializer]);
+        super(void 0, [input_dim, output_dim, initializer]);
+        this.layerType = 'linear';
     }
     finish(id) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -429,49 +425,57 @@ class Linear extends Model {
 exports.Linear = Linear;
 class ReLU extends Model {
     constructor(id) {
-        super(id, 'relu');
+        super(id);
+        this.layerType = 'relu';
     }
 }
 exports.ReLU = ReLU;
 class Dropout extends Model {
     constructor(id, rate = 0.5) {
-        super(id, 'dropout', [rate]);
+        super(id, [rate]);
+        this.layerType = 'dropout';
     }
 }
 exports.Dropout = Dropout;
 class Sigmoid extends Model {
     constructor(id) {
-        super(id, 'sigmoid');
+        super(id);
+        this.layerType = 'sigmoid';
     }
 }
 exports.Sigmoid = Sigmoid;
 class Softmax extends Model {
     constructor(id, dim = 1) {
-        super(id, 'softmax', [dim]);
+        super(id, [dim]);
+        this.layerType = 'softmax';
     }
 }
 exports.Softmax = Softmax;
 class LogSoftmax extends Model {
     constructor(id, dim = 1) {
-        super(id, 'logsoftmax', [dim]);
+        super(id, [dim]);
+        this.layerType = 'logsoftmax';
     }
 }
 exports.LogSoftmax = LogSoftmax;
 class Log extends Model {
     constructor(id) {
-        super(id, 'log');
+        super(id);
+        this.layerType = 'log';
     }
 }
 exports.Log = Log;
 class Tanh extends Model {
     constructor(id) {
-        super(id, 'tanh');
+        super(id);
+        this.layerType = 'tanh';
     }
 }
 exports.Tanh = Tanh;
 class MSELoss extends Model {
     constructor(id) {
-        super(id, 'mseloss');
+        super(id);
+        this.layerType = 'mseloss';
     }
     forward(input, target) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -484,7 +488,8 @@ class MSELoss extends Model {
 exports.MSELoss = MSELoss;
 class NLLLoss extends Model {
     constructor(id) {
-        super(id, 'nllloss');
+        super(id);
+        this.layerType = 'nllloss';
     }
     forward(input, target) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -497,7 +502,7 @@ class NLLLoss extends Model {
 exports.NLLLoss = NLLLoss;
 class CrossEntropyLoss extends Model {
     constructor(id, dim = 1) {
-        super(id, 'crossentropyloss', [dim]);
+        super(id, [dim]);
     }
     forward(input, target) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -508,4 +513,4 @@ class CrossEntropyLoss extends Model {
     }
 }
 exports.CrossEntropyLoss = CrossEntropyLoss;
-//# sourceMappingURL=nn.js.map
+//# sourceMappingURL=Model.js.map

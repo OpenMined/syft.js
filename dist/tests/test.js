@@ -1,32 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
 const syft = require("..");
-function test() {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let a = new syft.FloatTensor([
-            [
-                [1, 1, 1],
-                [1, 1, 1]
-            ],
-            [
-                [1, 1, 1],
-                [1, 1, 1]
-            ]
-        ]);
-        let b = new syft.FloatTensor([
-            [
-                [2, 2, 2],
-                [2, 2, 2]
-            ],
-            [
-                [2, 2, 2],
-                [2, 2, 2]
-            ]
-        ]);
-        let c = yield a.__add__(b);
-        return c;
-    });
+let log = console.log.bind(console, 'logging:');
+let ts = new syft.TensorSerializer;
+for (let i = 0; i < 5 * 5 * 5 * 5 * 5 * 9; i++) {
+    let props = ts.decodeType(i);
+    let type = ts.encodeType(props);
+    if (type !== i) {
+        log(i, '=>', type);
+    }
 }
-test().then(val => console.log('done', val), err => console.log('error', err));
+log('done');
 //# sourceMappingURL=test.js.map

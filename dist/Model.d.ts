@@ -1,14 +1,15 @@
+import { Optimizer } from './Optimizer';
 import { Tensor } from './Tensor';
 import { AsyncInit, IAsyncInit } from './AsyncInit';
 export declare class Model extends AsyncInit implements IAsyncInit {
+    type: string;
+    layerType: string;
     id?: string;
     params: boolean;
-    type: string;
-    output_shape?: string;
-    _layer_type: string;
-    constructor(id?: string, layer_type: string, params?: any[]);
+    outputShape?: string;
+    static getModel(id: string): Promise<any>;
+    constructor(id?: string, params?: any[]);
     finish(id: string): void;
-    discover(): Promise<any>;
     __call__(...args: any[]): Promise<any>;
     parameters(): Promise<any>;
     num_parameters(): Promise<any>;
@@ -19,7 +20,7 @@ export declare class Model extends AsyncInit implements IAsyncInit {
     __len__(): Promise<any>;
     __getitem__(idx: number): Promise<any>;
     activation(): Promise<any>;
-    layer_type(): Promise<any>;
+    getLayerType(): Promise<any>;
     cmd(function_call: string, params?: any[]): {
         functionCall: string;
         objectType: string;
@@ -30,15 +31,17 @@ export declare class Model extends AsyncInit implements IAsyncInit {
     __repr__(verbose?: boolean): Promise<string>;
 }
 export declare class Policy extends Model {
-    state_type: any;
-    optimizer: any;
-    constructor(model: any, optimizer: any, state_type?: string);
+    layerType: string;
+    stateType: any;
+    optimizer: Optimizer;
+    constructor(model: any, optimizer: Optimizer, stateType?: string);
     sample(input: Tensor): Promise<any>;
     parameters(): Promise<any>;
     __call__(...args: any[]): Promise<any>;
     history(): Promise<(Tensor | undefined)[][]>;
 }
 export declare class Sequential extends Model {
+    layerType: string;
     constructor(layers?: Model[]);
     add(model: Model): Promise<void>;
     summary(): Promise<void>;
@@ -46,39 +49,50 @@ export declare class Sequential extends Model {
     __getitem__(idx: number): Promise<any>;
 }
 export declare class Linear extends Model {
+    layerType: string;
     constructor(input_dim?: number, output_dim?: number, id?: string, initializer?: string);
     finish(id: string): Promise<void>;
 }
 export declare class ReLU extends Model {
+    layerType: string;
     constructor(id?: string);
 }
 export declare class Dropout extends Model {
+    layerType: string;
     constructor(id?: string, rate?: number);
 }
 export declare class Sigmoid extends Model {
+    layerType: string;
     constructor(id?: string);
 }
 export declare class Softmax extends Model {
+    layerType: string;
     constructor(id?: string, dim?: number);
 }
 export declare class LogSoftmax extends Model {
+    layerType: string;
     constructor(id?: string, dim?: number);
 }
 export declare class Log extends Model {
+    layerType: string;
     constructor(id?: string);
 }
 export declare class Tanh extends Model {
+    layerType: string;
     constructor(id?: string);
 }
 export declare class MSELoss extends Model {
+    layerType: string;
     constructor(id?: string);
     forward(input: Tensor, target: Tensor): Promise<any>;
 }
 export declare class NLLLoss extends Model {
+    layerType: string;
     constructor(id?: string);
     forward(input: Tensor, target: Tensor): Promise<any>;
 }
 export declare class CrossEntropyLoss extends Model {
+    layerType: 'crossentropyloss';
     constructor(id?: string, dim?: number);
     forward(input: Tensor, target: Tensor): Promise<any>;
 }
