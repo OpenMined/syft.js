@@ -16,7 +16,7 @@ class Optimizer extends AsyncInit_1.AsyncInit {
         let self = this;
         self.optimizer_type = optimizer_type;
         self.type = 'Optimizer';
-        controller.sendJSON(self.cmd('create', [self.optimizer_type, ...params], h_params))
+        controller.send_json(self.cmd('create', [self.optimizer_type, ...params], h_params))
             .then(res => self.__finish__(res))
             .catch(err => self.__error__(err));
     }

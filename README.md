@@ -1,6 +1,11 @@
 # syft.js
 
-## install from github
+## Resources
+  - [Setup Repo](./docs/setup.md)
+  - [Interactive Console](./docs/interactive-console.md)
+  <!-- - [Contribute](./docs/contribute.md) -->
+
+## install with npm from github
 ```
 $ npm install --save OpenMined/syft.js#master
 ```
