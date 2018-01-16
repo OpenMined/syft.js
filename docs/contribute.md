@@ -7,7 +7,7 @@ Step to help you get setup contribute to `syft.js`.
 
 # Step 1
 Fork the `syft.js` repo on Github.
-![Fork Syft.js](fork-repo.png)
+![Fork Syft.js](./img/fork-repo.png)
 
 # Step 2
 Clone your fork to your local machine and follow the [Setup Syft.js Repo](setup.md) guide.
