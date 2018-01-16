@@ -181,7 +181,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
     let res
 
-    if (self.is_contiguous()) {
+    if (await self.is_contiguous()) {
       res = await controller.sendJSON({
         'functionCall': 'to_numpy',
         'objectType': self.type,
@@ -734,7 +734,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     if (typeof res == 'string' && res.length > 0) {
       //TODO: figure this out
       // list(map(lambda x: Number(x), res.split(',')[0:-1]))
-      return res.split(',').slice(0, -1).map(a => Number(a))
+      return res.split(',').slice(0, -1)
     }
     return []
   }
@@ -1658,9 +1658,11 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     return self.no_params_func('zero_')
   }
 
-  async __str__() {
+  async toString() {
     let self = this
     await self.ready()
+
+    let shape = await self.shape()
 
     return String(await self.to_numpy()).replace(']', ' ').replace('[', ' ')
   }

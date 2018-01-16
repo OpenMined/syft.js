@@ -114,7 +114,7 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     unsqueeze(dim: number): Promise<string | this | FloatTensor | IntTensor | null>;
     unsqueeze_(dim: number): Promise<string | this | FloatTensor | IntTensor | null>;
     zero_(): Promise<string | this | FloatTensor | IntTensor | null>;
-    __str__(): Promise<string>;
+    toString(): Promise<string>;
     cpu(): Promise<string | this | FloatTensor | IntTensor | null>;
     gpu(): Promise<string | this | FloatTensor | IntTensor | null>;
     arithmetic_operation(x: number | Tensor, name: string, inline?: boolean): Promise<FloatTensor>;

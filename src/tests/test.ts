@@ -28,7 +28,7 @@ let log = console.log.bind(console, 'logging:')
 //
 //   let c = await a.__add__(b)
 //
-//   log(await c.__str__())
+//   log(await c.toString())
 //
 //   return c
 // }
