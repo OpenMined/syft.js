@@ -3,7 +3,8 @@
 ## Resources
   - [Setup Repo](./docs/setup.md)
   - [Interactive Console](./docs/interactive-console.md)
-  <!-- - [Contribute](./docs/contribute.md) -->
+  - [Contribute](./docs/contribute.md)
+  - [TypeScript Style Guidelines](./docs/style-guidelines.md)
 
 ## install with npm from github
 ```
