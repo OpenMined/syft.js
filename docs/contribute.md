@@ -16,7 +16,7 @@ Clone your fork to your local machine and follow the [Setup Syft.js Repo](setup.
 Choose or create an issue on github to work on.
 
 # Step 4
-Make code changes and run TypeScript compiler, making sure there are on TypeScript Errors.
+Make code changes and run TypeScript compiler, making sure there are *NO* TypeScript Errors.
 
 # Step 5
 Write tests for your code, and make sure to follow our [TypeScript Style Guidelines](style-guidelines.md)
