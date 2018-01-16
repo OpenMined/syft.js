@@ -4,16 +4,16 @@
   - Strings use single quotes `'`.
   - Prefer Template String over String Concatenation.
   - No Semicolons (except in for loops).
-  - Indent with 2 Spaces
+  - Indent with 2 Spaces.
   - Always use block bodies `{ /*code*/ }` for loops and if/else statements.
   - Prefer `let` statements over `var` statements.
   - Break up long lines.
   - Prefer arrow function over anonymous functions.
 
 ## Functions
-  - function parameters on separate lines
-  - define parameter types
-  - define return type
+  - function parameters on separate lines.
+  - define parameter types.
+  - define return type.
 
 example:
 ```javascript
@@ -26,7 +26,7 @@ function add(
 ```
 
 ## Switches
-  - `case` statements have same indent as `switch` statements
+  - `case` statements have same indent as `switch` statements.
   - Always include a `default` case.
 
 example
