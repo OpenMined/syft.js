@@ -8,7 +8,7 @@ Data is an array that stores all the numeric values in the tensor.  The Shape, S
 We can think of Data as a nested array that was flattened, and the Shape as the information to reconstruct the nested array.
 
 Example: 2x3x2
-```
+```javascript
 nested = [
   [
     [0, 1],
@@ -45,7 +45,7 @@ It turns out that there is a nice mathematical relationship here.
 Stride[i] = 1 * Shape[i + 1] * Shape[i + 2] ... * Shape[i + (Shape.Length - 1)]
 ```
 This can nicely be calculated using an inverse `for` loop and we can also calculate the `Size` at the same time.
-```
+```javascript
 Size = 1
 for (i = Shape.Length - 1; i >= 0; i--) {
   Stride[i] = Size
@@ -53,13 +53,13 @@ for (i = Shape.Length - 1; i >= 0; i--) {
 }
 ```
 With the example above we would get the following values for Strides:
-```
+```javascript
 Stride[0] = 6
 Stride[1] = 2
 Stride[2] = 1
 ```
 With a Size:
-```
+```javascript
 Size = 12
 ```
 
