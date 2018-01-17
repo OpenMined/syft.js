@@ -31,7 +31,7 @@ shape = [2, 3, 2]
 Shape describes the number of channels in each dimension.  We can see this in the above example.
 
 ## Size
-Size is the total number of unique coordinates that can be achieved with the given Shape.  this is equivalent to multiplying all the shape values together. As for the above example the Size would be `2 * 3 * 2` or `12`.
+Size is the total number of unique coordinates that can be achieved with the given Shape.  This is equivalent to multiplying all the shape values together. As for the above example, the Size would be `2 * 3 * 2` or `12`.
 
 # Strides
 Strides are the distance between values in a channel of a given dimension.  If we look at the `nested` array in the example above, we can come up with a simple indexing model to find the distances.
