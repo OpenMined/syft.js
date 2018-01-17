@@ -264,26 +264,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
             }));
         });
     }
-    __add__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return self.arithmetic_operation(x, 'add', false);
-        });
-    }
-    __iadd__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return self.arithmetic_operation(x, 'add', true);
-        });
-    }
     backward(grad) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
@@ -490,26 +470,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
             }), self.type);
         });
     }
-    __truediv__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'div', false);
-        });
-    }
-    __itruediv__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'div', true);
-        });
-    }
     keepgrad() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
@@ -520,26 +480,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
             else {
                 return false;
             }
-        });
-    }
-    __pow__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'pow', false);
-        });
-    }
-    __ipow__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'pow', true);
         });
     }
     pow(x) {
@@ -616,53 +556,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             return self.get('grad', true);
-        });
-    }
-    __mod__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'remainder', false);
-        });
-    }
-    __imod__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return self.arithmetic_operation(x, 'remainder', true);
-        });
-    }
-    __mul__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'mul', false);
-        });
-    }
-    __imul__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return yield self.arithmetic_operation(x, 'mul', true);
-        });
-    }
-    __neg__() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return yield self.neg();
         });
     }
     neg() {
@@ -859,26 +752,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
             return controller.sendJSON(self.cmd({
                 functionCall: 'trunc'
             }), self.type);
-        });
-    }
-    __sub__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return self.arithmetic_operation(x, 'sub', false);
-        });
-    }
-    __isub__(x) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
-            return self.arithmetic_operation(x, 'sub', true);
         });
     }
     view(...args) {

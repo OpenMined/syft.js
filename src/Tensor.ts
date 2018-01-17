@@ -476,52 +476,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     }))
   }
 
-  /*
-  * Performs element-wise addition arithmetic between two tensors
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     The Second tensor to perform addition with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __add__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return self.arithmetic_operation(x, 'add', false)
-  }
-
-  /*
-  * Performs in place element-wise addition arithmetic between two tensors
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     The Second tensor to perform addition with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __iadd__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return self.arithmetic_operation(x, 'add', true)
-  }
-
   //TODO: get the type of grad
   async backward(grad?: any) {
     let self = this
@@ -880,52 +834,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     }), self.type)
   }
 
-  /*
-  * Performs division arithmetic between two tensors
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Second divident tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __truediv__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'div', false)
-  }
-
-  /*
-  * Performs division arithmetic between two tensors inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Second divident tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __itruediv__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'div', true)
-  }
-
   async keepgrad() {
     let self = this
     await self.ready()
@@ -935,54 +843,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     } else {
       return false
     }
-  }
-
-  /*
-  * Takes the power of each element in input ('self') with 'x' and
-  * returns a tensor with the result.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Exponent tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __pow__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'pow', false)
-  }
-
-  /*
-  * Takes the power of each element in input ('self') with 'x' and
-  * returns a tensor with the result inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Exponent tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __ipow__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'pow', true)
   }
 
   /*
@@ -1135,105 +995,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     return self.get('grad', true)
-  }
-
-  /*
-  * Performs Modulus arithmetic operation between two tensors.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Dividend tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __mod__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'remainder', false)
-  }
-
-  /*
-  * Performs Modulus arithmetic operation between two tensors inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Dividend tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __imod__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return self.arithmetic_operation(x, 'remainder', true)
-  }
-
-  /*
-  * Performs Multiplication arithmetic operation between two tensors.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Second tensor to be multiplied with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __mul__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'mul', false)
-  }
-
-  /*
-  * Performs Multiplication arithmetic operation between two tensors inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Second tensor to be multiplied with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __imul__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return await self.arithmetic_operation(x, 'mul', true)
-  }
-
-  async __neg__() {
-    let self = this
-    await self.ready()
-
-    return await self.neg()
   }
 
   /*
@@ -1573,52 +1334,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     return controller.sendJSON(self.cmd({
       functionCall: 'trunc'
     }), self.type)
-  }
-
-  /*
-  * Performs element-wise substraction arithmetic between two tensors
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     The Second tensor to perform addition with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  */
-  async __sub__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return self.arithmetic_operation(x, 'sub', false)
-  }
-
-  /*
-  * Performs element-wise substraction arithmetic between two tensors
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     The Second tensor to perform addition with.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
-  */
-  async __isub__(
-    x: Tensor
-  ) {
-    let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
-
-    return self.arithmetic_operation(x, 'sub', true)
   }
 
   //TODO: figure this out (any)?

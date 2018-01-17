@@ -39,8 +39,6 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     asin_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     atan(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     atan_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __add__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __iadd__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     backward(grad?: any): Promise<void>;
     ceil(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     ceil_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -61,11 +59,7 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     index_add(indices: any, dim: number, x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     index_add_(indices: any, dim: number, x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     index_select(dim: number, indices: any): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __truediv__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __itruediv__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     keepgrad(): Promise<boolean>;
-    __pow__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __ipow__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     pow(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     pow_(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     floor(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -74,11 +68,6 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     round_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     mm(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     grad(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __mod__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __imod__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __mul__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __imul__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __neg__(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     neg(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     neg_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     relu(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -99,8 +88,6 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     sqrt_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     trace(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     trunc(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __sub__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __isub__(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     view(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     view_(...args: any[]): Promise<this>;
     view_as(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
