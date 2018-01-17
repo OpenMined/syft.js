@@ -17,13 +17,8 @@ function log(message) {
     }
 }
 exports.log = log;
-function cmd(functionCall, params = []) {
-    return {
-        functionCall: functionCall,
-        objectType: 'controller',
-        objectIndex: '-1',
-        tensorIndexParams: params
-    };
+function cmd(options) {
+    return Object.assign({ objectType: 'controller', objectIndex: '-1', tensorIndexParams: [] }, options);
 }
 exports.cmd = cmd;
 const wq = new WorkQueue_1.WorkQueue(job => {
@@ -48,7 +43,9 @@ socket.on('message', (res) => {
 });
 function num_models() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return no_params_func(cmd, 'num_models', 'int');
+        return sendJSON(cmd({
+            functionCall: 'num_models'
+        }), 'int');
     });
 }
 exports.num_models = num_models;
@@ -60,7 +57,10 @@ function get_model(id) {
 exports.get_model = get_model;
 function load(filename) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return params_func(cmd, 'load_floattensor', [filename], 'FloatTensor');
+        return sendJSON(cmd({
+            functionCall: 'load_floattensor',
+            tensorIndexParams: [filename]
+        }), 'FloatTensor');
     });
 }
 exports.load = load;
@@ -70,23 +70,35 @@ function save(x, filename) {
 exports.save = save;
 function concatenate(tensors, axis = 0) {
     let ids = tensors.map(t => t.id);
-    ids.unshift(String(axis));
-    return params_func(cmd, 'concatenate', ids, 'FloatTensor');
+    return sendJSON(cmd({
+        functionCall: 'concatenate',
+        tensorIndexParams: [axis, ...ids]
+    }), 'FloatTensor');
 }
 exports.concatenate = concatenate;
 function num_tensors() {
-    return no_params_func(cmd, 'num_tensors', 'int');
+    return sendJSON(cmd({
+        functionCall: 'num_tensors'
+    }), 'int');
 }
 exports.num_tensors = num_tensors;
 function new_tensors_allowed(allowed) {
     if (allowed == void 0) {
-        return no_params_func(cmd, 'new_tensors_allowed', 'bool');
+        return sendJSON(cmd({
+            functionCall: 'new_tensors_allowed'
+        }), 'bool');
     }
     else if (allowed) {
-        return params_func(cmd, 'new_tensors_allowed', ['True'], 'bool');
+        return sendJSON(cmd({
+            functionCall: 'new_tensors_allowed',
+            tensorIndexParams: ['True']
+        }), 'bool');
     }
     else {
-        return params_func(cmd, 'new_tensors_allowed', ['False'], 'bool');
+        return sendJSON(cmd({
+            functionCall: 'new_tensors_allowed',
+            tensorIndexParams: ['False']
+        }), 'bool');
     }
 }
 exports.new_tensors_allowed = new_tensors_allowed;
@@ -98,9 +110,10 @@ function __getitem__(id) {
     return get_tensor(id);
 }
 exports.__getitem__ = __getitem__;
-function params_func(cmd, name, params, return_type) {
+function sendJSON(message, return_type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let res = yield wq.queue(JSON.stringify(cmd(name, params)));
+        let data = JSON.stringify(message);
+        let res = yield wq.queue(data);
         log(res);
         if (return_type == void 0) {
             return;
@@ -158,17 +171,6 @@ function params_func(cmd, name, params, return_type) {
             }
         }
         return res;
-    });
-}
-exports.params_func = params_func;
-function no_params_func(cmd, name, return_type) {
-    return params_func(cmd, name, [], return_type);
-}
-exports.no_params_func = no_params_func;
-function sendJSON(message, response = true) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let data = JSON.stringify(message);
-        return yield wq.queue(data);
     });
 }
 exports.sendJSON = sendJSON;

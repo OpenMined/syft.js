@@ -4,6 +4,7 @@ import {Optimizer} from './Optimizer'
 // from syft.utils import Progress
 import {
   Tensor,
+  IntTensor,
   FloatTensor
 } from './Tensor'
 
@@ -76,8 +77,11 @@ export class Model extends AsyncInit implements IAsyncInit {
     if (id) {
       self.__finish__(id)
     } else {
-      controller.sendJSON(self.cmd('create', [self.layerType, ...params]))
-        .then(res => self.__finish__(res))
+      controller.sendJSON(self.cmd({
+        functionCall: 'create',
+        tensorIndexParams: [self.layerType, ...params]
+      }), 'string')
+        .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
     }
   }
@@ -102,25 +106,32 @@ export class Model extends AsyncInit implements IAsyncInit {
       return await self.forward(args[0], args[1], args[2])
     }
   }
+
   async parameters() {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'params', 'FloatTensor_list', false)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'params'
+    }), 'FloatTensor_list')
   }
 
   async num_parameters() {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'param_count', 'int')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'param_count'
+    }), 'int')
   }
 
   async models() {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'models', 'Model_list')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'models'
+    }), 'Model_list')
   }
 
   async set_id(
@@ -129,7 +140,10 @@ export class Model extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    await controller.params_func(self.cmd, 'set_id', [new_id], 'string')
+    await controller.sendJSON(self.cmd({
+      functionCall: 'set_id',
+      tensorIndexParams: [new_id]
+    }), 'string')
 
     self.id = new_id
     return self
@@ -150,13 +164,16 @@ export class Model extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (Array.isArray(input)) {
-      input = new FloatTensor(input, autograd=true, delete_after_use=false)
+      input = new FloatTensor(input, autograd=true, /*delete_after_use=false*/)
     }
     if (Array.isArray(target)) {
-      target = new FloatTensor(target, autograd=true, delete_after_use=false)
+      target = new FloatTensor(target, autograd=true, /*delete_after_use=false*/)
     }
 
-    let num_batches = await controller.params_func(self.cmd,'prepare_to_fit',[input.id, target.id, criterion.id, optim.id, batch_size], return_type='int')
+    let num_batches = await controller.sendJSON(self.cmd({
+      functionCall: 'prepare_to_fit',
+      tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
+    }), 'int')
 
     console.log(`Number of Batches:${num_batches}`)
 
@@ -176,7 +193,10 @@ export class Model extends AsyncInit implements IAsyncInit {
 
       for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
         let prev_loss = loss
-        let _loss = await controller.params_func(self.cmd,'fit',[log_i, Math.min(log_i + log_interval, num_batches), 1], return_type='float')
+        let _loss = await controller.sendJSON(self.cmd({
+          functionCall: 'fit',
+          tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
+        }), 'float')
         if (_loss != '0') {
           loss = _loss
         }
@@ -294,37 +314,47 @@ export class Model extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'activation', 'FloatTensor', delete_after_use=false)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'activation'
+    }), 'FloatTensor', /*delete_after_use=false*/)
   }
 
   async getLayerType() {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'model_type', 'string')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'model_type'
+    }), 'string')
   }
 
   cmd(
-    function_call: string,
-    params: any[] = []
-  ) {
+    options: {
+      [key: string]: any
+      functionCall: string
+      tensorIndexParams?: any[],
+    }
+  ): SocketCMD {
     let self = this
 
     return {
-      functionCall: function_call,
       objectType: self.type,
-      objectIndex: self.id,
-      tensorIndexParams: params
+      objectIndex: self.id || '-1',
+      tensorIndexParams: [],
+      ...options
     }
   }
 
   async forward(
-    input: Tensor
+    ...input: Tensor[]
   ) {
     let self = this
     await self.ready()
 
-    return controller.params_func(self.cmd, 'forward', [input.id], 'FloatTensor', false)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'forward',
+      tensorIndexParams: input.map(t => t.id)
+    }), 'FloatTensor' /*, false*/)
   }
 
   async __repr__(
@@ -352,10 +382,12 @@ export class Model extends AsyncInit implements IAsyncInit {
 
 export class Policy extends Model {
   layerType = 'policy'
-  stateType: any // TODO: what type is this
+  stateType: string
   optimizer: Optimizer
+  model: Model
   constructor(
-    model: any, // TODO: what type is this
+    id: string|undefined,
+    model: Model,
     optimizer: Optimizer,
     stateType = 'discrete'
   ) {
@@ -363,16 +395,20 @@ export class Policy extends Model {
     let self = this
 
     self.stateType = stateType
+    self.model = model
     self.optimizer = optimizer
   }
 
   async sample(
-    input: Tensor
+    ...input: Tensor[]
   ) {
     let self = this
     await self.ready()
 
-    return controller.params_func(self.cmd, 'sample', [input.id], 'IntTensor')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sample',
+      tensorIndexParams: input.map(t => t.id)
+    }), 'IntTensor')
   }
 
   async parameters() {
@@ -389,23 +425,9 @@ export class Policy extends Model {
       await self.ready()
 
     if (self.stateType == 'discrete') {
-      if (args.length == 1) {
-        return self.sample(args[0])
-      } else if (args.length == 2) {
-        return self.sample(args[0], args[1])
-      } else if (args.length == 3) {
-        return self.sample(args[0], args[1], args[2])
-      }
-
+      self.sample(...args)
     } else if (self.stateType == 'continuous') {
-      if (args.length == 1) {
-        return self.forward(args[0])
-      } else if (args.length == 2) {
-        return self.forward(args[0], args[1])
-      } else if (args.length == 3) {
-        return self.forward(args[0], args[1], args[2])
-      }
-
+      self.forward(...args)
     } else {
       console.log(`Error: State type ${self.stateType} unknown`)
     }
@@ -415,7 +437,9 @@ export class Policy extends Model {
       let self = this
       await self.ready()
 
-    // TODO: let raw_history = await controller.params_func(self.cmd,'get_history',[],return_type='string')
+    let raw_history = await controller.sendJSON(self.cmd({
+      functionCall: 'get_history'
+    }), 'string')
     // TODO: let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
     let losses = []
     let rewards = []
@@ -459,7 +483,10 @@ export class Sequential extends Model {
     let self = this
     await self.ready()
 
-    await controller.params_func(self.cmd, 'add', [model.id], delete_after_use=false)
+    await controller.sendJSON(self.cmd({
+      functionCall: 'add',
+      tensorIndexParams: [model.id]
+    }), /*delete_after_use=false*/)
   }
 
   async summary() {
@@ -510,9 +537,9 @@ export class Linear extends Model {
   layerType = 'linear'
 
   constructor(
+    id?: string,
     input_dim = 0,
     output_dim = 0,
-    id?: string,
     initializer = 'Xavier'
   ) {
 
@@ -619,7 +646,10 @@ export class MSELoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type='FloatTensor', delete_after_use=false)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'forward',
+      tensorIndexParams: [input.id, target.id]
+    }), 'FloatTensor' /*delete_after_use=false*/)
   }
 
 }
@@ -639,7 +669,10 @@ export class NLLLoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type='FloatTensor', delete_after_use=false)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'forward',
+      tensorIndexParams: [input.id, target.id]
+    }), 'FloatTensor' /*delete_after_use=false*/)
   }
 }
 
@@ -663,6 +696,9 @@ export class CrossEntropyLoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type='FloatTensor', delete_after_use=false)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'forward',
+      tensorIndexParams: [input.id, target.id]
+    }), 'FloatTensor' /*delete_after_use=false*/)
   }
 }

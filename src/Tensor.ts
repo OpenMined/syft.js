@@ -66,7 +66,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (self.id) {
-      self.no_params_func('delete')
+      await controller.sendJSON(self.cmd({
+        functionCall: 'delete'
+      }))
     }
   }
 
@@ -77,50 +79,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     // do nothing
   }
 
-  async params_func(
-    name: string,
-    params: any[],
-    return_response = false,
-    return_type = 'FloatTensor',
-    data_is_pointer = true
-  ) {
-    let self = this
-    await self.ready()
-
-    // send the command
-    let res = await controller.sendJSON(
-    self.cmd(name, params))
-
-    controller.log(res)
-
-    if (return_response) {
-      if (return_type == 'IntTensor') {
-        controller.log(`IntTensor.__init__: ${res}`)
-        return new IntTensor(res, data_is_pointer)
-      } else if (return_type == 'FloatTensor') {
-        controller.log(`FloatTensor.__init__: ${res}`)
-        if (res == '') {
-          return null
-        }
-        return new FloatTensor(res, data_is_pointer)
-      } else {
-        return res
-      }
-    }
-    return self
-  }
-
-  async no_params_func(
-    name: string,
-    return_response = false,
-    return_type?: string
-  ) {
-    let self = this
-    await self.ready()
-
-    return await self.params_func(name, [], return_response, return_type || self.type)
-  }
-
   async get(
     param_name = 'size',
     response_as_tensor = false
@@ -129,35 +87,33 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (response_as_tensor) {
-      return await self.params_func(
-        'get',
-        [param_name],
-        true,
-        self.type,
-        true
-      )
+      return await controller.sendJSON(self.cmd({
+        functionCall: 'get',
+        tensorIndexParams: [param_name]
+      }), self.type)
     } else {
-      return await self.params_func(
-        'get',
-        [param_name],
-        true,
-        'string',
-        false
-      )
+      return await controller.sendJSON(self.cmd({
+        functionCall: 'get',
+        tensorIndexParams: [param_name]
+      }), 'string')
     }
   }
 
   protected cmd(
-    functionCall: string,
-    tensorIndexParams: any[] = []
-  ) {
+    options: {
+      [key: string]: any
+      functionCall: string
+      tensorIndexParams?: any[],
+    }
+  ): SocketCMD {
     let self = this
 
     return {
-      'functionCall': functionCall,
-      'objectType': self.type,
-      'objectIndex': self.id,
-      'tensorIndexParams': tensorIndexParams
+      objectType: self.type,
+      objectIndex: self.id,
+      tensorIndexParams: [],
+      hyperParams: [],
+      ...options
     }
   }
 
@@ -165,7 +121,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    let txt = await self.no_params_func('is_contiguous', true)
+    let txt = await controller.sendJSON(self.cmd({
+      functionCall: 'is_contiguous'
+    }), 'bool')
 
     if (txt == 'true') {
       return true
@@ -182,11 +140,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let res
 
     if (await self.is_contiguous()) {
-      res = await controller.sendJSON({
-        'functionCall': 'to_numpy',
-        'objectType': self.type,
-        'objectIndex': self.id
-      })
+      res = await controller.sendJSON(self.cmd({
+        functionCall: 'to_numpy'
+      }), 'string')
       return res // np.fromstring(res, sep=' ').astype('int').reshape(self.shape())
     } else {
       return ' - non-contiguous - '
@@ -264,7 +220,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('abs', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'abs'
+    }), self.type)
   }
 
   /*
@@ -280,7 +238,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('abs_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'abs_'
+    }))
   }
 
   /*
@@ -296,7 +256,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('acos', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'acos'
+    }), self.type)
   }
 
   /*
@@ -312,7 +274,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('acos_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'acos_'
+    }))
   }
 
   /*
@@ -340,7 +304,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       y.ready()
     ])
 
-    return await self.params_func('addmm_', [x.id, y.id])
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'addmm_',
+      tensorIndexParams: [x.id, y.id]
+    }))
   }
 
   /*
@@ -370,7 +337,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     ])
 
     let copy = await self.copy()
-    await copy.params_func('addmm_', [x.id, y.id])
+    await copy.addmm_(x, y)
 
     return copy
   }
@@ -400,7 +367,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       y.ready()
     ])
 
-    return await self.params_func('addmv_', [x.id, y.id])
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'addmv_',
+      tensorIndexParams: [x.id, y.id]
+    }))
   }
 
   /*
@@ -429,7 +399,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     ])
 
     let copy = await self.copy()
-    await copy.params_func('addmv_', [x.id, y.id])
+    await copy.addmv_(x, y)
 
     return copy
   }
@@ -447,7 +417,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('asin', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'asin'
+    }), self.type)
   }
 
   /*
@@ -463,7 +435,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('asin_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'asin_'
+    }))
   }
 
   /*
@@ -479,7 +453,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('atan', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'atan'
+    }), self.type)
   }
 
   /*
@@ -495,7 +471,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('atan_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'atan_'
+    }))
   }
 
   /*
@@ -550,9 +528,14 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (grad == void 0) {
-      self.no_params_func('backward')
+      controller.sendJSON(self.cmd({
+        functionCall: 'backward'
+      }))
     } else {
-      self.params_func('backward', [grad.id])
+      controller.sendJSON(self.cmd({
+        functionCall: 'backward',
+        tensorIndexParams: [grad.id]
+      }))
     }
   }
 
@@ -569,7 +552,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('ceil', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'ceil'
+    }), self.type)
   }
 
   /*
@@ -585,7 +570,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('ceil_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'ceil_'
+    }))
   }
 
   /*
@@ -601,7 +588,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('contiguous', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'contiguous'
+    }), self.type)
   }
 
   /*
@@ -617,7 +606,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    let t = await self.no_params_func('copy', true)
+    let t = await controller.sendJSON(self.cmd({
+      functionCall: 'copy'
+    }), self.type)
 
     if (t instanceof Tensor) {
       return t
@@ -639,7 +630,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('cos', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cos'
+    }), self.type)
   }
 
   /*
@@ -655,7 +648,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('cos_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cos_'
+    }))
   }
 
   /*
@@ -671,7 +666,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('cosh', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cosh'
+    }), self.type)
   }
 
   /*
@@ -687,7 +684,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('cosh_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cosh_'
+    }))
   }
 
   /*
@@ -704,7 +703,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     let res = await self.get('children')
-    if (res.length > 0) {
+    if (res && typeof res == 'string') {
       //TODO: figure this out
       return [] // list(map(lambda x: Number(x), res.split(',')[0:-1]))
     }
@@ -756,7 +755,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.params_func('cumsum', [dim], true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cumsum',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   async dataOnGpu() {
@@ -782,7 +784,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('exp', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'exp'
+    }), self.type)
   }
 
   /*
@@ -798,7 +802,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('exp_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'exp_'
+    }))
   }
 
   /*
@@ -818,7 +824,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.params_func('expand', args, true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'expand',
+      tensorIndexParams: args
+    }), self.type)
   }
 
   //TODO: figure this out
@@ -833,7 +842,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       x.ready()
     ])
 
-    return await self.params_func('index_add', [indices.id, dim, x.id], true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'index_add',
+      tensorIndexParams: [indices.id, dim, x.id]
+    }), self.type)
   }
 
   //TODO: figure this out
@@ -848,7 +860,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       x.ready()
     ])
 
-    return await self.params_func('index_add_', [indices.id, dim, x.id], true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'index_add_',
+      tensorIndexParams: [indices.id, dim, x.id]
+    }), self.type)
   }
 
   //TODO: figure this out
@@ -859,7 +874,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.params_func('index_select', [indices.id, dim], true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'index_select',
+      tensorIndexParams: [indices.id, dim]
+    }), self.type)
   }
 
   /*
@@ -1027,7 +1045,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('floor', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'floor'
+    }), self.type)
   }
 
   /*
@@ -1043,7 +1063,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('floor_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'floor_'
+    }))
   }
 
   /*
@@ -1059,7 +1081,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('round', true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'round'
+    }), self.type)
   }
 
   /*
@@ -1075,7 +1099,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('round_')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'round_'
+    }))
   }
 
   /*
@@ -1098,7 +1124,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       x.ready()
     ])
 
-    return self.params_func('mm', [x.id], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'mm',
+      tensorIndexParams: [x.id]
+    }), self.type)
   }
 
   async grad() {
@@ -1220,7 +1249,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('neg', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'neg'
+    }), self.type)
   }
 
   /*
@@ -1236,14 +1267,18 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('neg_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'neg_'
+    }))
   }
 
   async relu() {
     let self = this
     await self.ready()
 
-    return self.no_params_func('relu', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'relu'
+    }), self.type)
   }
 
   async save(
@@ -1252,7 +1287,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('save', [filename], true, 'bool')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'save',
+      tensorIndexParams: [filename]
+    }), 'bool')
   }
 
   async set(
@@ -1262,7 +1300,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.params_func('set', [...param_name, params], true, 'none')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'set',
+      tensorIndexParams: [...param_name, params]
+    }))
   }
 
   /*
@@ -1278,7 +1319,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sigmoid_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sigmoid_'
+    }))
   }
 
   /*
@@ -1295,7 +1338,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sigmoid', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sigmoid'
+    }), self.type)
   }
 
   /*
@@ -1311,7 +1356,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sign', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sign'
+    }), self.type)
   }
 
   /*
@@ -1327,7 +1374,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sign_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sign_'
+    }))
   }
 
   /*
@@ -1343,7 +1392,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sin', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sin'
+    }), self.type)
   }
 
   /*
@@ -1359,7 +1410,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sin_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sin_'
+    }))
   }
 
   /*
@@ -1405,7 +1458,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       //TODO: figure this out
       return (await self.get('shape') as string || '').split(',').map(a => Number(a))
     } else {
-      return await self.no_params_func('shape', true)
+      return await controller.sendJSON(self.cmd({
+        functionCall: 'shape'
+      }), self.type)
     }
   }
 
@@ -1415,7 +1470,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('softmax', [dim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'softmax',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   async std(
@@ -1424,7 +1482,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('std', [dim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'std',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   /*
@@ -1449,10 +1510,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (dim == -1) {
-      return self.no_params_func('stride', true)
+      return controller.sendJSON(self.cmd({
+        functionCall: 'stride'
+      }), 'string')
     } else {
       //TODO: figure out this
-      let strides = await self.params_func('stride', [dim], true)
+      let strides = await controller.sendJSON(self.cmd({
+        functionCall: 'stride',
+        tensorIndexParams: [dim]
+      }), 'string')
       return (strides as string).split(' ')
     }
   }
@@ -1470,14 +1536,18 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sqrt', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sqrt'
+    }), self.type)
   }
 
   async sqrt_() {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sqrt_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sqrt_'
+    }))
   }
 
   /*
@@ -1491,14 +1561,18 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('trace', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'trace'
+    }), self.type)
   }
 
   async trunc() {
     let self = this
     await self.ready()
 
-    return self.no_params_func('trunc', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'trunc'
+    }), self.type)
   }
 
   /*
@@ -1552,7 +1626,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('view', args, true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'view',
+      tensorIndexParams: args
+    }), self.type)
   }
 
   //TODO: figure this out (any)?
@@ -1560,7 +1637,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    await self.params_func('view_', args, false)
+    await controller.sendJSON(self.cmd({
+      functionCall: 'view_',
+      tensorIndexParams: args
+    }))
     return self
   }
 
@@ -1573,7 +1653,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       x.ready()
     ])
 
-    return self.params_func('view_as', [x.id], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'view_as',
+      tensorIndexParams: [x.id]
+    }), self.type)
   }
 
   async view_as_(
@@ -1585,7 +1668,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       x.ready()
     ])
 
-    self.params_func('view_as_', [x.id], false)
+    await controller.sendJSON(self.cmd({
+      functionCall: 'view_as_',
+      tensorIndexParams: [x.id]
+    }))
     return self
   }
 
@@ -1602,7 +1688,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('transpose', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'transpose'
+    }), self.type)
   }
 
 
@@ -1612,7 +1700,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('triu', [k], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'triu',
+      tensorIndexParams: [k]
+    }), self.type)
   }
 
   async triu_(
@@ -1621,7 +1712,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('triu_', [k])
+    return controller.sendJSON(self.cmd({
+      functionCall: 'triu_',
+      tensorIndexParams: [k]
+    }))
   }
 
   async unsqueeze(
@@ -1630,7 +1724,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('unsqueeze', [dim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'unsqueeze',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   async unsqueeze_(
@@ -1639,7 +1736,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('unsqueeze_', [dim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'unsqueeze_',
+      tensorIndexParams: [dim]
+    }))
   }
 
   /*
@@ -1655,7 +1755,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('zero_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'zero_'
+    }))
   }
 
   async toString() {
@@ -1680,7 +1782,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('cpu')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'cpu'
+    }))
   }
 
   /*
@@ -1696,7 +1800,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.no_params_func('gpu')
+    return await controller.sendJSON(self.cmd({
+      functionCall: 'gpu'
+    }))
   }
 
   async arithmetic_operation(
@@ -1722,12 +1828,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       operation_cmd += '_'
     }
     // sends the command
-    let response = await controller.sendJSON(
-      self.cmd(operation_cmd, [parameter])
-    )
-
-    // TODO: IntTensor as well
-    return new FloatTensor(String(response), true)
+    return await controller.sendJSON(self.cmd({
+      functionCall: operation_cmd,
+      tensorIndexParams: [parameter]
+    }), inline ? void 0 : self.type)
   }
 
   /*
@@ -1743,7 +1847,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sinh', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sinh'
+    }), self.type)
   }
 
   /*
@@ -1759,7 +1865,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('sinh_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sinh_'
+    }))
   }
 
   /*
@@ -1775,7 +1883,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('log', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'log'
+    }), self.type)
   }
 
   /*
@@ -1791,7 +1901,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('log_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'log_'
+    }))
   }
 
   /*
@@ -1807,7 +1919,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('log1p_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'log1p_'
+    }))
   }
 
   /*
@@ -1823,7 +1937,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('log1p', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'log1p'
+    }), self.type)
   }
 
   /*
@@ -1839,7 +1955,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('frac', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'frac'
+    }), self.type)
   }
 
   /*
@@ -1855,7 +1973,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('frac_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'frac_'
+    }))
   }
 
   /*
@@ -1871,7 +1991,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('reciprocal', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'reciprocal'
+    }), self.type)
   }
 
   /*
@@ -1887,7 +2009,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('reciprocal_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'reciprocal_'
+    }))
   }
 
   /*
@@ -1904,7 +2028,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('rsqrt', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'rsqrt'
+    }), self.type)
   }
 
   /*
@@ -1921,7 +2047,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('rsqrt_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'rsqrt_'
+    }))
   }
 
   /*
@@ -1959,7 +2087,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     // TODO: 'FloatTensor'
-    return self.arithmetic_operation(divisor, 'remainder', 'FloatTensor')
+    return self.arithmetic_operation(divisor, 'remainder', true)
   }
 
   /*
@@ -1976,7 +2104,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('sample', [dim], true, 'IntTensor')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sample',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   /*
@@ -1992,7 +2123,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('tan', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'tan'
+    }), self.type)
   }
 
   /*
@@ -2008,7 +2141,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('tan_')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'tan_'
+    }))
   }
 
   /*
@@ -2024,7 +2159,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.no_params_func('tanh', true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'tanh'
+    }), self.type)
   }
 
   /*
@@ -2045,7 +2182,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('squeeze', [dim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'squeeze',
+      tensorIndexParams: [dim]
+    }), self.type)
   }
 
   /*
@@ -2066,7 +2206,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('squeeze_', [dim])
+    return controller.sendJSON(self.cmd({
+      functionCall: 'squeeze_',
+      tensorIndexParams: [dim]
+    }))
   }
 
   /*
@@ -2089,7 +2232,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('min', [dim, keepdim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'min',
+      tensorIndexParams: [dim, keepdim]
+    }), self.type)
   }
 
   /*
@@ -2112,7 +2258,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('max', [dim, keepdim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'max',
+      tensorIndexParams: [dim, keepdim]
+    }), self.type)
   }
 
   /*
@@ -2135,7 +2284,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('sum', [dim, keepdim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'sum',
+      tensorIndexParams: [dim, keepdim]
+    }), self.type)
   }
 
   /*
@@ -2158,7 +2310,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('prod', [dim, keepdim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'prod',
+      tensorIndexParams: [dim, keepdim]
+    }), self.type)
   }
 
   /*
@@ -2181,7 +2336,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return self.params_func('mean', [dim, keepdim], true)
+    return controller.sendJSON(self.cmd({
+      functionCall: 'mean',
+      tensorIndexParams: [dim, keepdim]
+    }), self.type)
   }
 }
 
@@ -2203,24 +2361,22 @@ export class IntTensor extends Tensor {
     if (data instanceof IntDimArray) {
       self.data = data
 
-      controller.sendJSON({
-        'objectType': self.type,
-        'functionCall': 'create',
-        'data': Array.from(self.data.data),
-        'shape': Array.from(self.data.shape)
-      })
-        .then(res => self.__finish__(res))
+      controller.sendJSON(self.cmd({
+        functionCall: 'create',
+        data: Array.from(self.data.data),
+        shape: Array.from(self.data.shape)
+      }), 'string')
+        .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
     } else if (Array.isArray(data)) {
       self.data = new IntDimArray(data)
 
-      controller.sendJSON({
-        'objectType': self.type,
-        'functionCall': 'create',
-        'data': Array.from(self.data.data),
-        'shape': Array.from(self.data.shape)
-      })
-        .then(res => self.__finish__(res))
+      controller.sendJSON(self.cmd({
+        functionCall: 'create',
+        data: Array.from(self.data.data),
+        shape: Array.from(self.data.shape)
+      }), 'string')
+        .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
     } else if (data_is_pointer) {
       self.id = data
@@ -2254,24 +2410,22 @@ export class FloatTensor extends Tensor {
     if (data instanceof FloatDimArray) {
       self.data = data
 
-      controller.sendJSON({
-        'objectType': self.type,
-        'functionCall': 'create',
-        'data': Array.from(self.data.data),
-        'shape': Array.from(self.data.shape)
-      })
-        .then(res => self.__finish__(res))
+      controller.sendJSON(self.cmd({
+        functionCall: 'create',
+        data: Array.from(self.data.data),
+        shape: Array.from(self.data.shape)
+      }), 'string')
+        .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
     } else if (Array.isArray(data)) {
       self.data = new FloatDimArray(data)
 
-      controller.sendJSON({
-        'objectType': self.type,
-        'functionCall': 'create',
-        'data': Array.from(self.data.data),
-        'shape': Array.from(self.data.shape)
-      })
-        .then(res => self.__finish__(res))
+      controller.sendJSON(self.cmd({
+        functionCall: 'create',
+        data: Array.from(self.data.data),
+        shape: Array.from(self.data.shape)
+      }), 'string')
+        .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
     } else if (data_is_pointer) {
       self.id = data

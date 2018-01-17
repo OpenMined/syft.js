@@ -16,7 +16,10 @@ class Model extends AsyncInit_1.AsyncInit {
             self.__finish__(id);
         }
         else {
-            controller.sendJSON(self.cmd('create', [self.layerType, ...params]))
+            controller.sendJSON(self.cmd({
+                functionCall: 'create',
+                tensorIndexParams: [self.layerType, ...params]
+            }), 'string')
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
@@ -78,28 +81,37 @@ class Model extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'params', 'FloatTensor_list', false);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'params'
+            }), 'FloatTensor_list');
         });
     }
     num_parameters() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'param_count', 'int');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'param_count'
+            }), 'int');
         });
     }
     models() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'models', 'Model_list');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'models'
+            }), 'Model_list');
         });
     }
     set_id(new_id) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            yield controller.params_func(self.cmd, 'set_id', [new_id], 'string');
+            yield controller.sendJSON(self.cmd({
+                functionCall: 'set_id',
+                tensorIndexParams: [new_id]
+            }), 'string');
             self.id = new_id;
             return self;
         });
@@ -109,12 +121,15 @@ class Model extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             if (Array.isArray(input)) {
-                input = new Tensor_1.FloatTensor(input, autograd = true, delete_after_use = false);
+                input = new Tensor_1.FloatTensor(input, autograd = true);
             }
             if (Array.isArray(target)) {
-                target = new Tensor_1.FloatTensor(target, autograd = true, delete_after_use = false);
+                target = new Tensor_1.FloatTensor(target, autograd = true);
             }
-            let num_batches = yield controller.params_func(self.cmd, 'prepare_to_fit', [input.id, target.id, criterion.id, optim.id, batch_size], return_type = 'int');
+            let num_batches = yield controller.sendJSON(self.cmd({
+                functionCall: 'prepare_to_fit',
+                tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
+            }), 'int');
             console.log(`Number of Batches:${num_batches}`);
             let progress_bars = [];
             if (verbose) {
@@ -127,7 +142,10 @@ class Model extends AsyncInit_1.AsyncInit {
                 let iter_start = time.time();
                 for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
                     let prev_loss = loss;
-                    let _loss = yield controller.params_func(self.cmd, 'fit', [log_i, Math.min(log_i + log_interval, num_batches), 1], return_type = 'float');
+                    let _loss = yield controller.sendJSON(self.cmd({
+                        functionCall: 'fit',
+                        tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
+                    }), 'float');
                     if (_loss != '0') {
                         loss = _loss;
                     }
@@ -225,30 +243,32 @@ class Model extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'activation', 'FloatTensor', delete_after_use = false);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'activation'
+            }), 'FloatTensor');
         });
     }
     getLayerType() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'model_type', 'string');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'model_type'
+            }), 'string');
         });
     }
-    cmd(function_call, params = []) {
+    cmd(options) {
         let self = this;
-        return {
-            functionCall: function_call,
-            objectType: self.type,
-            objectIndex: self.id,
-            tensorIndexParams: params
-        };
+        return Object.assign({ objectType: self.type, objectIndex: self.id || '-1', tensorIndexParams: [] }, options);
     }
-    forward(input) {
+    forward(...input) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.params_func(self.cmd, 'forward', [input.id], 'FloatTensor', false);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'forward',
+                tensorIndexParams: input.map(t => t.id)
+            }), 'FloatTensor');
         });
     }
     __repr__(verbose = true) {
@@ -275,18 +295,22 @@ class Model extends AsyncInit_1.AsyncInit {
 }
 exports.Model = Model;
 class Policy extends Model {
-    constructor(model, optimizer, stateType = 'discrete') {
+    constructor(id, model, optimizer, stateType = 'discrete') {
         super(void 0, [model.id, optimizer.id]);
         this.layerType = 'policy';
         let self = this;
         self.stateType = stateType;
+        self.model = model;
         self.optimizer = optimizer;
     }
-    sample(input) {
+    sample(...input) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.params_func(self.cmd, 'sample', [input.id], 'IntTensor');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sample',
+                tensorIndexParams: input.map(t => t.id)
+            }), 'IntTensor');
         });
     }
     parameters() {
@@ -301,26 +325,10 @@ class Policy extends Model {
             let self = this;
             yield self.ready();
             if (self.stateType == 'discrete') {
-                if (args.length == 1) {
-                    return self.sample(args[0]);
-                }
-                else if (args.length == 2) {
-                    return self.sample(args[0], args[1]);
-                }
-                else if (args.length == 3) {
-                    return self.sample(args[0], args[1], args[2]);
-                }
+                self.sample(...args);
             }
             else if (self.stateType == 'continuous') {
-                if (args.length == 1) {
-                    return self.forward(args[0]);
-                }
-                else if (args.length == 2) {
-                    return self.forward(args[0], args[1]);
-                }
-                else if (args.length == 3) {
-                    return self.forward(args[0], args[1], args[2]);
-                }
+                self.forward(...args);
             }
             else {
                 console.log(`Error: State type ${self.stateType} unknown`);
@@ -331,6 +339,9 @@ class Policy extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
+            let raw_history = yield controller.sendJSON(self.cmd({
+                functionCall: 'get_history'
+            }), 'string');
             let losses = [];
             let rewards = [];
             for (let { loss, reward } of history_idx) {
@@ -367,7 +378,10 @@ class Sequential extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            yield controller.params_func(self.cmd, 'add', [model.id], delete_after_use = false);
+            yield controller.sendJSON(self.cmd({
+                functionCall: 'add',
+                tensorIndexParams: [model.id]
+            }));
         });
     }
     summary() {
@@ -409,7 +423,7 @@ class Sequential extends Model {
 }
 exports.Sequential = Sequential;
 class Linear extends Model {
-    constructor(input_dim = 0, output_dim = 0, id, initializer = 'Xavier') {
+    constructor(id, input_dim = 0, output_dim = 0, initializer = 'Xavier') {
         super(void 0, [input_dim, output_dim, initializer]);
         this.layerType = 'linear';
     }
@@ -481,7 +495,10 @@ class MSELoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type = 'FloatTensor', delete_after_use = false);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'forward',
+                tensorIndexParams: [input.id, target.id]
+            }), 'FloatTensor');
         });
     }
 }
@@ -495,7 +512,10 @@ class NLLLoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type = 'FloatTensor', delete_after_use = false);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'forward',
+                tensorIndexParams: [input.id, target.id]
+            }), 'FloatTensor');
         });
     }
 }
@@ -508,7 +528,10 @@ class CrossEntropyLoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.params_func(self.cmd, 'forward', [input.id, target.id], return_type = 'FloatTensor', delete_after_use = false);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'forward',
+                tensorIndexParams: [input.id, target.id]
+            }), 'FloatTensor');
         });
     }
 }

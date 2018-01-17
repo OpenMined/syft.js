@@ -30,7 +30,9 @@ class Tensor extends AsyncInit_1.AsyncInit {
             self.__delete__();
             yield self.ready();
             if (self.id) {
-                self.no_params_func('delete');
+                yield controller.sendJSON(self.cmd({
+                    functionCall: 'delete'
+                }));
             }
         });
     }
@@ -40,64 +42,35 @@ class Tensor extends AsyncInit_1.AsyncInit {
             yield self.ready();
         });
     }
-    params_func(name, params, return_response = false, return_type = 'FloatTensor', data_is_pointer = true) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let res = yield controller.sendJSON(self.cmd(name, params));
-            controller.log(res);
-            if (return_response) {
-                if (return_type == 'IntTensor') {
-                    controller.log(`IntTensor.__init__: ${res}`);
-                    return new IntTensor(res, data_is_pointer);
-                }
-                else if (return_type == 'FloatTensor') {
-                    controller.log(`FloatTensor.__init__: ${res}`);
-                    if (res == '') {
-                        return null;
-                    }
-                    return new FloatTensor(res, data_is_pointer);
-                }
-                else {
-                    return res;
-                }
-            }
-            return self;
-        });
-    }
-    no_params_func(name, return_response = false, return_type) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return yield self.params_func(name, [], return_response, return_type || self.type);
-        });
-    }
     get(param_name = 'size', response_as_tensor = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
             if (response_as_tensor) {
-                return yield self.params_func('get', [param_name], true, self.type, true);
+                return yield controller.sendJSON(self.cmd({
+                    functionCall: 'get',
+                    tensorIndexParams: [param_name]
+                }), self.type);
             }
             else {
-                return yield self.params_func('get', [param_name], true, 'string', false);
+                return yield controller.sendJSON(self.cmd({
+                    functionCall: 'get',
+                    tensorIndexParams: [param_name]
+                }), 'string');
             }
         });
     }
-    cmd(functionCall, tensorIndexParams = []) {
+    cmd(options) {
         let self = this;
-        return {
-            'functionCall': functionCall,
-            'objectType': self.type,
-            'objectIndex': self.id,
-            'tensorIndexParams': tensorIndexParams
-        };
+        return Object.assign({ objectType: self.type, objectIndex: self.id, tensorIndexParams: [], hyperParams: [] }, options);
     }
     is_contiguous() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let txt = yield self.no_params_func('is_contiguous', true);
+            let txt = yield controller.sendJSON(self.cmd({
+                functionCall: 'is_contiguous'
+            }), 'bool');
             if (txt == 'true') {
                 return true;
             }
@@ -111,12 +84,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             let res;
-            if (self.is_contiguous()) {
-                res = yield controller.sendJSON({
-                    'functionCall': 'to_numpy',
-                    'objectType': self.type,
-                    'objectIndex': self.id
-                });
+            if (yield self.is_contiguous()) {
+                res = yield controller.sendJSON(self.cmd({
+                    functionCall: 'to_numpy'
+                }), 'string');
                 return res;
             }
             else {
@@ -171,28 +142,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('abs', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'abs'
+            }), self.type);
         });
     }
     abs_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('abs_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'abs_'
+            }));
         });
     }
     acos() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('acos', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'acos'
+            }), self.type);
         });
     }
     acos_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('acos_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'acos_'
+            }));
         });
     }
     addmm_(x, y) {
@@ -203,7 +182,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 x.ready(),
                 y.ready()
             ]);
-            return yield self.params_func('addmm_', [x.id, y.id]);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'addmm_',
+                tensorIndexParams: [x.id, y.id]
+            }));
         });
     }
     addmm(x, y) {
@@ -215,7 +197,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 y.ready()
             ]);
             let copy = yield self.copy();
-            yield copy.params_func('addmm_', [x.id, y.id]);
+            yield copy.addmm_(x, y);
             return copy;
         });
     }
@@ -227,7 +209,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 x.ready(),
                 y.ready()
             ]);
-            return yield self.params_func('addmv_', [x.id, y.id]);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'addmv_',
+                tensorIndexParams: [x.id, y.id]
+            }));
         });
     }
     addmv(x, y) {
@@ -239,7 +224,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 y.ready()
             ]);
             let copy = yield self.copy();
-            yield copy.params_func('addmv_', [x.id, y.id]);
+            yield copy.addmv_(x, y);
             return copy;
         });
     }
@@ -247,28 +232,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('asin', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'asin'
+            }), self.type);
         });
     }
     asin_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('asin_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'asin_'
+            }));
         });
     }
     atan() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('atan', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'atan'
+            }), self.type);
         });
     }
     atan_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('atan_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'atan_'
+            }));
         });
     }
     __add__(x) {
@@ -296,10 +289,15 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             if (grad == void 0) {
-                self.no_params_func('backward');
+                controller.sendJSON(self.cmd({
+                    functionCall: 'backward'
+                }));
             }
             else {
-                self.params_func('backward', [grad.id]);
+                controller.sendJSON(self.cmd({
+                    functionCall: 'backward',
+                    tensorIndexParams: [grad.id]
+                }));
             }
         });
     }
@@ -307,28 +305,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('ceil', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'ceil'
+            }), self.type);
         });
     }
     ceil_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('ceil_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'ceil_'
+            }));
         });
     }
     contiguous() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('contiguous', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'contiguous'
+            }), self.type);
         });
     }
     copy() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let t = yield self.no_params_func('copy', true);
+            let t = yield controller.sendJSON(self.cmd({
+                functionCall: 'copy'
+            }), self.type);
             if (t instanceof Tensor) {
                 return t;
             }
@@ -339,28 +345,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('cos', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cos'
+            }), self.type);
         });
     }
     cos_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('cos_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cos_'
+            }));
         });
     }
     cosh() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('cosh', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cosh'
+            }), self.type);
         });
     }
     cosh_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('cosh_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cosh_'
+            }));
         });
     }
     children() {
@@ -368,7 +382,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             let res = yield self.get('children');
-            if (res.length > 0) {
+            if (res && typeof res == 'string') {
                 return [];
             }
             return [];
@@ -387,7 +401,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             yield self.ready();
             let res = yield self.get('creators');
             if (typeof res == 'string' && res.length > 0) {
-                return res.split(',').slice(0, -1).map(a => Number(a));
+                return res.split(',').slice(0, -1);
             }
             return [];
         });
@@ -396,7 +410,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.params_func('cumsum', [dim], true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cumsum',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     dataOnGpu() {
@@ -413,21 +430,28 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('exp', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'exp'
+            }), self.type);
         });
     }
     exp_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('exp_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'exp_'
+            }));
         });
     }
     expand(...args) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.params_func('expand', args, true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'expand',
+                tensorIndexParams: args
+            }), self.type);
         });
     }
     index_add(indices, dim, x) {
@@ -437,7 +461,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 self.ready(),
                 x.ready()
             ]);
-            return yield self.params_func('index_add', [indices.id, dim, x.id], true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'index_add',
+                tensorIndexParams: [indices.id, dim, x.id]
+            }), self.type);
         });
     }
     index_add_(indices, dim, x) {
@@ -447,14 +474,20 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 self.ready(),
                 x.ready()
             ]);
-            return yield self.params_func('index_add_', [indices.id, dim, x.id], true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'index_add_',
+                tensorIndexParams: [indices.id, dim, x.id]
+            }), self.type);
         });
     }
     index_select(dim, indices) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.params_func('index_select', [indices.id, dim], true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'index_select',
+                tensorIndexParams: [indices.id, dim]
+            }), self.type);
         });
     }
     __truediv__(x) {
@@ -533,28 +566,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('floor', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'floor'
+            }), self.type);
         });
     }
     floor_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('floor_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'floor_'
+            }));
         });
     }
     round() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('round', true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'round'
+            }), self.type);
         });
     }
     round_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('round_');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'round_'
+            }));
         });
     }
     mm(x) {
@@ -564,7 +605,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 self.ready(),
                 x.ready()
             ]);
-            return self.params_func('mm', [x.id], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'mm',
+                tensorIndexParams: [x.id]
+            }), self.type);
         });
     }
     grad() {
@@ -625,77 +669,101 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('neg', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'neg'
+            }), self.type);
         });
     }
     neg_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('neg_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'neg_'
+            }));
         });
     }
     relu() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('relu', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'relu'
+            }), self.type);
         });
     }
     save(filename) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('save', [filename], true, 'bool');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'save',
+                tensorIndexParams: [filename]
+            }), 'bool');
         });
     }
     set(param_name = 'size', params = []) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.params_func('set', [...param_name, params], true, 'none');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'set',
+                tensorIndexParams: [...param_name, params]
+            }));
         });
     }
     sigmoid_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sigmoid_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sigmoid_'
+            }));
         });
     }
     sigmoid() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sigmoid', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sigmoid'
+            }), self.type);
         });
     }
     sign() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sign', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sign'
+            }), self.type);
         });
     }
     sign_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sign_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sign_'
+            }));
         });
     }
     sin() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sin', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sin'
+            }), self.type);
         });
     }
     sin_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sin_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sin_'
+            }));
         });
     }
     size() {
@@ -713,7 +781,9 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 return ((yield self.get('shape')) || '').split(',').map(a => Number(a));
             }
             else {
-                return yield self.no_params_func('shape', true);
+                return yield controller.sendJSON(self.cmd({
+                    functionCall: 'shape'
+                }), self.type);
             }
         });
     }
@@ -721,14 +791,20 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('softmax', [dim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'softmax',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     std(dim = -1) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('std', [dim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'std',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     stride(dim = -1) {
@@ -736,10 +812,15 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             if (dim == -1) {
-                return self.no_params_func('stride', true);
+                return controller.sendJSON(self.cmd({
+                    functionCall: 'stride'
+                }), 'string');
             }
             else {
-                let strides = yield self.params_func('stride', [dim], true);
+                let strides = yield controller.sendJSON(self.cmd({
+                    functionCall: 'stride',
+                    tensorIndexParams: [dim]
+                }), 'string');
                 return strides.split(' ');
             }
         });
@@ -748,28 +829,36 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sqrt', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sqrt'
+            }), self.type);
         });
     }
     sqrt_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sqrt_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sqrt_'
+            }));
         });
     }
     trace() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('trace', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'trace'
+            }), self.type);
         });
     }
     trunc() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('trunc', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'trunc'
+            }), self.type);
         });
     }
     __sub__(x) {
@@ -796,14 +885,20 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('view', args, true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'view',
+                tensorIndexParams: args
+            }), self.type);
         });
     }
     view_(...args) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            yield self.params_func('view_', args, false);
+            yield controller.sendJSON(self.cmd({
+                functionCall: 'view_',
+                tensorIndexParams: args
+            }));
             return self;
         });
     }
@@ -814,7 +909,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 self.ready(),
                 x.ready()
             ]);
-            return self.params_func('view_as', [x.id], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'view_as',
+                tensorIndexParams: [x.id]
+            }), self.type);
         });
     }
     view_as_(x) {
@@ -824,7 +922,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 self.ready(),
                 x.ready()
             ]);
-            self.params_func('view_as_', [x.id], false);
+            yield controller.sendJSON(self.cmd({
+                functionCall: 'view_as_',
+                tensorIndexParams: [x.id]
+            }));
             return self;
         });
     }
@@ -832,48 +933,65 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('transpose', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'transpose'
+            }), self.type);
         });
     }
     triu(k = 0) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('triu', [k], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'triu',
+                tensorIndexParams: [k]
+            }), self.type);
         });
     }
     triu_(k = 0) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('triu_', [k]);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'triu_',
+                tensorIndexParams: [k]
+            }));
         });
     }
     unsqueeze(dim) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('unsqueeze', [dim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'unsqueeze',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     unsqueeze_(dim) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('unsqueeze_', [dim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'unsqueeze_',
+                tensorIndexParams: [dim]
+            }));
         });
     }
     zero_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('zero_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'zero_'
+            }));
         });
     }
-    __str__() {
+    toString() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
+            let shape = yield self.shape();
             return String(yield self.to_numpy()).replace(']', ' ').replace('[', ' ');
         });
     }
@@ -881,14 +999,18 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('cpu');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'cpu'
+            }));
         });
     }
     gpu() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.no_params_func('gpu');
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'gpu'
+            }));
         });
     }
     arithmetic_operation(x, name, inline = false) {
@@ -908,92 +1030,118 @@ class Tensor extends AsyncInit_1.AsyncInit {
             if (inline) {
                 operation_cmd += '_';
             }
-            let response = yield controller.sendJSON(self.cmd(operation_cmd, [parameter]));
-            return new FloatTensor(String(response), true);
+            return yield controller.sendJSON(self.cmd({
+                functionCall: operation_cmd,
+                tensorIndexParams: [parameter]
+            }), inline ? void 0 : self.type);
         });
     }
     sinh() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sinh', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sinh'
+            }), self.type);
         });
     }
     sinh_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('sinh_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sinh_'
+            }));
         });
     }
     log() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('log', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'log'
+            }), self.type);
         });
     }
     log_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('log_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'log_'
+            }));
         });
     }
     log1p_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('log1p_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'log1p_'
+            }));
         });
     }
     log1p() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('log1p', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'log1p'
+            }), self.type);
         });
     }
     frac() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('frac', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'frac'
+            }), self.type);
         });
     }
     frac_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('frac_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'frac_'
+            }));
         });
     }
     reciprocal() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('reciprocal', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'reciprocal'
+            }), self.type);
         });
     }
     reciprocal_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('reciprocal_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'reciprocal_'
+            }));
         });
     }
     rsqrt() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('rsqrt', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'rsqrt'
+            }), self.type);
         });
     }
     rsqrt_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('rsqrt_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'rsqrt_'
+            }));
         });
     }
     remainder(divisor) {
@@ -1007,84 +1155,114 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.arithmetic_operation(divisor, 'remainder', 'FloatTensor');
+            return self.arithmetic_operation(divisor, 'remainder', true);
         });
     }
     sample(dim) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('sample', [dim], true, 'IntTensor');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sample',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     tan() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('tan', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'tan'
+            }), self.type);
         });
     }
     tan_() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('tan_');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'tan_'
+            }));
         });
     }
     tanh() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.no_params_func('tanh', true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'tanh'
+            }), self.type);
         });
     }
     squeeze(dim = -1) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('squeeze', [dim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'squeeze',
+                tensorIndexParams: [dim]
+            }), self.type);
         });
     }
     squeeze_(dim = -1) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('squeeze_', [dim]);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'squeeze_',
+                tensorIndexParams: [dim]
+            }));
         });
     }
     min(dim = -1, keepdim = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('min', [dim, keepdim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'min',
+                tensorIndexParams: [dim, keepdim]
+            }), self.type);
         });
     }
     max(dim = -1, keepdim = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('max', [dim, keepdim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'max',
+                tensorIndexParams: [dim, keepdim]
+            }), self.type);
         });
     }
     sum(dim = -1, keepdim = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('sum', [dim, keepdim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'sum',
+                tensorIndexParams: [dim, keepdim]
+            }), self.type);
         });
     }
     prod(dim = -1, keepdim = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('prod', [dim, keepdim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'prod',
+                tensorIndexParams: [dim, keepdim]
+            }), self.type);
         });
     }
     mean(dim = -1, keepdim = false) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.params_func('mean', [dim, keepdim], true);
+            return controller.sendJSON(self.cmd({
+                functionCall: 'mean',
+                tensorIndexParams: [dim, keepdim]
+            }), self.type);
         });
     }
 }
@@ -1100,23 +1278,21 @@ class IntTensor extends Tensor {
         }
         if (data instanceof DimArray_1.IntDimArray) {
             self.data = data;
-            controller.sendJSON({
-                'objectType': self.type,
-                'functionCall': 'create',
-                'data': Array.from(self.data.data),
-                'shape': Array.from(self.data.shape)
-            })
+            controller.sendJSON(self.cmd({
+                functionCall: 'create',
+                data: Array.from(self.data.data),
+                shape: Array.from(self.data.shape)
+            }), 'string')
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
         else if (Array.isArray(data)) {
             self.data = new DimArray_1.IntDimArray(data);
-            controller.sendJSON({
-                'objectType': self.type,
-                'functionCall': 'create',
-                'data': Array.from(self.data.data),
-                'shape': Array.from(self.data.shape)
-            })
+            controller.sendJSON(self.cmd({
+                functionCall: 'create',
+                data: Array.from(self.data.data),
+                shape: Array.from(self.data.shape)
+            }), 'string')
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
@@ -1141,23 +1317,21 @@ class FloatTensor extends Tensor {
         }
         if (data instanceof DimArray_1.FloatDimArray) {
             self.data = data;
-            controller.sendJSON({
-                'objectType': self.type,
-                'functionCall': 'create',
-                'data': Array.from(self.data.data),
-                'shape': Array.from(self.data.shape)
-            })
+            controller.sendJSON(self.cmd({
+                functionCall: 'create',
+                data: Array.from(self.data.data),
+                shape: Array.from(self.data.shape)
+            }), 'string')
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
         else if (Array.isArray(data)) {
             self.data = new DimArray_1.FloatDimArray(data);
-            controller.sendJSON({
-                'objectType': self.type,
-                'functionCall': 'create',
-                'data': Array.from(self.data.data),
-                'shape': Array.from(self.data.shape)
-            })
+            controller.sendJSON(self.cmd({
+                functionCall: 'create',
+                data: Array.from(self.data.data),
+                shape: Array.from(self.data.shape)
+            }), 'string')
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }

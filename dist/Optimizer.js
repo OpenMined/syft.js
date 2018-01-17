@@ -16,7 +16,10 @@ class Optimizer extends AsyncInit_1.AsyncInit {
         let self = this;
         self.optimizer_type = optimizer_type;
         self.type = 'Optimizer';
-        controller.send_json(self.cmd('create', [self.optimizer_type, ...params], h_params))
+        controller.sendJSON(self.cmd({
+            functionCall: 'create',
+            tensorIndexParams: [self.optimizer_type, ...params], h_params
+        }), 'string')
             .then(res => self.__finish__(res))
             .catch(err => self.__error__(err));
     }
@@ -28,25 +31,24 @@ class Optimizer extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.no_params_func(self.cmd, 'zero_grad', return_type = 'string');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'zero_grad'
+            }), 'string');
         });
     }
     step(batch_size, iteration) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.params_func(self.cmd, 'step', [batch_size, iteration], 'string');
+            return controller.sendJSON(self.cmd({
+                functionCall: 'step',
+                tensorIndexParams: [batch_size, iteration]
+            }), 'string');
         });
     }
-    cmd(function_call, params = [], h_params = []) {
+    cmd(options) {
         let self = this;
-        return {
-            functionCall: function_call,
-            objectType: self.type,
-            objectIndex: self.id,
-            tensorIndexParams: params,
-            hyperParams: h_params
-        };
+        return Object.assign({ objectType: self.type, objectIndex: self.id, tensorIndexParams: [], hyperParams: [] }, options);
     }
 }
 exports.Optimizer = Optimizer;

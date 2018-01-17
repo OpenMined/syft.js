@@ -6,7 +6,7 @@ import {
   IntTensor
 } from './Tensor'
 import { WorkQueue } from './WorkQueue'
-import {Model} from './Model'
+import { Model } from './Model'
 
 const verbose = false
 
@@ -26,14 +26,17 @@ export function log(
 
 // Network Convenience Functions
 export function cmd(
-  functionCall: string,
-  params: any[] = []
+  options: {
+    [key: string]: any
+    functionCall: string
+    tensorIndexParams?: any[],
+  }
 ): SocketCMD {
   return {
-    functionCall: functionCall,
     objectType: 'controller',
     objectIndex: '-1',
-    tensorIndexParams: params
+    tensorIndexParams: [],
+    ...options
   }
 }
 
@@ -70,7 +73,9 @@ socket.on('message', (res) => {
 
 // Introspection
 export async function num_models() {
-  return no_params_func(cmd, 'num_models','int')
+  return sendJSON(cmd({
+    functionCall: 'num_models'
+  }), 'int')
 }
 
 export async function get_model(
@@ -82,7 +87,10 @@ export async function get_model(
 export async function load(
   filename: string
 ) {
-  return params_func(cmd, 'load_floattensor', [filename], 'FloatTensor')
+  return sendJSON(cmd({
+    functionCall: 'load_floattensor',
+    tensorIndexParams: [filename]
+  }), 'FloatTensor')
 }
 
 export function save(
@@ -99,24 +107,35 @@ export function concatenate(
 
   let ids = tensors.map(t => t.id)
 
-  ids.unshift(String(axis))
-
-  return params_func(cmd, 'concatenate', ids, 'FloatTensor')
+  return sendJSON(cmd({
+    functionCall: 'concatenate',
+    tensorIndexParams: [axis, ...ids]
+  }), 'FloatTensor')
 }
 
 export function num_tensors() {
-  return no_params_func(cmd, 'num_tensors', 'int')
+  return sendJSON(cmd({
+    functionCall: 'num_tensors'
+  }), 'int')
 }
 
 export function new_tensors_allowed(
   allowed?: boolean
 ) {
     if (allowed == void 0) {
-      return no_params_func(cmd, 'new_tensors_allowed', 'bool')
+      return sendJSON(cmd({
+        functionCall:'new_tensors_allowed'
+      }), 'bool')
     } else if (allowed) {
-      return params_func(cmd, 'new_tensors_allowed', ['True'], 'bool')
+      return sendJSON(cmd({
+        functionCall:'new_tensors_allowed',
+        tensorIndexParams: ['True']
+      }), 'bool')
     } else {
-      return params_func(cmd, 'new_tensors_allowed', ['False'], 'bool')
+      return sendJSON(cmd({
+        functionCall:'new_tensors_allowed',
+        tensorIndexParams: ['False']
+      }), 'bool')
     }
 }
 
@@ -132,14 +151,14 @@ export function __getitem__(
   return get_tensor(id)
 }
 
-export async function params_func(
-  cmd: (name: string, params: any[]) => SocketCMD,
-  name: string,
-  params: any[],
+export async function sendJSON(
+  message: SocketCMD,
   return_type?: string
 ) {
+  let data = JSON.stringify(message)
+
   // send the command
-  let res = await wq.queue(JSON.stringify(cmd(name, params)))
+  let res = await wq.queue(data)
 
   log(res)
 
@@ -196,22 +215,4 @@ export async function params_func(
   }
 
   return res
-}
-
-export function no_params_func(
-  cmd: (name: string, params: any[]) => SocketCMD,
-  name: string,
-  return_type: string
-) {
-  return params_func(cmd, name, [], return_type)
-}
-
-export async function sendJSON(
-  message: any,
-  response = true
-) {
-  let data = JSON.stringify(message)
-
-  // send the command
-  return await wq.queue(data)
 }

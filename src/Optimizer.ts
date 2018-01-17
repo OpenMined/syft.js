@@ -4,6 +4,11 @@ import {
   IAsyncInit
 } from './AsyncInit'
 
+import {
+  IntTensor,
+  FloatTensor
+} from './Tensor'
+
 function get_param_ids(
   params: any[] = [] // TODO: what type is this
 ) {
@@ -35,8 +40,11 @@ export class Optimizer extends AsyncInit implements IAsyncInit {
     self.optimizer_type = optimizer_type
     self.type = 'Optimizer'
 
-    controller.sendJSON(self.cmd('create', [self.optimizer_type, ...params], h_params))
-      .then(res => self.__finish__(res))
+    controller.sendJSON(self.cmd({
+      functionCall: 'create',
+      tensorIndexParams: [self.optimizer_type, ...params], h_params
+    }), 'string')
+      .then(res => self.__finish__(res as string))
       .catch(err => self.__error__(err))
   }
 
@@ -52,32 +60,39 @@ export class Optimizer extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return controller.no_params_func(self.cmd, 'zero_grad', return_type='string')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'zero_grad'
+    }), 'string')
   }
 
   async step(
     batch_size: number,
     iteration: number // TODO: what type is this
-  ){
+  ) {
     let self = this
     await self.ready()
 
-    return controller.params_func(self.cmd, 'step', [batch_size, iteration], 'string')
+    return controller.sendJSON(self.cmd({
+      functionCall: 'step',
+      tensorIndexParams: [batch_size, iteration]
+    }), 'string')
   }
 
   cmd(
-    function_call: string,
-    params: any[] = [],   // TODO: what type is this
-    h_params: any[] = []  // TODO: what type is this
-  ) {
+    options: {
+      [key: string]: any
+      functionCall: string
+      tensorIndexParams?: any[],
+    }
+  ): SocketCMD {
     let self = this
 
     return {
-      functionCall: function_call,
       objectType: self.type,
       objectIndex: self.id,
-      tensorIndexParams: params,
-      hyperParams: h_params
+      tensorIndexParams: [],
+      hyperParams: [],
+      ...options
     }
   }
 }
