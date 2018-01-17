@@ -485,20 +485,12 @@ class Tensor extends AsyncInit_1.AsyncInit {
     pow(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
             return yield self.arithmetic_operation(x, 'pow', false);
         });
     }
     pow_(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield Promise.all([
-                self.ready(),
-                x.ready()
-            ]);
             return yield self.arithmetic_operation(x, 'pow', true);
         });
     }
@@ -864,7 +856,6 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            let shape = yield self.shape();
             return String(yield self.to_numpy()).replace(']', ' ').replace('[', ' ');
         });
     }
@@ -893,6 +884,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let operation_cmd = name;
             let parameter;
             if (x instanceof Tensor) {
+                yield x.ready();
                 operation_cmd += '_elem';
                 parameter = x.id;
             }
@@ -1017,18 +1009,16 @@ class Tensor extends AsyncInit_1.AsyncInit {
             }));
         });
     }
-    remainder(divisor) {
+    remainder(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
-            return self.arithmetic_operation(divisor, 'remainder');
+            return self.arithmetic_operation(x, 'remainder');
         });
     }
-    remainder_(divisor) {
+    remainder_(x) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
-            yield self.ready();
-            return self.arithmetic_operation(divisor, 'remainder', true);
+            return self.arithmetic_operation(x, 'remainder', true);
         });
     }
     sample(dim) {
