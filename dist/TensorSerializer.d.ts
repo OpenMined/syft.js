@@ -34,7 +34,7 @@ export declare class TensorSerializer {
     };
     dataType(data: ArrayLike<number>): TSTypes.int8 | TSTypes.int16 | TSTypes.int32;
     lenType(data: number | ArrayLike<number>): TSTypes.int8 | TSTypes.int16 | TSTypes.int32;
-    byteSize(n: TSTypes): 2 | 1 | 4 | 8 | 16;
+    byteSize(n: TSTypes): 1 | 2 | 4 | 8 | 16;
     calcContentLength(props: {
         shapeLengthSetting: TSTypes;
         dataShapeLengthSetting: TSTypes;

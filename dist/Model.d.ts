@@ -1,5 +1,5 @@
 import { Optimizer } from './Optimizer';
-import { Tensor } from './Tensor';
+import { Tensor, IntTensor, FloatTensor } from './Tensor';
 import { AsyncInit, IAsyncInit } from './AsyncInit';
 export declare class Model extends AsyncInit implements IAsyncInit {
     type: string;
@@ -10,34 +10,34 @@ export declare class Model extends AsyncInit implements IAsyncInit {
     static getModel(id: string): Promise<any>;
     constructor(id?: string, params?: any[]);
     finish(id: string): void;
-    __call__(...args: any[]): Promise<any>;
-    parameters(): Promise<any>;
-    num_parameters(): Promise<any>;
-    models(): Promise<any>;
+    __call__(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    num_parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    models(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     set_id(new_id: string): Promise<this>;
     fit(input: number[] | Tensor, target: number[] | Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
     summary(verbose?: boolean, return_instead_of_print?: boolean): Promise<string | undefined>;
     __len__(): Promise<any>;
     __getitem__(idx: number): Promise<any>;
-    activation(): Promise<any>;
-    getLayerType(): Promise<any>;
-    cmd(function_call: string, params?: any[]): {
+    activation(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    getLayerType(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    cmd(options: {
+        [key: string]: any;
         functionCall: string;
-        objectType: string;
-        objectIndex: string | undefined;
-        tensorIndexParams: any[];
-    };
-    forward(input: Tensor): Promise<any>;
+        tensorIndexParams?: any[];
+    }): SocketCMD;
+    forward(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     __repr__(verbose?: boolean): Promise<string>;
 }
 export declare class Policy extends Model {
     layerType: string;
-    stateType: any;
+    stateType: string;
     optimizer: Optimizer;
-    constructor(model: any, optimizer: Optimizer, stateType?: string);
-    sample(input: Tensor): Promise<any>;
-    parameters(): Promise<any>;
-    __call__(...args: any[]): Promise<any>;
+    model: Model;
+    constructor(id: string | undefined, model: Model, optimizer: Optimizer, stateType?: string);
+    sample(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    __call__(...args: any[]): Promise<void>;
     history(): Promise<(Tensor | undefined)[][]>;
 }
 export declare class Sequential extends Model {
@@ -50,7 +50,7 @@ export declare class Sequential extends Model {
 }
 export declare class Linear extends Model {
     layerType: string;
-    constructor(input_dim?: number, output_dim?: number, id?: string, initializer?: string);
+    constructor(id?: string, input_dim?: number, output_dim?: number, initializer?: string);
     finish(id: string): Promise<void>;
 }
 export declare class ReLU extends Model {
@@ -84,15 +84,15 @@ export declare class Tanh extends Model {
 export declare class MSELoss extends Model {
     layerType: string;
     constructor(id?: string);
-    forward(input: Tensor, target: Tensor): Promise<any>;
+    forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class NLLLoss extends Model {
     layerType: string;
     constructor(id?: string);
-    forward(input: Tensor, target: Tensor): Promise<any>;
+    forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class CrossEntropyLoss extends Model {
     layerType: 'crossentropyloss';
     constructor(id?: string, dim?: number);
-    forward(input: Tensor, target: Tensor): Promise<any>;
+    forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }

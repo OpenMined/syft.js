@@ -1,8 +1,7 @@
-declare type SocketCMDObjectType = 'controller'
-
 declare type SocketCMD = {
-  functionCall: string,
-  objectType: SocketCMDObjectType,
-  objectIndex: string,
+  [key: string]: any
+  functionCall: string
+  objectType: string
+  objectIndex?: string
   tensorIndexParams: any[]
 }
