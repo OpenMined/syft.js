@@ -60,8 +60,8 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     index_add_(indices: any, dim: number, x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     index_select(dim: number, indices: any): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     keepgrad(): Promise<boolean>;
-    pow(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    pow_(x: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    pow(x: number | Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    pow_(x: number | Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     floor(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     floor_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     round(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -114,8 +114,8 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     reciprocal_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     rsqrt(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     rsqrt_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    remainder(divisor: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    remainder_(divisor: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    remainder(x: number | Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    remainder_(x: number | Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     sample(dim: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     tan(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     tan_(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;

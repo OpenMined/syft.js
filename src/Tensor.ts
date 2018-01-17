@@ -858,13 +858,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   *     Output tensor
   */
   async pow(
-    x: Tensor
+    x: number|Tensor
   ) {
     let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
 
     return await self.arithmetic_operation(x, 'pow', false)
   }
@@ -881,13 +877,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   *     Caller with values inplace
   */
   async pow_(
-    x: Tensor
+    x: number|Tensor
   ) {
     let self = this
-    await Promise.all([
-      self.ready(),
-      x.ready()
-    ])
 
     return await self.arithmetic_operation(x, 'pow', true)
   }
@@ -1479,7 +1471,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    let shape = await self.shape()
 
     return String(await self.to_numpy()).replace(']', ' ').replace('[', ' ')
   }
@@ -1532,6 +1523,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let parameter
 
     if (x instanceof Tensor) {
+      await x.ready()
       operation_cmd += '_elem'
       parameter = x.id
     } else {
@@ -1778,12 +1770,11 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   *     Output tensor
   */
   async remainder(
-    divisor: number
+    x: number|Tensor
   ) {
     let self = this
-    await self.ready()
 
-    return self.arithmetic_operation(divisor, 'remainder')
+    return self.arithmetic_operation(x, 'remainder')
   }
 
   /*
@@ -1796,13 +1787,11 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   *     Caller with values inplace
   */
   async remainder_(
-    divisor: number
+    x: number|Tensor
   ) {
     let self = this
-    await self.ready()
 
-    // TODO: 'FloatTensor'
-    return self.arithmetic_operation(divisor, 'remainder', true)
+    return self.arithmetic_operation(x, 'remainder', true)
   }
 
   /*
