@@ -133,6 +133,86 @@ class Tensor extends AsyncInit_1.AsyncInit {
             return desc;
         });
     }
+    batchify(dim, batch_size) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return controller.sendJSON(self.cmd({
+                functionCall: 'batchify',
+                tensorIndexParams: [dim, batch_size]
+            }), 'FloatTensor_list');
+        });
+    }
+    clamp(min, max) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return controller.sendJSON(self.cmd({
+                functionCall: 'clamp',
+                tensorIndexParams: [min, max]
+            }), self.type);
+        });
+    }
+    equal(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
+                functionCall: 'equal',
+                tensorIndexParams: [x.id]
+            }), 'bool'), 'boolean');
+        });
+    }
+    lt(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
+                functionCall: 'lt',
+                tensorIndexParams: [x.id]
+            }), 'bool'), 'boolean');
+        });
+    }
+    lt_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
+                functionCall: 'lt_',
+                tensorIndexParams: [x.id]
+            }), 'bool'), 'boolean');
+        });
+    }
+    norm(dim = -1, keepdim = false, p = 2) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
+                functionCall: 'norm',
+                tensorIndexParams: [dim, keepdim, p]
+            }), self.type), self.constructor);
+        });
+    }
+    random_() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            yield controller.sendJSON(self.cmd({
+                functionCall: 'random_'
+            }), self.type);
+            return self;
+        });
+    }
+    split(split_size_or_sections, dim = 0) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            yield self.ready();
+            return yield controller.sendJSON(self.cmd({
+                functionCall: 'split_by_size',
+                tensorIndexParams: [split_size_or_sections, dim]
+            }), 'FloatTensor_list');
+        });
+    }
     abs() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;

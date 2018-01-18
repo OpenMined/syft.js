@@ -51,3 +51,5 @@ for (let i = 0; i < 5*5*5*5*5*9; i++) {
   }
 }
 log('done')
+
+let t = new syft.FloatTensor([[1, 2], [3, 4]])
