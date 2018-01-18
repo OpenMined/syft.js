@@ -209,6 +209,208 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     return desc
   }
 
+  async batchify(
+    dim: number,
+    batch_size: number
+  ) {
+    let self = this
+    await self.ready()
+
+    return controller.sendJSON(self.cmd({
+      functionCall: 'batchify',
+      tensorIndexParams: [dim, batch_size]
+    }), 'FloatTensor_list')
+  }
+
+  /*
+  * Clamp all elements in input into the range [min, max]
+  * Parameters
+  * ----------
+  * min : float
+  *     lower-bound of the range to be clamped to
+  * max : float
+  *     upper-bound of the range to be clamped to
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  // TODO: is this inline or not?
+  async clamp(
+    min?: number,
+    max?: number
+  ) {
+    let self = this
+    await self.ready()
+
+    return controller.sendJSON(self.cmd({
+      functionCall: 'clamp',
+      tensorIndexParams: [min, max]
+    }), self.type)
+  }
+
+  /*
+  * Determines whether the given tensor has the same size and elements as this instance.
+  *
+  * :param x: IntTensor
+  * :return: True if the given tensor has the same size and elements as this instance. Otherwise, False.
+  */
+  async equal(
+    x: this
+  ): Promise<boolean> {
+    let self = this
+    await self.ready()
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'equal',
+        tensorIndexParams: [x.id]
+      }), 'bool'),
+      'boolean'
+    )
+  }
+
+  /*
+  * Performs element-wise > comparison and returns 1 if the element
+  * is less than a corresponding element in other Tensor, and 0 otherwise.
+  * Returns a new Tensor with results of the comparison.
+  *
+  * Parameters
+  * __________
+  * other: IntTensor to compare with
+  *
+  * Returns
+  * _________
+  * IntTensor
+  *     Output tensor
+  */
+  async lt(
+    x: this
+  ): Promise<boolean> {
+    let self = this
+    await self.ready()
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'lt',
+        tensorIndexParams: [x.id]
+      }), 'bool'),
+      'boolean'
+    )
+  }
+
+  /*
+  * Performs inline element-wise > comparison and returns 1 if the element
+  * is less than a corresponding element in other Tensor, and 0 otherwise.
+  *
+  * Parameters
+  * __________
+  * other: IntTensor to compare with
+  *
+  * Returns
+  * _________
+  * IntTensor
+  *     Output tensor
+  */
+  async lt_(
+    x: this
+  ): Promise<boolean> {
+    let self = this
+    await self.ready()
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'lt_',
+        tensorIndexParams: [x.id]
+      }), 'bool'),
+      'boolean'
+    )
+  }
+
+  /*
+  * Returns the p-norm of each row of the input tensor in the given dimension dim.
+  * Parameters
+  * ----------
+  * dim : int
+  *     the dimension to reduce
+  * keepdim : bool
+  *     whether the output tensors have dim retained or not
+  * p: float
+  *     the exponent value in the norm formulation
+  * Returns
+  * -------
+  * FloatTensor
+  *     Output tensor
+  */
+  // TODO: is this inline or not?
+  async norm(
+    dim = -1,
+    keepdim = false,
+    p = 2
+  ): Promise<this> {
+    let self = this
+    await self.ready()
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'norm',
+        tensorIndexParams: [dim, keepdim, p]
+      }), self.type),
+      self.constructor
+    )
+  }
+
+  /*
+  * Returns a tensor filled with random numbers from a uniform distribution on the interval [0,1)
+  * The shape of the tensor is defined by the varargs sizes.
+  * ----------
+  * Returns
+  * -------
+  * FloatTensor
+  *     Caller with values inplace
+  */
+  async random_(): Promise<this> {
+    let self = this
+    await self.ready()
+
+    await controller.sendJSON(self.cmd({
+      functionCall: 'random_'
+    }), self.type)
+
+    return self
+  }
+
+  /*
+  * Splits the tensor into chunks. If split_size_or_sections is an integer type, then tensor will be split into chunks of size split_size_or_sections (if possible). Last chunk will be smaller if the tensor size along a given dimension is not divisible by split_size. If split_size_or_sections is a list, then tensor will be split into len(split_size_or_sections) chunks with sizes in dim according to split_size_or_sections.
+  * Parameters
+  * ----------
+  * split_size_or_sections : int or list(int)
+  *     size of a single chunk or of sizes for each chunk
+  * dim: int
+  *     dimension along which to split the tensor.
+  */
+  // TODO: figure this out
+  async split(
+    split_size_or_sections: number,
+    dim = 0
+  ) {
+    let self = this
+    await self.ready()
+
+    // if (typeof split_size_or_sections == 'number') {
+      return await controller.sendJSON(self.cmd({
+        functionCall: 'split_by_size',
+        tensorIndexParams: [split_size_or_sections, dim]
+      }), 'FloatTensor_list')
+    // }
+    // split_size_or_sections = list(split_size_or_sections)
+    // assert type(split_size_or_sections) == list
+    // assert type(split_size_or_sections[0]) == int
+    // return self.controller.params_func(cmd_func=self.cmd,name="split_by_sections", params=split_size_or_sections+[dim], return_type='FloatTensor_list')
+  }
+
+
+
 
   ///////////////////////////////////
   // Tensor Manipulation Functions //

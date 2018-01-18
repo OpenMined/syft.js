@@ -27,6 +27,14 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     is_contiguous(): Promise<boolean>;
     to_numpy(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     __repr__(verbose?: boolean): Promise<string>;
+    batchify(dim: number, batch_size: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    clamp(min?: number, max?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    equal(x: this): Promise<boolean>;
+    lt(x: this): Promise<boolean>;
+    lt_(x: this): Promise<boolean>;
+    norm(dim?: number, keepdim?: boolean, p?: number): Promise<this>;
+    random_(): Promise<this>;
+    split(split_size_or_sections: number, dim?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     abs(): Promise<this>;
     abs_(): Promise<this>;
     acos(): Promise<this>;
