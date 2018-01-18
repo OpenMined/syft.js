@@ -9,9 +9,11 @@ import {
   IAsyncInit
 } from './AsyncInit'
 
+import { assertType } from './asserts'
+
 const TENSOR_SUPER = {}
 
-import {TensorSerializer} from './TensorSerializer'
+import { TensorSerializer } from './TensorSerializer'
 
 const tensorSerializer = new TensorSerializer
 
@@ -33,7 +35,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
   static deserialize(
     str: string
-  ) {
+  ): Tensor {
     return tensorSerializer.deserialize(str)
   }
 
@@ -45,7 +47,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
   finish(
     id: string
-  ) {
+  ): void {
     let self = this
 
     self.id = id
@@ -58,7 +60,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * Returns
   * -------
   */
-  async delete() {
+  async delete(): Promise<void> {
     let self = this
 
     self.__delete__()
@@ -72,7 +74,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     }
   }
 
-  async autograd(state: boolean) {
+  async autograd(
+    state: boolean
+  ): Promise<void> {
     let self = this
     await self.ready()
 
@@ -82,20 +86,26 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async get(
     param_name = 'size',
     response_as_tensor = false
-  ) {
+  ): Promise<Tensor|string> {
     let self = this
     await self.ready()
 
     if (response_as_tensor) {
-      return await controller.sendJSON(self.cmd({
-        functionCall: 'get',
-        tensorIndexParams: [param_name]
-      }), self.type)
+      return assertType(
+        await controller.sendJSON(self.cmd({
+          functionCall: 'get',
+          tensorIndexParams: [param_name]
+        }), self.type),
+        self.constructor
+      )
     } else {
-      return await controller.sendJSON(self.cmd({
-        functionCall: 'get',
-        tensorIndexParams: [param_name]
-      }), 'string')
+      return assertType(
+        await controller.sendJSON(self.cmd({
+          functionCall: 'get',
+          tensorIndexParams: [param_name]
+        }), 'string'),
+        'string'
+      )
     }
   }
 
@@ -117,19 +127,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     }
   }
 
-  async is_contiguous() {
+  async is_contiguous(): Promise<boolean> {
     let self = this
     await self.ready()
 
-    let txt = await controller.sendJSON(self.cmd({
-      functionCall: 'is_contiguous'
-    }), 'bool')
-
-    if (txt == 'true') {
-      return true
-    } else {
-      return false
-    }
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'is_contiguous'
+      }), 'bool'),
+      'boolean'
+    )
   }
 
   //TODO: figure this out
@@ -216,13 +223,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor:
   *     Output tensor
   */
-  async abs() {
+  async abs(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'abs'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'abs'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -234,13 +244,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async abs_() {
+  async abs_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'abs_'
     }))
+
+    return self
   }
 
   /*
@@ -252,13 +264,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async acos() {
+  async acos(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'acos'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'acos'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -270,13 +285,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async acos_() {
+  async acos_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'acos_'
     }))
+
+    return self
   }
 
   /*
@@ -296,7 +313,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async addmm_(
     x: Tensor,
     y: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
@@ -304,10 +321,12 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       y.ready()
     ])
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'addmm_',
       tensorIndexParams: [x.id, y.id]
     }))
+
+    return self
   }
 
   /*
@@ -327,7 +346,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async addmm(
     x: Tensor,
     y: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
 
     await Promise.all([
@@ -359,7 +378,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async addmv_(
     x: Tensor,
     y: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
@@ -367,10 +386,12 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       y.ready()
     ])
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'addmv_',
       tensorIndexParams: [x.id, y.id]
     }))
+
+    return self
   }
 
   /*
@@ -390,7 +411,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async addmv(
     x: Tensor,
     y: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
@@ -413,13 +434,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async asin() {
+  async asin(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'asin'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'asin'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -431,13 +455,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async asin_() {
+  async asin_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'asin_'
     }))
+
+    return self
   }
 
   /*
@@ -449,13 +475,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async atan() {
+  async atan(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'atan'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'atan'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -467,26 +496,30 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async atan_() {
+  async atan_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'atan_'
     }))
+
+    return self
   }
 
   //TODO: get the type of grad
-  async backward(grad?: any) {
+  async backward(
+    grad?: any
+  ) {
     let self = this
     await self.ready()
 
     if (grad == void 0) {
-      controller.sendJSON(self.cmd({
+      await controller.sendJSON(self.cmd({
         functionCall: 'backward'
       }))
     } else {
-      controller.sendJSON(self.cmd({
+      await controller.sendJSON(self.cmd({
         functionCall: 'backward',
         tensorIndexParams: [grad.id]
       }))
@@ -502,13 +535,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async ceil() {
+  async ceil(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'ceil'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'ceil'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -520,13 +556,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async ceil_() {
+  async ceil_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'ceil_'
     }))
+
+    return self
   }
 
   /*
@@ -538,13 +576,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async contiguous() {
+  async contiguous(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'contiguous'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'contiguous'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -556,19 +597,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async copy(): Promise<Tensor> {
+  async copy(): Promise<this> {
     let self = this
     await self.ready()
 
-    let t = await controller.sendJSON(self.cmd({
-      functionCall: 'copy'
-    }), self.type)
-
-    if (t instanceof Tensor) {
-      return t
-    }
-
-    throw new Error('Failed To Copy Tensor')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'copy'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -580,13 +618,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async cos() {
+  async cos(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'cos'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'cos'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -598,13 +639,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async cos_() {
+  async cos_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'cos_'
     }))
+
+    return self
   }
 
   /*
@@ -616,13 +659,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async cosh() {
+  async cosh(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'cosh'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'cosh'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -634,13 +680,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async cosh_() {
+  async cosh_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'cosh_'
     }))
+
+    return self
   }
 
   /*
@@ -705,14 +753,18 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async cumsum(dim = 0) {
+  // TODO: Remove this???  duplicate of sum(dim, keepdim)
+  async cumsum(dim = 0): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'cumsum',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'cumsum',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async dataOnGpu() {
@@ -734,13 +786,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async exp() {
+  async exp(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'exp'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'exp'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -752,13 +807,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async exp_() {
+  async exp_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'exp_'
     }))
+
+    return self
   }
 
   /*
@@ -772,16 +829,20 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     the new, expanded tensor.
   */
+  // TODO: @justin is this inline or does it return a new tensor?
   async expand(
     ...args: number[]
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'expand',
-      tensorIndexParams: args
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'expand',
+        tensorIndexParams: args
+      }), self.type),
+      self.constructor
+    )
   }
 
   //TODO: figure this out
@@ -789,17 +850,20 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     indices: any, // what type is this?
     dim: number,
     x: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
       x.ready()
     ])
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'index_add',
-      tensorIndexParams: [indices.id, dim, x.id]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'index_add',
+        tensorIndexParams: [indices.id, dim, x.id]
+      }), self.type),
+      self.constructor
+    )
   }
 
   //TODO: figure this out
@@ -807,31 +871,36 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     indices: any, // what type is this?
     dim: number,
     x: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
       x.ready()
     ])
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'index_add_',
       tensorIndexParams: [indices.id, dim, x.id]
     }), self.type)
+
+    return self
   }
 
   //TODO: figure this out
   async index_select(
     dim: number,
     indices: any // what type is this?
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'index_select',
-      tensorIndexParams: [indices.id, dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'index_select',
+        tensorIndexParams: [indices.id, dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async keepgrad() {
@@ -859,7 +928,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async pow(
     x: number|Tensor
-  ) {
+  ): Promise<this> {
     let self = this
 
     return await self.arithmetic_operation(x, 'pow', false)
@@ -878,7 +947,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async pow_(
     x: number|Tensor
-  ) {
+  ): Promise<this> {
     let self = this
 
     return await self.arithmetic_operation(x, 'pow', true)
@@ -893,13 +962,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async floor() {
+  async floor(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'floor'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'floor'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -911,13 +983,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async floor_() {
+  async floor_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'floor_'
     }))
+
+    return self
   }
 
   /*
@@ -929,13 +1003,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async round() {
+  async round(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
-      functionCall: 'round'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'round'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -947,13 +1024,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async round_() {
+  async round_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'round_'
     }))
+
+    return self
   }
 
   /*
@@ -969,17 +1048,20 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async mm(
     x: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
       x.ready()
     ])
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'mm',
-      tensorIndexParams: [x.id]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'mm',
+        tensorIndexParams: [x.id]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async grad() {
@@ -998,13 +1080,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async neg() {
+  async neg(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'neg'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'neg'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1016,22 +1101,27 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async neg_() {
+  async neg_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'neg_'
     }))
+
+    return self
   }
 
-  async relu() {
+  async relu(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'relu'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'relu'
+      }), self.type),
+      self.constructor
+    )
   }
 
   async save(
@@ -1040,7 +1130,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    return await controller.sendJSON(self.cmd({
       functionCall: 'save',
       tensorIndexParams: [filename]
     }), 'bool')
@@ -1068,13 +1158,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace.
   */
-  async sigmoid_() {
+  async sigmoid_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'sigmoid_'
     }))
+
+    return self
   }
 
   /*
@@ -1087,13 +1179,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async sigmoid() {
+  async sigmoid(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sigmoid'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sigmoid'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1105,13 +1200,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async sign() {
+  async sign(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sign'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sign'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1123,13 +1221,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async sign_() {
+  async sign_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'sign_'
     }))
+
+    return self
   }
 
   /*
@@ -1141,13 +1241,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async sin() {
+  async sin(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sin'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sin'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1159,13 +1262,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async sin_() {
+  async sin_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'sin_'
     }))
+
+    return self
   }
 
   /*
@@ -1219,26 +1324,32 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
   async softmax(
     dim = -1
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'softmax',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'softmax',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async std(
     dim = -1
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'std',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'std',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1263,7 +1374,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (dim == -1) {
-      return controller.sendJSON(self.cmd({
+      return await controller.sendJSON(self.cmd({
         functionCall: 'stride'
       }), 'string')
     } else {
@@ -1285,22 +1396,27 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor:
   *     Output Tensor
   */
-  async sqrt() {
+  async sqrt(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sqrt'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sqrt'
+      }), self.type),
+      self.constructor
+    )
   }
 
-  async sqrt_() {
+  async sqrt_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'sqrt_'
     }))
+
+    return self
   }
 
   /*
@@ -1310,37 +1426,50 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async trace() {
+  async trace(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'trace'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'trace'
+      }), self.type),
+      self.constructor
+    )
   }
 
-  async trunc() {
+  async trunc(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'trunc'
-    }), self.type)
-  }
-
-  //TODO: figure this out (any)?
-  async view(...args: any[]) {
-    let self = this
-    await self.ready()
-
-    return controller.sendJSON(self.cmd({
-      functionCall: 'view',
-      tensorIndexParams: args
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'trunc'
+      }), self.type),
+      self.constructor
+    )
   }
 
   //TODO: figure this out (any)?
-  async view_(...args: any[]) {
+  async view(
+    ...args: any[]
+  ): Promise<this> {
+    let self = this
+    await self.ready()
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'view',
+        tensorIndexParams: args
+      }), self.type),
+      self.constructor
+    )
+  }
+
+  //TODO: figure this out (any)?
+  async view_(
+    ...args: any[]
+  ): Promise<this> {
     let self = this
     await self.ready()
 
@@ -1348,27 +1477,31 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       functionCall: 'view_',
       tensorIndexParams: args
     }))
+
     return self
   }
 
   async view_as(
     x: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
       x.ready()
     ])
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'view_as',
-      tensorIndexParams: [x.id]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'view_as',
+        tensorIndexParams: [x.id]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async view_as_(
     x: Tensor
-  ) {
+  ): Promise<this> {
     let self = this
     await Promise.all([
       self.ready(),
@@ -1391,62 +1524,75 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async T() {
+  async T(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'transpose'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'transpose'
+      }), self.type),
+      self.constructor
+    )
   }
 
 
   async triu(
     k = 0
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'triu',
-      tensorIndexParams: [k]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'triu',
+        tensorIndexParams: [k]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async triu_(
     k = 0
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'triu_',
       tensorIndexParams: [k]
     }))
+
+    return self
   }
 
   async unsqueeze(
     dim: number
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'unsqueeze',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'unsqueeze',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   async unsqueeze_(
     dim: number
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'unsqueeze_',
       tensorIndexParams: [dim]
     }))
+
+    return self
   }
 
   /*
@@ -1458,19 +1604,20 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async zero_() {
+  async zero_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'zero_'
     }))
+
+    return self
   }
 
   async toString() {
     let self = this
     await self.ready()
-
 
     return String(await self.to_numpy()).replace(']', ' ').replace('[', ' ')
   }
@@ -1515,7 +1662,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     x: number|Tensor,
     name: string,
     inline = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
@@ -1533,12 +1680,22 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
     if (inline) {
       operation_cmd += '_'
+
+      await controller.sendJSON(self.cmd({
+        functionCall: operation_cmd,
+        tensorIndexParams: [parameter]
+      }))
+
+      return self
     }
-    // sends the command
-    return await controller.sendJSON(self.cmd({
-      functionCall: operation_cmd,
-      tensorIndexParams: [parameter]
-    }), inline ? void 0 : self.type)
+
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: operation_cmd,
+        tensorIndexParams: [parameter]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1550,13 +1707,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async sinh() {
+  async sinh(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sinh'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sinh'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1568,13 +1728,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace.
   */
-  async sinh_() {
+  async sinh_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'sinh_'
     }))
+
+    return self
   }
 
   /*
@@ -1586,13 +1748,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async log() {
+  async log(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'log'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'log'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1604,13 +1769,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace.
   */
-  async log_() {
+  async log_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'log_'
     }))
+
+    return self
   }
 
   /*
@@ -1622,13 +1789,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace.
   */
-  async log1p_() {
+  async log1p_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'log1p_'
     }))
+
+    return self
   }
 
   /*
@@ -1640,13 +1809,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async log1p() {
+  async log1p(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'log1p'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'log1p'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1658,13 +1830,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async frac() {
+  async frac(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'frac'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'frac'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1676,13 +1851,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async frac_() {
+  async frac_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'frac_'
     }))
+
+    return self
   }
 
   /*
@@ -1694,13 +1871,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async reciprocal() {
+  async reciprocal(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'reciprocal'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'reciprocal'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1712,13 +1892,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async reciprocal_() {
+  async reciprocal_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'reciprocal_'
     }))
+
+    return self
   }
 
   /*
@@ -1731,13 +1913,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async rsqrt() {
+  async rsqrt(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'rsqrt'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'rsqrt'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1750,13 +1935,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async rsqrt_() {
+  async rsqrt_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'rsqrt_'
     }))
+
+    return self
   }
 
   /*
@@ -1771,7 +1958,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async remainder(
     x: number|Tensor
-  ) {
+  ): Promise<this> {
     let self = this
 
     return self.arithmetic_operation(x, 'remainder')
@@ -1788,7 +1975,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async remainder_(
     x: number|Tensor
-  ) {
+  ): Promise<this> {
     let self = this
 
     return self.arithmetic_operation(x, 'remainder', true)
@@ -1804,14 +1991,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async sample(
     dim: number
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sample',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sample',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1823,13 +2013,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async tan() {
+  async tan(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'tan'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'tan'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1841,13 +2034,15 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Caller with values inplace
   */
-  async tan_() {
+  async tan_(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'tan_'
     }))
+
+    return self
   }
 
   /*
@@ -1859,13 +2054,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   * FloatTensor
   *     Output tensor
   */
-  async tanh() {
+  async tanh(): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'tanh'
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'tanh'
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1882,14 +2080,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async squeeze(
     dim = -1
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'squeeze',
-      tensorIndexParams: [dim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'squeeze',
+        tensorIndexParams: [dim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1906,14 +2107,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   */
   async squeeze_(
     dim = -1
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
+    await controller.sendJSON(self.cmd({
       functionCall: 'squeeze_',
       tensorIndexParams: [dim]
     }))
+
+    return self
   }
 
   /*
@@ -1932,14 +2135,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async min(
     dim = -1,
     keepdim = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'min',
-      tensorIndexParams: [dim, keepdim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'min',
+        tensorIndexParams: [dim, keepdim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1958,14 +2164,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async max(
     dim = -1,
     keepdim = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'max',
-      tensorIndexParams: [dim, keepdim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'max',
+        tensorIndexParams: [dim, keepdim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -1984,14 +2193,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async sum(
     dim = -1,
     keepdim = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sum',
-      tensorIndexParams: [dim, keepdim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sum',
+        tensorIndexParams: [dim, keepdim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -2010,14 +2222,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async prod(
     dim = -1,
     keepdim = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'prod',
-      tensorIndexParams: [dim, keepdim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'prod',
+        tensorIndexParams: [dim, keepdim]
+      }), self.type),
+      self.constructor
+    )
   }
 
   /*
@@ -2036,14 +2251,17 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   async mean(
     dim = -1,
     keepdim = false
-  ) {
+  ): Promise<this> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'mean',
-      tensorIndexParams: [dim, keepdim]
-    }), self.type)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'mean',
+        tensorIndexParams: [dim, keepdim]
+      }), self.type),
+      self.constructor
+    )
   }
 }
 
