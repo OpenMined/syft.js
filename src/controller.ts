@@ -10,6 +10,7 @@ import { Model } from './Model'
 
 const verbose = false
 
+
 const identity = uuid.v4()
 const socket = zmq.socket('dealer')
 
@@ -17,10 +18,10 @@ socket.identity = identity
 socket.connect('tcp://localhost:5555')
 
 export function log(
-  message: any
+  ...args: any[]
 ): void {
   if (verbose) {
-    console.log(message)
+    console.log(...args)
   }
 }
 
@@ -42,7 +43,7 @@ export function cmd(
 
 const wq = new WorkQueue<string, string>(job => {
   // send the command
-  console.log('sending:', job.data)
+  log('sending:', job.data)
   socket.send(/*job.id + */job.data)
 }, 1)
 
@@ -61,7 +62,7 @@ socket.on('message', (res) => {
   if (job) {
     let r = res.toString()
 
-    console.log('receiving:', r)
+    log('receiving:', r)
 
     if (r.startsWith('Unity Error:')) {
       job.reject(new Error(r))
@@ -154,20 +155,16 @@ export async function sendJSON(
   // send the command
   let res = await wq.queue(data)
 
-  log(res)
-
   if (return_type == void 0) {
     return
   } else if (return_type == 'FloatTensor') {
       if (res != '-1' && res != '') {
-        log('FloatTensor.__init__: ' +  res)
-        return new FloatTensor(res, true)
+        return new FloatTensor(res)
       }
       return
   } else if (return_type == 'IntTensor') {
     if (res != '-1' && res != '') {
-      log('IntTensor.__init__: ' +  res)
-      return new IntTensor(res, true)
+      return new IntTensor(res)
     }
     return
   } else if (return_type == 'FloatTensor_list') {
@@ -177,7 +174,7 @@ export async function sendJSON(
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
-          tensors.push(get_tensor(str_id))
+          tensors.push(new FloatTensor(str_id))
         }
       }
     }

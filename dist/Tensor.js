@@ -80,10 +80,10 @@ class Tensor extends AsyncInit_1.AsyncInit {
             yield self.ready();
             let res;
             if (yield self.is_contiguous()) {
-                res = yield controller.sendJSON(self.cmd({
+                res = asserts_1.assertType(yield controller.sendJSON(self.cmd({
                     functionCall: 'to_numpy'
-                }), 'string');
-                return res;
+                }), 'string'), 'string');
+                return res.split(' ').map(a => Number(a));
             }
             else {
                 return ' - non-contiguous - ';
@@ -750,14 +750,8 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (as_list) {
-                return ((yield self.get('shape')) || '').split(',').map(a => Number(a));
-            }
-            else {
-                return yield controller.sendJSON(self.cmd({
-                    functionCall: 'shape'
-                }), self.type);
-            }
+            let res = asserts_1.assertType(yield self.get('shape'), 'string');
+            return res.split(',').slice(0, -1).map(a => Number(a));
         });
     }
     softmax(dim = -1) {
@@ -948,7 +942,9 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return String(yield self.to_numpy()).replace(']', ' ').replace('[', ' ');
+            let shape = yield self.shape();
+            let data = yield self.to_numpy();
+            return `${self.type}<${shape.join('x')}>(id: ${self.id}) [${data}]`;
         });
     }
     cpu() {
@@ -996,6 +992,66 @@ class Tensor extends AsyncInit_1.AsyncInit {
                 functionCall: operation_cmd,
                 tensorIndexParams: [parameter]
             }), self.type), self.constructor);
+        });
+    }
+    add(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'add');
+        });
+    }
+    add_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'add', true);
+        });
+    }
+    sub(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'sub');
+        });
+    }
+    sub_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'sub', true);
+        });
+    }
+    mul(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'mul');
+        });
+    }
+    mul_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'mul', true);
+        });
+    }
+    div(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'div');
+        });
+    }
+    div_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'div', true);
+        });
+    }
+    mod(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'mod');
+        });
+    }
+    mod_(x) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let self = this;
+            return self.arithmetic_operation(x, 'mod', true);
         });
     }
     sinh() {
@@ -1237,7 +1293,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
 Tensor.__tensor__ = {};
 exports.Tensor = Tensor;
 class IntTensor extends Tensor {
-    constructor(data, data_is_pointer = false) {
+    constructor(data) {
         super(TENSOR_SUPER);
         this.type = 'IntTensor';
         let self = this;
@@ -1264,16 +1320,15 @@ class IntTensor extends Tensor {
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
-        else if (data_is_pointer) {
+        else {
             self.id = data;
-            self.data_is_pointer = true;
             self.__finish__(data);
         }
     }
 }
 exports.IntTensor = IntTensor;
 class FloatTensor extends Tensor {
-    constructor(data, autograd = false, data_is_pointer = false) {
+    constructor(data, autograd = false) {
         super(TENSOR_SUPER);
         this.type = 'FloatTensor';
         let self = this;
@@ -1303,9 +1358,8 @@ class FloatTensor extends Tensor {
                 .then(res => self.__finish__(res))
                 .catch(err => self.__error__(err));
         }
-        else if (data_is_pointer) {
+        else {
             self.id = data;
-            self.data_is_pointer = true;
             self.__finish__(data);
         }
     }

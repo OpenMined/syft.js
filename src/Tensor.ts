@@ -22,7 +22,6 @@ export class Tensor extends AsyncInit implements IAsyncInit {
 
   id: string
   data: DimArray
-  data_is_pointer: boolean
   type: string
 
   constructor($?: any) {
@@ -147,10 +146,14 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let res
 
     if (await self.is_contiguous()) {
-      res = await controller.sendJSON(self.cmd({
-        functionCall: 'to_numpy'
-      }), 'string')
-      return res // np.fromstring(res, sep=' ').astype('int').reshape(self.shape())
+      res = assertType(
+        await controller.sendJSON(self.cmd({
+          functionCall: 'to_numpy'
+        }), 'string'),
+        'string'
+      ) as string
+
+      return res.split(' ').map(a => Number(a))
     } else {
       return ' - non-contiguous - '
     }
@@ -1514,14 +1517,9 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    if (as_list) {
-      //TODO: figure this out
-      return (await self.get('shape') as string || '').split(',').map(a => Number(a))
-    } else {
-      return await controller.sendJSON(self.cmd({
-        functionCall: 'shape'
-      }), self.type)
-    }
+    let res = assertType(await self.get('shape'), 'string') as string
+
+    return res.split(',').slice(0, -1).map(a => Number(a))
   }
 
   async softmax(
@@ -1821,7 +1819,10 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return String(await self.to_numpy()).replace(']', ' ').replace('[', ' ')
+    let shape = await self.shape()
+    let data = await self.to_numpy()
+
+    return `${self.type}<${shape.join('x')}>(id: ${self.id}) [${data}]`
   }
 
   /*
@@ -1898,6 +1899,86 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       }), self.type),
       self.constructor
     )
+  }
+
+  async add(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'add')
+  }
+
+  async add_(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'add', true)
+  }
+
+  async sub(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'sub')
+  }
+
+  async sub_(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'sub', true)
+  }
+
+  async mul(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'mul')
+  }
+
+  async mul_(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'mul', true)
+  }
+
+  async div(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'div')
+  }
+
+  async div_(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'div', true)
+  }
+
+  async mod(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'mod')
+  }
+
+  async mod_(
+    x: number|Tensor
+  ): Promise<this> {
+    let self = this
+
+    return self.arithmetic_operation(x, 'mod', true)
   }
 
   /*
@@ -2471,8 +2552,7 @@ export class IntTensor extends Tensor {
   data: IntDimArray
   type = 'IntTensor'
   constructor(
-    data: string|any[]|IntDimArray,
-    data_is_pointer = false
+    data: string|any[]|IntDimArray
   ) {
     super(TENSOR_SUPER)
 
@@ -2502,9 +2582,8 @@ export class IntTensor extends Tensor {
       }), 'string')
         .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
-    } else if (data_is_pointer) {
+    } else {
       self.id = data
-      self.data_is_pointer = true
       self.__finish__(data)
     }
   }
@@ -2516,8 +2595,7 @@ export class FloatTensor extends Tensor {
 
   constructor(
     data: string|any[]|FloatDimArray,
-    autograd = false,
-    data_is_pointer = false
+    autograd = false
   ) {
     super(TENSOR_SUPER)
 
@@ -2551,9 +2629,8 @@ export class FloatTensor extends Tensor {
       }), 'string')
         .then(res => self.__finish__(res as string))
         .catch(err => self.__error__(err))
-    } else if (data_is_pointer) {
+    } else {
       self.id = data
-      self.data_is_pointer = true
       self.__finish__(data)
     }
   }
