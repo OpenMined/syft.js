@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const Async = require("promasync");
 const controller = require("./controller");
+const asserts_1 = require("./asserts");
 const Tensor_1 = require("./Tensor");
 const AsyncInit_1 = require("./AsyncInit");
 class Model extends AsyncInit_1.AsyncInit {
@@ -62,28 +63,20 @@ class Model extends AsyncInit_1.AsyncInit {
         let self = this;
         self.id = id;
     }
-    __call__(...args) {
+    feed(...args) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (args.length == 1) {
-                return yield self.forward(args[0]);
-            }
-            else if (args.length == 2) {
-                return yield self.forward(args[0], args[1]);
-            }
-            else if (args.length == 3) {
-                return yield self.forward(args[0], args[1], args[2]);
-            }
+            return yield self.forward(...args);
         });
     }
     parameters() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.sendJSON(self.cmd({
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
                 functionCall: 'params'
-            }), 'FloatTensor_list');
+            }), 'FloatTensor_list'), Array);
         });
     }
     num_parameters() {
@@ -99,9 +92,9 @@ class Model extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.sendJSON(self.cmd({
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
                 functionCall: 'models'
-            }), 'Model_list');
+            }), 'Model_list'), Array);
         });
     }
     set_id(new_id) {
@@ -121,31 +114,31 @@ class Model extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             if (Array.isArray(input)) {
-                input = new Tensor_1.FloatTensor(input, autograd = true);
+                input = new Tensor_1.FloatTensor(input);
             }
             if (Array.isArray(target)) {
-                target = new Tensor_1.FloatTensor(target, autograd = true);
+                target = new Tensor_1.FloatTensor(target);
             }
-            let num_batches = yield controller.sendJSON(self.cmd({
+            let num_batches = asserts_1.assertType(yield controller.sendJSON(self.cmd({
                 functionCall: 'prepare_to_fit',
                 tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
-            }), 'int');
+            }), 'int'), 'number');
             console.log(`Number of Batches:${num_batches}`);
             let progress_bars = [];
             if (verbose) {
             }
-            let start = time.time();
+            let start = Date.now();
             let loss = 100000;
             for (let iter = 0; iter < iters; iter++) {
                 if (verbose) {
                 }
-                let iter_start = time.time();
+                let iter_start = Date.now();
                 for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
                     let prev_loss = loss;
-                    let _loss = yield controller.sendJSON(self.cmd({
+                    let _loss = asserts_1.assertType(yield controller.sendJSON(self.cmd({
                         functionCall: 'fit',
                         tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
-                    }), 'float');
+                    }), 'float'), 'number');
                     if (_loss != '0') {
                         loss = _loss;
                     }
@@ -162,7 +155,7 @@ class Model extends AsyncInit_1.AsyncInit {
                         if (verbose) {
                         }
                     }
-                    let elapsed = time.time() - iter_start;
+                    let elapsed = Date.now() - iter_start;
                     let pace = elapsed / (log_i + 1);
                     let remaining = Math.floor((num_batches - log_i - 1) * pace);
                     let remainingStr = '';
@@ -177,7 +170,7 @@ class Model extends AsyncInit_1.AsyncInit {
                 }
                 if (verbose) {
                 }
-                let elapsed = time.time() - start;
+                let elapsed = Date.now() - start;
                 let pace = elapsed / (iter + 1);
                 let remaining = Math.floor((iters - iter - 1) * pace);
                 let remainingStr = '';
@@ -225,18 +218,11 @@ class Model extends AsyncInit_1.AsyncInit {
             return;
         });
     }
-    __len__() {
+    length() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
             return (yield self.models()).length;
-        });
-    }
-    __getitem__(idx) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return (yield self.parameters())[idx];
         });
     }
     activation() {
@@ -271,34 +257,18 @@ class Model extends AsyncInit_1.AsyncInit {
             }), 'FloatTensor');
         });
     }
-    __repr__(verbose = true) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            if (verbose) {
-                let output = '';
-                output += self.__repr__(false) + '\n';
-                for (let p of yield self.parameters()) {
-                    output += '\t W:' + p.__repr__(false);
-                }
-                let activation = yield self.activation();
-                if (activation) {
-                    output += '\t A:' + activation.__repr__(verbose = false) + '\n';
-                }
-                return output;
-            }
-            else {
-                return `<syft.nn.${self.layerType} at ${self.id}>`;
-            }
-        });
-    }
 }
 exports.Model = Model;
 class Policy extends Model {
     constructor(id, model, optimizer, stateType = 'discrete') {
-        super(void 0, [model.id, optimizer.id]);
-        this.layerType = 'policy';
+        if (model && optimizer) {
+            super(void 0, [model.id, optimizer.id]);
+        }
+        else {
+            super(id, []);
+        }
         let self = this;
+        self.layerType = 'policy';
         self.stateType = stateType;
         self.model = model;
         self.optimizer = optimizer;
@@ -317,48 +287,23 @@ class Policy extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return self.model.parameters();
+            if (self.model) {
+                return self.model.parameters();
+            }
+            return [];
         });
     }
-    __call__(...args) {
+    feed(...args) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
             if (self.stateType == 'discrete') {
-                self.sample(...args);
+                return yield self.sample(...args);
             }
             else if (self.stateType == 'continuous') {
-                self.forward(...args);
+                return yield self.forward(...args);
             }
-            else {
-                console.log(`Error: State type ${self.stateType} unknown`);
-            }
-        });
-    }
-    history() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let raw_history = yield controller.sendJSON(self.cmd({
-                functionCall: 'get_history'
-            }), 'string');
-            let losses = [];
-            let rewards = [];
-            for (let { loss, reward } of history_idx) {
-                if (loss != -1) {
-                    losses.push(yield controller.get_tensor(loss));
-                }
-                else {
-                    losses.push(void 0);
-                }
-                if (reward != -1) {
-                    rewards.push(yield controller.get_tensor(reward));
-                }
-                else {
-                    rewards.push(void 0);
-                }
-            }
-            return [losses, rewards];
+            throw new Error(`Unknown State Type: ${self.stateType}`);
         });
     }
 }
@@ -400,24 +345,7 @@ class Sequential extends Model {
             output += mods.join(single);
             output += double;
             console.log(output);
-        });
-    }
-    __repr__() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            let output = '';
-            for (let m of yield self.models()) {
-                output += m.__repr__();
-            }
             return output;
-        });
-    }
-    __getitem__(idx) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let self = this;
-            yield self.ready();
-            return (yield self.models())[idx];
         });
     }
 }
@@ -431,7 +359,6 @@ class Linear extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             self.id = id;
-            yield self.ready();
             let params = yield self.parameters();
         });
     }

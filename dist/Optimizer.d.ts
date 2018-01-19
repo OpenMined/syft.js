@@ -1,13 +1,12 @@
 import { AsyncInit, IAsyncInit } from './AsyncInit';
-import { IntTensor, FloatTensor } from './Tensor';
 export declare class Optimizer extends AsyncInit implements IAsyncInit {
     id: string;
     type: string;
     optimizer_type: string;
     constructor(id?: string, optimizer_type?: string, params?: any[], h_params?: any[]);
     finish(id: string): void;
-    zero_grad(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    step(batch_size: number, iteration: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    zero_grad(): Promise<any>;
+    step(batch_size: number, iteration: number): Promise<any>;
     cmd(options: {
         [key: string]: any;
         functionCall: string;

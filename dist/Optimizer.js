@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const controller = require("./controller");
 const AsyncInit_1 = require("./AsyncInit");
+const asserts_1 = require("./asserts");
 function get_param_ids(params = []) {
     let param_ids = [];
     for (let p of params) {
@@ -31,19 +32,19 @@ class Optimizer extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.sendJSON(self.cmd({
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
                 functionCall: 'zero_grad'
-            }), 'string');
+            }), 'string'), 'string');
         });
     }
     step(batch_size, iteration) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return controller.sendJSON(self.cmd({
+            return asserts_1.assertType(yield controller.sendJSON(self.cmd({
                 functionCall: 'step',
                 tensorIndexParams: [batch_size, iteration]
-            }), 'string');
+            }), 'string'), 'string');
         });
     }
     cmd(options) {
