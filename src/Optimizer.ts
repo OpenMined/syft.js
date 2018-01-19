@@ -110,7 +110,7 @@ export class SGD extends Optimizer {
     lr = 0.01,
     momentum = 0,
     decay = 0
-  ){
+  ) {
     super(void 0,'sgd', get_param_ids(params), [String(lr), String(momentum), String(decay)])
   }
 }
@@ -141,7 +141,7 @@ export class Adam extends Optimizer {
     beta_2 = 0.999,
     epsilon = 1e-6,
     decay = 0
-  ){
+  ) {
     super(void 0, 'adam', get_param_ids(params), [String(lr), String(beta_1), String(beta_2), String(epsilon), String(decay)])
   }
 }

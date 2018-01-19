@@ -1,9 +1,9 @@
 export interface IAsyncInit {
   finish(res: any): void
-  __init__ : {
+  __init__: {
     error: Error|null
     ready: boolean
-    waits: {res: (val?: any)=>void, rej: (val?: any)=>void}[]
+    waits: {res: (val?: any) => void, rej: (val?: any) => void}[]
     evict: boolean
   }
 }
@@ -12,7 +12,7 @@ export class AsyncInit {
   __init__ : {
     error: Error|null
     ready: boolean
-    waits: {res: (val?: any)=>void, rej: (val?: any)=>void}[]
+    waits: {res: (val?: any) => void, rej: (val?: any) => void}[]
     evict: boolean
   } = {
     error: null,
@@ -26,7 +26,7 @@ export class AsyncInit {
 
     self.finish(res)
     self.__init__.ready = true
-    self.__init__.waits.forEach(wait => wait.res());
+    self.__init__.waits.forEach(wait => wait.res())
     self.__init__.waits = []
   }
 
@@ -35,7 +35,7 @@ export class AsyncInit {
 
     let err = new Error(res)
     self.__init__.error = err
-    self.__init__.waits.forEach(wait => wait.rej(err));
+    self.__init__.waits.forEach(wait => wait.rej(err))
     self.__init__.waits = []
   }
 

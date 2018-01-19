@@ -3,9 +3,9 @@ export function assertType(
   Type: Function|string
 ) {
   if (
-    typeof Type == 'string'
+    typeof Type === 'string'
   ) {
-    if (typeof value == Type) {
+    if (typeof value === Type) {
       return value
     }
 

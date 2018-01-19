@@ -77,7 +77,7 @@ function num_tensors() {
 }
 exports.num_tensors = num_tensors;
 function new_tensors_allowed(allowed) {
-    if (allowed == void 0) {
+    if (allowed == null) {
         return sendJSON(cmd({
             functionCall: 'new_tensors_allowed'
         }), 'bool');
@@ -108,24 +108,24 @@ function sendJSON(message, return_type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let data = JSON.stringify(message);
         let res = yield wq.queue(data);
-        if (return_type == void 0) {
+        if (return_type == null) {
             return;
         }
-        else if (return_type == 'FloatTensor') {
-            if (res != '-1' && res != '') {
+        else if (return_type === 'FloatTensor') {
+            if (res !== '-1' && res !== '') {
                 return new Tensor_1.FloatTensor(res);
             }
             return;
         }
-        else if (return_type == 'IntTensor') {
-            if (res != '-1' && res != '') {
+        else if (return_type === 'IntTensor') {
+            if (res !== '-1' && res !== '') {
                 return new Tensor_1.IntTensor(res);
             }
             return;
         }
-        else if (return_type == 'FloatTensor_list') {
+        else if (return_type === 'FloatTensor_list') {
             let tensors = [];
-            if (res != '') {
+            if (res !== '') {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
@@ -135,9 +135,9 @@ function sendJSON(message, return_type) {
             }
             return tensors;
         }
-        else if (return_type == 'Model_list') {
+        else if (return_type === 'Model_list') {
             let models = [];
-            if (res != '') {
+            if (res !== '') {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
@@ -147,17 +147,17 @@ function sendJSON(message, return_type) {
             }
             return models;
         }
-        else if (return_type == 'int') {
+        else if (return_type === 'int') {
             return Number(res);
         }
-        else if (return_type == 'string') {
+        else if (return_type === 'string') {
             return String(res);
         }
-        else if (return_type == 'bool') {
-            if (res == 'True') {
+        else if (return_type === 'bool') {
+            if (res === 'True') {
                 return true;
             }
-            else if (res == 'False') {
+            else if (res === 'False') {
                 return false;
             }
         }

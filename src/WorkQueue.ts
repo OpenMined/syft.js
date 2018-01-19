@@ -58,8 +58,8 @@ export class WorkQueue<D, R> {
     let self = this
 
     if (
-      self.iddleWorkers.length == 0 ||
-      self.waiting.length == 0
+      self.iddleWorkers.length === 0 ||
+      self.waiting.length === 0
     ) return
 
     let id = self.iddleWorkers.shift()

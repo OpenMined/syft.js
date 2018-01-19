@@ -49,12 +49,12 @@ const wq = new WorkQueue<string, string>(job => {
 
 socket.on('message', (res) => {
 
-  //TODO: allow for mutiple request at once
+  // TODO: allow for mutiple request at once
   // let str = res.toString()
   // let id = str.slice(0, wq.idLength)
   // let result = str.slice(wq.idLength)
 
-  let job;
+  let job
   for (let id in wq.working) {
     job = wq.working[id]
   }
@@ -117,7 +117,7 @@ export function num_tensors() {
 export function new_tensors_allowed(
   allowed?: boolean
 ) {
-    if (allowed == void 0) {
+    if (allowed == null) {
       return sendJSON(cmd({
         functionCall:'new_tensors_allowed'
       }), 'bool')
@@ -155,22 +155,22 @@ export async function sendJSON(
   // send the command
   let res = await wq.queue(data)
 
-  if (return_type == void 0) {
+  if (return_type == null) {
     return
-  } else if (return_type == 'FloatTensor') {
-      if (res != '-1' && res != '') {
+  } else if (return_type === 'FloatTensor') {
+      if (res !== '-1' && res !== '') {
         return new FloatTensor(res)
       }
       return
-  } else if (return_type == 'IntTensor') {
-    if (res != '-1' && res != '') {
+  } else if (return_type === 'IntTensor') {
+    if (res !== '-1' && res !== '') {
       return new IntTensor(res)
     }
     return
-  } else if (return_type == 'FloatTensor_list') {
+  } else if (return_type === 'FloatTensor_list') {
     let tensors: Tensor[] = []
 
-    if (res != '') {
+    if (res !== '') {
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
@@ -180,10 +180,10 @@ export async function sendJSON(
     }
 
     return tensors
-  } else if (return_type == 'Model_list') {
+  } else if (return_type === 'Model_list') {
     let models: any[] = []
 
-    if (res != '') {
+    if (res !== '') {
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
@@ -193,14 +193,14 @@ export async function sendJSON(
     }
 
     return models
-  } else if (return_type == 'int') {
+  } else if (return_type === 'int') {
     return Number(res)
-  } else if (return_type == 'string') {
+  } else if (return_type === 'string') {
     return String(res)
-  } else if (return_type == 'bool') {
-    if (res == 'True') {
+  } else if (return_type === 'bool') {
+    if (res === 'True') {
       return true
-    } else if (res == 'False') {
+    } else if (res === 'False') {
       return false
     }
   }

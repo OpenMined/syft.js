@@ -27,12 +27,12 @@ export enum TSTypes {
 }
 
 function toArrayBuffer(buf: Buffer) {
-    var ab = new ArrayBuffer(buf.length);
-    var view = new Uint8Array(ab);
+    var ab = new ArrayBuffer(buf.length)
+    var view = new Uint8Array(ab)
     for (var i = 0; i < buf.length; ++i) {
-        view[i] = buf[i];
+        view[i] = buf[i]
     }
-    return ab;
+    return ab
 }
 
 export class TensorSerializer {
@@ -91,7 +91,7 @@ export class TensorSerializer {
 
   lenType(data: number|ArrayLike<number>) {
     let max = -1
-    if (typeof data == 'number') {
+    if (typeof data === 'number') {
       max = data
     } else {
       max = data[0]
@@ -115,7 +115,7 @@ export class TensorSerializer {
   }
 
   byteSize(n: TSTypes) {
-    switch(n) {
+    switch (n) {
     case TSTypes.int8:
       return 1
     case TSTypes.int16:
@@ -169,7 +169,7 @@ export class TensorSerializer {
   ) {
     let self = this
 
-    let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32
+    let dataType = t.type === 'IntTensor' ? TSTypes.int32 : TSTypes.float32
 
     let props = {
       shapeLengthSetting     : TSTypes.uint32,
@@ -187,7 +187,7 @@ export class TensorSerializer {
       props.shapeTypeSetting       = self.lenType(t.data.shape)
       props.dataShapeTypeSetting   = self.lenType(t.data.shape)
 
-      if (t.type == 'IntTensor') {
+      if (t.type === 'IntTensor') {
         props.dataTypeSetting = self.dataType(t.data.data)
       }
     }
@@ -203,7 +203,7 @@ export class TensorSerializer {
     offset += 2
 
     // shape length header
-    switch(props.shapeLengthSetting) {
+    switch (props.shapeLengthSetting) {
     case TSTypes.uint8:
       view.setUint8(offset, t.data.shape.length)
       break
@@ -226,7 +226,7 @@ export class TensorSerializer {
     offset += self.byteSize(props.shapeLengthSetting)
 
     // data shape length header
-    switch(props.dataShapeLengthSetting) {
+    switch (props.dataShapeLengthSetting) {
     case TSTypes.uint8:
       view.setUint8(offset, t.data.shape.length)
       break
@@ -249,7 +249,7 @@ export class TensorSerializer {
     offset += self.byteSize(props.dataShapeLengthSetting)
 
     // data length header
-    switch(props.dataLengthSetting) {
+    switch (props.dataLengthSetting) {
     case TSTypes.uint8:
       view.setUint8(offset, t.data.data.length)
       break
@@ -274,7 +274,7 @@ export class TensorSerializer {
     // shape data
     for (let i = 0; i < t.data.shape.length; i++) {
       // data shape length header
-      sw: switch(props.shapeTypeSetting) {
+      sw: switch (props.shapeTypeSetting) {
       case TSTypes.uint8:
         view.setUint8(offset, t.data.shape[i])
         break sw
@@ -300,7 +300,7 @@ export class TensorSerializer {
     // data shape data
     for (let i = 0; i < t.data.shape.length; i++) {
       // data shape length header
-      sw: switch(props.dataShapeTypeSetting) {
+      sw: switch (props.dataShapeTypeSetting) {
       case TSTypes.uint8:
         view.setUint8(offset, t.data.shape[i])
         break sw
@@ -326,7 +326,7 @@ export class TensorSerializer {
     // data data
     for (let i = 0; i < t.data.data.length; i++) {
       // data shape length header
-      sw: switch(props.dataTypeSetting) {
+      sw: switch (props.dataTypeSetting) {
       case TSTypes.int8:
         view.setInt8(offset, t.data.data[i])
         break sw
@@ -379,7 +379,7 @@ export class TensorSerializer {
 
     // shape length header
     let shapeLength = 0
-    switch(props.shapeLengthSetting) {
+    switch (props.shapeLengthSetting) {
     case TSTypes.uint8:
       shapeLength = view.getUint8(offset)
       break
@@ -403,7 +403,7 @@ export class TensorSerializer {
 
     // data shape length header
     let dataShapeLength = 0
-    switch(props.dataShapeLengthSetting) {
+    switch (props.dataShapeLengthSetting) {
     case TSTypes.uint8:
       dataShapeLength = view.getUint8(offset)
       break
@@ -427,7 +427,7 @@ export class TensorSerializer {
 
     // data length header
     let dataLength = 0
-    switch(props.dataLengthSetting) {
+    switch (props.dataLengthSetting) {
     case TSTypes.uint8:
       dataLength = view.getUint8(offset)
       break
@@ -453,7 +453,7 @@ export class TensorSerializer {
     let shape = new Uint32Array(shapeLength)
     for (let i = 0; i < shapeLength; i++) {
       // data shape length header
-      sw: switch(props.shapeTypeSetting) {
+      sw: switch (props.shapeTypeSetting) {
       case TSTypes.uint8:
         shape[i] = view.getUint8(offset)
         break sw
@@ -480,7 +480,7 @@ export class TensorSerializer {
     let dataShape = new Uint32Array(dataShapeLength)
     for (let i = 0; i < dataShapeLength; i++) {
       // data shape length header
-      sw: switch(props.dataShapeTypeSetting) {
+      sw: switch (props.dataShapeTypeSetting) {
       case TSTypes.uint8:
         dataShape[i] = view.getUint8(offset)
         break sw
@@ -519,7 +519,7 @@ export class TensorSerializer {
 
     for (let i = 0; i < dataLength; i++) {
       // data shape length header
-      sw: switch(props.dataTypeSetting) {
+      sw: switch (props.dataTypeSetting) {
       case TSTypes.int8:
         data[i] = view.getInt8(offset)
         break sw
