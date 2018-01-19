@@ -88,7 +88,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.forward(...args)
+    return self.forward(...args)
   }
 
   async parameters(): Promise<Tensor[]> {
@@ -424,9 +424,9 @@ export class Policy extends Model {
     await self.ready()
 
     if (self.stateType === 'discrete') {
-      return await self.sample(...args)
+      return self.sample(...args)
     } else if (self.stateType === 'continuous') {
-      return await self.forward(...args)
+      return self.forward(...args)
     }
 
     throw new Error(`Unknown State Type: ${self.stateType}`)
@@ -503,7 +503,7 @@ export class Sequential extends Model {
     Async.each
 
     let mods = await Async.map(await self.models() as Model[], async (m) => {
-      return await m.summary(false, true)
+      return m.summary(false, true)
     })
     output += mods.join(single)
     output += double
@@ -630,7 +630,7 @@ export class MSELoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'forward',
       tensorIndexParams: [input.id, target.id]
     }), 'FloatTensor' /*delete_after_use=false*/)
@@ -655,7 +655,7 @@ export class NLLLoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'forward',
       tensorIndexParams: [input.id, target.id]
     }), 'FloatTensor' /*delete_after_use=false*/)
@@ -682,7 +682,7 @@ export class CrossEntropyLoss extends Model {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'forward',
       tensorIndexParams: [input.id, target.id]
     }), 'FloatTensor' /*delete_after_use=false*/)

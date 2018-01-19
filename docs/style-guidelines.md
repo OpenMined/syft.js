@@ -14,6 +14,7 @@
   - function parameters on separate lines.
   - define parameter types.
   - define return type.
+  - no `return await`s just return (`async` functions wrap non-promise returns in a promise).
 
 example:
 ```javascript

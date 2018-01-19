@@ -401,7 +401,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     // if (typeof split_size_or_sections === 'number') {
-      return await controller.sendJSON(self.cmd({
+      return controller.sendJSON(self.cmd({
         functionCall: 'split_by_size',
         tensorIndexParams: [split_size_or_sections, dim]
       }), 'FloatTensor_list')
@@ -921,7 +921,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.get('creation_op')
+    return self.get('creation_op')
   }
 
   /*
@@ -1136,7 +1136,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   ): Promise<this> {
     let self = this
 
-    return await self.arithmetic_operation(x, 'pow', false)
+    return self.arithmetic_operation(x, 'pow', false)
   }
 
   /*
@@ -1155,7 +1155,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
   ): Promise<this> {
     let self = this
 
-    return await self.arithmetic_operation(x, 'pow', true)
+    return self.arithmetic_operation(x, 'pow', true)
   }
 
   /*
@@ -1335,7 +1335,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'save',
       tensorIndexParams: [filename]
     }), 'bool')
@@ -1348,7 +1348,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'set',
       tensorIndexParams: [...param_name, params]
     }))
@@ -1491,7 +1491,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await self.get('size')
+    return self.get('size')
   }
 
   /*
@@ -1574,7 +1574,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (dim === -1) {
-      return await controller.sendJSON(self.cmd({
+      return controller.sendJSON(self.cmd({
         functionCall: 'stride'
       }), 'string')
     } else {
@@ -1838,7 +1838,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'cpu'
     }))
   }
@@ -1856,7 +1856,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return await controller.sendJSON(self.cmd({
+    return controller.sendJSON(self.cmd({
       functionCall: 'gpu'
     }))
   }

@@ -67,7 +67,7 @@ class Model extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield self.forward(...args);
+            return self.forward(...args);
         });
     }
     parameters() {
@@ -298,10 +298,10 @@ class Policy extends Model {
             let self = this;
             yield self.ready();
             if (self.stateType === 'discrete') {
-                return yield self.sample(...args);
+                return self.sample(...args);
             }
             else if (self.stateType === 'continuous') {
-                return yield self.forward(...args);
+                return self.forward(...args);
             }
             throw new Error(`Unknown State Type: ${self.stateType}`);
         });
@@ -340,7 +340,7 @@ class Sequential extends Model {
             let output = single + header + double;
             Async.each;
             let mods = yield Async.map(yield self.models(), (m) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return yield m.summary(false, true);
+                return m.summary(false, true);
             }));
             output += mods.join(single);
             output += double;
@@ -422,7 +422,7 @@ class MSELoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.sendJSON(self.cmd({
+            return controller.sendJSON(self.cmd({
                 functionCall: 'forward',
                 tensorIndexParams: [input.id, target.id]
             }), 'FloatTensor');
@@ -439,7 +439,7 @@ class NLLLoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.sendJSON(self.cmd({
+            return controller.sendJSON(self.cmd({
                 functionCall: 'forward',
                 tensorIndexParams: [input.id, target.id]
             }), 'FloatTensor');
@@ -455,7 +455,7 @@ class CrossEntropyLoss extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            return yield controller.sendJSON(self.cmd({
+            return controller.sendJSON(self.cmd({
                 functionCall: 'forward',
                 tensorIndexParams: [input.id, target.id]
             }), 'FloatTensor');
