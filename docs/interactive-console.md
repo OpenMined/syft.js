@@ -17,7 +17,7 @@ $ node --inspect console
 
 # Step 3
 Open Chrome and negative to `chrome://inspect`,
-then click on *inspect* near `path/to/syft.js`.
+then click on *inspect* for the process called `console`.
 ![Open Chrome Inspector](./img/chrome-inspector.png)
 
 # Step 4
