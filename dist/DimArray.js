@@ -29,12 +29,12 @@ class DimArray {
     __fillData__(data, arr = []) {
         let self = this;
         let d = flatten(data);
-        if (d.length != self.size) {
+        if (d.length !== self.size) {
             throw new Error('Invalid Data Structure');
         }
         for (let i in d) {
             let v = d[i];
-            if (typeof v != 'number') {
+            if (typeof v !== 'number') {
                 throw new Error('Invalid Data Type');
             }
             self.data[i] = v;

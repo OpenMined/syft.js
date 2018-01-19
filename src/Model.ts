@@ -193,7 +193,7 @@ export class Model extends AsyncInit implements IAsyncInit {
           }), 'float'),
           'number'
         )
-        if (_loss != '0') {
+        if (_loss !== '0') {
           loss = _loss
         }
         if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
@@ -215,7 +215,7 @@ export class Model extends AsyncInit implements IAsyncInit {
         }
 
         let elapsed = Date.now() - iter_start
-        let pace = elapsed / (log_i+1)
+        let pace = elapsed / (log_i + 1)
         let remaining = Math.floor((num_batches - log_i - 1) * pace)
         let remainingStr = ''
 
@@ -225,16 +225,16 @@ export class Model extends AsyncInit implements IAsyncInit {
           remainingStr += remaining + 's'
         }
         if (verbose) {
-          // TODO: progress_bars[-1].update(log_i+1,[('',remaining),('loss',str(loss)),('batch',str(log_i)+'-'+str(min(log_i+log_interval,num_batches)))])
+          // TODO: progress_bars[-1].update(log_i + 1, [('', remaining), ('loss', str(loss)), ('batch', str(log_i) + '-' + str(min(log_i + log_interval, num_batches)))])
         }
       }
       if (verbose) {
         // TODO: progress_bars[-1].success()
-        // TODO: progress_bars[-1].update(num_batches,[('',str(Date.now() - iter_start)),('loss',str(loss)),('batch',str(log_i)+'-'+str(min(log_i+log_interval,num_batches)))])
+        // TODO: progress_bars[-1].update(num_batches, [('', str(Date.now() - iter_start)), ('loss', str(loss)), ('batch', str(log_i) + '-' + str(min(log_i + log_interval, num_batches)))])
       }
 
       let elapsed = Date.now() - start
-      let pace = elapsed / (iter+1)
+      let pace = elapsed / (iter + 1)
       let remaining = Math.floor((iters - iter - 1) * pace)
       let remainingStr = ''
       if (remaining > 60) {
@@ -243,7 +243,7 @@ export class Model extends AsyncInit implements IAsyncInit {
         remainingStr += remaining + 's'
       }
       if (verbose) {
-        // TODO: progress_bars[0].update(iter,[('',remaining),('loss',loss)])
+        // TODO: progress_bars[0].update(iter, [('', remaining), ('loss', loss)])
       }
       if (Number.isNaN(loss)) {
         break
@@ -265,7 +265,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
     let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
     let outputShape = ''
-    if (typeof self.outputShape == 'number') {
+    if (typeof self.outputShape === 'number') {
       outputShape = String(self.outputShape)
     } else {
       outputShape = String(self.outputShape)
@@ -418,14 +418,14 @@ export class Policy extends Model {
   }
 
   async feed(
-    ...args: any[]  //TODO: what type is this
+    ...args: any[]  // TODO: what type is this
   ) {
     let self = this
     await self.ready()
 
-    if (self.stateType == 'discrete') {
+    if (self.stateType === 'discrete') {
       return await self.sample(...args)
-    } else if (self.stateType == 'continuous') {
+    } else if (self.stateType === 'continuous') {
       return await self.forward(...args)
     }
 
@@ -444,12 +444,12 @@ export class Policy extends Model {
   //   let rewards = []
   //
   //   for (let {loss, reward} of history_idx) {
-  //     if (loss != -1) {
+  //     if (loss !== -1) {
   //       losses.push(await controller.get_tensor(loss))
   //     } else {
   //       losses.push(void 0)
   //     }
-  //     if (reward != -1) {
+  //     if (reward !== -1) {
   //       rewards.push(await controller.get_tensor(reward))
   //     } else {
   //       rewards.push(void 0)
@@ -464,7 +464,7 @@ export class Sequential extends Model {
   layerType = 'sequential'
 
   constructor(
-    layers?: Model[] //TODO: what type is this
+    layers?: Model[] // TODO: what type is this
   ) {
     super(void 0)
     let self = this
@@ -495,8 +495,8 @@ export class Sequential extends Model {
     let single = '_________________________________________________________________\n'
     let header = 'Layer (type)                 Output Shape              Param #   \n'
     let double = '=================================================================\n'
-    //TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-    //TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+    // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+    // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
     let non_trainable_params = 'Non-trainable params: 0' + '\n'
 
     let output = single + header + double
@@ -507,7 +507,7 @@ export class Sequential extends Model {
     })
     output += mods.join(single)
     output += double
-    //TODO: output += total_params + trainable_params + non_trainable_params + single
+    // TODO: output += total_params + trainable_params + non_trainable_params + single
     console.log(output)
     return output
   }

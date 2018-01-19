@@ -33,8 +33,8 @@ class WorkQueue {
     }
     drain() {
         let self = this;
-        if (self.iddleWorkers.length == 0 ||
-            self.waiting.length == 0)
+        if (self.iddleWorkers.length === 0 ||
+            self.waiting.length === 0)
             return;
         let id = self.iddleWorkers.shift();
         let job = self.waiting.shift();

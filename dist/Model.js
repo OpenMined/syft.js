@@ -139,7 +139,7 @@ class Model extends AsyncInit_1.AsyncInit {
                         functionCall: 'fit',
                         tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
                     }), 'float'), 'number');
-                    if (_loss != '0') {
+                    if (_loss !== '0') {
                         loss = _loss;
                     }
                     if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
@@ -197,7 +197,7 @@ class Model extends AsyncInit_1.AsyncInit {
             yield self.ready();
             let layerType = `${yield self.getLayerType()}_${self.id} (${self.type})`;
             let outputShape = '';
-            if (typeof self.outputShape == 'number') {
+            if (typeof self.outputShape === 'number') {
                 outputShape = String(self.outputShape);
             }
             else {
@@ -297,10 +297,10 @@ class Policy extends Model {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (self.stateType == 'discrete') {
+            if (self.stateType === 'discrete') {
                 return yield self.sample(...args);
             }
-            else if (self.stateType == 'continuous') {
+            else if (self.stateType === 'continuous') {
                 return yield self.forward(...args);
             }
             throw new Error(`Unknown State Type: ${self.stateType}`);

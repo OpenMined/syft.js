@@ -138,7 +138,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     )
   }
 
-  //TODO: figure this out
+  // TODO: figure this out
   async to_numpy() {
     let self = this
     await self.ready()
@@ -170,7 +170,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let type_str = (await self.shape() as number[]).join('x')
 
     let grad = await self.get('grad')
-    if (grad == '') {
+    if (grad === '') {
       grad = 'None'
     }
 
@@ -183,7 +183,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
       let creators = await self.creators()
 
       if (children.length > 0) {
-        //tensor_str = '\n -------------------------------\n' + tensor_str
+        // tensor_str = '\n -------------------------------\n' + tensor_str
         desc += '\n\t-----------children-----------\n'
       }
       for (let child_id of children) {
@@ -400,16 +400,16 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    // if (typeof split_size_or_sections == 'number') {
+    // if (typeof split_size_or_sections === 'number') {
       return await controller.sendJSON(self.cmd({
         functionCall: 'split_by_size',
         tensorIndexParams: [split_size_or_sections, dim]
       }), 'FloatTensor_list')
     // }
     // split_size_or_sections = list(split_size_or_sections)
-    // assert type(split_size_or_sections) == list
-    // assert type(split_size_or_sections[0]) == int
-    // return self.controller.params_func(cmd_func=self.cmd,name="split_by_sections", params=split_size_or_sections+[dim], return_type='FloatTensor_list')
+    // assert type(split_size_or_sections) === list
+    // assert type(split_size_or_sections[0]) === int
+    // return self.controller.params_func(cmd_func=self.cmd,name='split_by_sections', params=split_size_or_sections+[dim], return_type='FloatTensor_list')
   }
 
 
@@ -712,14 +712,14 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     return self
   }
 
-  //TODO: get the type of grad
+  // TODO: get the type of grad
   async backward(
     grad?: any
   ) {
     let self = this
     await self.ready()
 
-    if (grad == void 0) {
+    if (grad == null) {
       await controller.sendJSON(self.cmd({
         functionCall: 'backward'
       }))
@@ -910,8 +910,8 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     let res = await self.get('children')
-    if (res && typeof res == 'string') {
-      //TODO: figure this out
+    if (res && typeof res === 'string') {
+      // TODO: figure this out
       return [] // list(map(lambda x: Number(x), res.split(',')[0:-1]))
     }
     return []
@@ -937,8 +937,8 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     let res = await self.get('creators')
-    if (typeof res == 'string' && res.length > 0) {
-      //TODO: figure this out
+    if (typeof res === 'string' && res.length > 0) {
+      // TODO: figure this out
       // list(map(lambda x: Number(x), res.split(',')[0:-1]))
       return res.split(',').slice(0, -1)
     }
@@ -976,7 +976,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    if (await self.get('dataOnGpu') == '1') {
+    if (await self.get('dataOnGpu') === '1') {
       return true
     }
     return false
@@ -1050,7 +1050,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     )
   }
 
-  //TODO: figure this out
+  // TODO: figure this out
   async index_add(
     indices: any, // what type is this?
     dim: number,
@@ -1071,7 +1071,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     )
   }
 
-  //TODO: figure this out
+  // TODO: figure this out
   async index_add_(
     indices: any, // what type is this?
     dim: number,
@@ -1091,7 +1091,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     return self
   }
 
-  //TODO: figure this out
+  // TODO: figure this out
   async index_select(
     dim: number,
     indices: any // what type is this?
@@ -1112,7 +1112,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    if (await self.get('keepgrad') == '1') {
+    if (await self.get('keepgrad') === '1') {
         return true
     } else {
       return false
@@ -1573,12 +1573,12 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    if (dim == -1) {
+    if (dim === -1) {
       return await controller.sendJSON(self.cmd({
         functionCall: 'stride'
       }), 'string')
     } else {
-      //TODO: figure out this
+      // TODO: figure out this
       let strides = await controller.sendJSON(self.cmd({
         functionCall: 'stride',
         tensorIndexParams: [dim]
@@ -1650,7 +1650,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     )
   }
 
-  //TODO: figure this out (any)?
+  // TODO: figure this out (any)?
   async view(
     ...args: any[]
   ): Promise<this> {
@@ -1666,7 +1666,7 @@ export class Tensor extends AsyncInit implements IAsyncInit {
     )
   }
 
-  //TODO: figure this out (any)?
+  // TODO: figure this out (any)?
   async view_(
     ...args: any[]
   ): Promise<this> {
@@ -2641,8 +2641,8 @@ export class FloatTensor extends Tensor {
   //   await self.ready()
   //   let out
   //
-  //   if (setter == void 0) {
-  //     if (await self.get('autograd') == '1') {
+  //   if (setter == null) {
+  //     if (await self.get('autograd') === '1') {
   //       return true
   //     } else {
   //       return false
@@ -2653,7 +2653,7 @@ export class FloatTensor extends Tensor {
   //     } else {
   //       out = await self.set('autograd', ['0'])
   //     }
-  //     if ((out == '1' && setter) || (out == '0' && !setter)) {
+  //     if ((out === '1' && setter) || (out === '0' && !setter)) {
   //       return self
   //     } else {
   //       return false

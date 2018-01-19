@@ -97,7 +97,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let tensor_str = yield self.to_numpy();
             let type_str = (yield self.shape()).join('x');
             let grad = yield self.get('grad');
-            if (grad == '') {
+            if (grad === '') {
                 grad = 'None';
             }
             let co = String(yield self.creation_op());
@@ -349,7 +349,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (grad == void 0) {
+            if (grad == null) {
                 yield controller.sendJSON(self.cmd({
                     functionCall: 'backward'
                 }));
@@ -442,7 +442,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             let res = yield self.get('children');
-            if (res && typeof res == 'string') {
+            if (res && typeof res === 'string') {
                 return [];
             }
             return [];
@@ -460,7 +460,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
             let self = this;
             yield self.ready();
             let res = yield self.get('creators');
-            if (typeof res == 'string' && res.length > 0) {
+            if (typeof res === 'string' && res.length > 0) {
                 return res.split(',').slice(0, -1);
             }
             return [];
@@ -480,7 +480,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if ((yield self.get('dataOnGpu')) == '1') {
+            if ((yield self.get('dataOnGpu')) === '1') {
                 return true;
             }
             return false;
@@ -556,7 +556,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if ((yield self.get('keepgrad')) == '1') {
+            if ((yield self.get('keepgrad')) === '1') {
                 return true;
             }
             else {
@@ -778,7 +778,7 @@ class Tensor extends AsyncInit_1.AsyncInit {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let self = this;
             yield self.ready();
-            if (dim == -1) {
+            if (dim === -1) {
                 return yield controller.sendJSON(self.cmd({
                     functionCall: 'stride'
                 }), 'string');

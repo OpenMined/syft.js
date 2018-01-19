@@ -65,7 +65,7 @@ class TensorSerializer {
     }
     lenType(data) {
         let max = -1;
-        if (typeof data == 'number') {
+        if (typeof data === 'number') {
             max = data;
         }
         else {
@@ -121,7 +121,7 @@ class TensorSerializer {
     }
     serialize(t, optimizeStorage = false) {
         let self = this;
-        let dataType = t.type == 'IntTensor' ? TSTypes.int32 : TSTypes.float32;
+        let dataType = t.type === 'IntTensor' ? TSTypes.int32 : TSTypes.float32;
         let props = {
             shapeLengthSetting: TSTypes.uint32,
             dataShapeLengthSetting: TSTypes.uint32,
@@ -136,7 +136,7 @@ class TensorSerializer {
             props.dataLengthSetting = self.lenType(t.data.data.length);
             props.shapeTypeSetting = self.lenType(t.data.shape);
             props.dataShapeTypeSetting = self.lenType(t.data.shape);
-            if (t.type == 'IntTensor') {
+            if (t.type === 'IntTensor') {
                 props.dataTypeSetting = self.dataType(t.data.data);
             }
         }
