@@ -6,7 +6,6 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     };
     id: string;
     data: DimArray;
-    data_is_pointer: boolean;
     type: string;
     constructor($?: any);
     static deserialize(str: string): Tensor;
@@ -25,7 +24,7 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
         tensorIndexParams?: any[];
     }): SocketCMD;
     is_contiguous(): Promise<boolean>;
-    to_numpy(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    to_numpy(): Promise<number[] | " - non-contiguous - ">;
     __repr__(verbose?: boolean): Promise<string>;
     batchify(dim: number, batch_size: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     clamp(min?: number, max?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -88,7 +87,7 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     sin(): Promise<this>;
     sin_(): Promise<this>;
     size(): Promise<string | Tensor>;
-    shape(as_list?: boolean): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    shape(as_list?: boolean): Promise<number[]>;
     softmax(dim?: number): Promise<this>;
     std(dim?: number): Promise<this>;
     stride(dim?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -110,6 +109,16 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     cpu(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     gpu(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     arithmetic_operation(x: number | Tensor, name: string, inline?: boolean): Promise<this>;
+    add(x: number | Tensor): Promise<this>;
+    add_(x: number | Tensor): Promise<this>;
+    sub(x: number | Tensor): Promise<this>;
+    sub_(x: number | Tensor): Promise<this>;
+    mul(x: number | Tensor): Promise<this>;
+    mul_(x: number | Tensor): Promise<this>;
+    div(x: number | Tensor): Promise<this>;
+    div_(x: number | Tensor): Promise<this>;
+    mod(x: number | Tensor): Promise<this>;
+    mod_(x: number | Tensor): Promise<this>;
     sinh(): Promise<this>;
     sinh_(): Promise<this>;
     log(): Promise<this>;
@@ -139,10 +148,10 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
 export declare class IntTensor extends Tensor {
     data: IntDimArray;
     type: string;
-    constructor(data: string | any[] | IntDimArray, data_is_pointer?: boolean);
+    constructor(data: string | any[] | IntDimArray);
 }
 export declare class FloatTensor extends Tensor {
     data: FloatDimArray;
     type: string;
-    constructor(data: string | any[] | FloatDimArray, autograd?: boolean, data_is_pointer?: boolean);
+    constructor(data: string | any[] | FloatDimArray, autograd?: boolean);
 }

@@ -11,9 +11,9 @@ const identity = uuid.v4();
 const socket = zmq.socket('dealer');
 socket.identity = identity;
 socket.connect('tcp://localhost:5555');
-function log(message) {
+function log(...args) {
     if (verbose) {
-        console.log(message);
+        console.log(...args);
     }
 }
 exports.log = log;
@@ -22,7 +22,7 @@ function cmd(options) {
 }
 exports.cmd = cmd;
 const wq = new WorkQueue_1.WorkQueue(job => {
-    console.log('sending:', job.data);
+    log('sending:', job.data);
     socket.send(job.data);
 }, 1);
 socket.on('message', (res) => {
@@ -32,7 +32,7 @@ socket.on('message', (res) => {
     }
     if (job) {
         let r = res.toString();
-        console.log('receiving:', r);
+        log('receiving:', r);
         if (r.startsWith('Unity Error:')) {
             job.reject(new Error(r));
         }
@@ -108,21 +108,18 @@ function sendJSON(message, return_type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let data = JSON.stringify(message);
         let res = yield wq.queue(data);
-        log(res);
         if (return_type == void 0) {
             return;
         }
         else if (return_type == 'FloatTensor') {
             if (res != '-1' && res != '') {
-                log('FloatTensor.__init__: ' + res);
-                return new Tensor_1.FloatTensor(res, true);
+                return new Tensor_1.FloatTensor(res);
             }
             return;
         }
         else if (return_type == 'IntTensor') {
             if (res != '-1' && res != '') {
-                log('IntTensor.__init__: ' + res);
-                return new Tensor_1.IntTensor(res, true);
+                return new Tensor_1.IntTensor(res);
             }
             return;
         }
@@ -132,7 +129,7 @@ function sendJSON(message, return_type) {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
-                        tensors.push(get_tensor(str_id));
+                        tensors.push(new Tensor_1.FloatTensor(str_id));
                     }
                 }
             }
