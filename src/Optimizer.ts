@@ -4,10 +4,7 @@ import {
   IAsyncInit
 } from './AsyncInit'
 
-import {
-  IntTensor,
-  FloatTensor
-} from './Tensor'
+import { assertType } from './asserts'
 
 function get_param_ids(
   params: any[] = [] // TODO: what type is this
@@ -60,9 +57,12 @@ export class Optimizer extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'zero_grad'
-    }), 'string')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'zero_grad'
+      }), 'string'),
+      'string'
+    )
   }
 
   async step(
@@ -72,10 +72,13 @@ export class Optimizer extends AsyncInit implements IAsyncInit {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'step',
-      tensorIndexParams: [batch_size, iteration]
-    }), 'string')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'step',
+        tensorIndexParams: [batch_size, iteration]
+      }), 'string'),
+      'string'
+    )
   }
 
   cmd(

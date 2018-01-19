@@ -1,19 +1,12 @@
 import * as Async from 'promasync'
 import * as controller from './controller'
 import {Optimizer} from './Optimizer'
-// from syft.utils import Progress
+import {assertType} from './asserts'
 import {
   Tensor,
   IntTensor,
   FloatTensor
 } from './Tensor'
-
-import {
-  DimArray,
-  FloatDimArray
-} from './DimArray'
-// import sys, time
-// import numpy as np
 
 import {
   AsyncInit,
@@ -59,10 +52,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     case 'policy':
       return new Policy(id)
     default:
-      throw new Error(
-        `Unsupported Layer Type: '${layerType}'.`
-      )
-
+      throw new Error(`Unsupported Layer Type: '${layerType}'.`)
     }
   }
 
@@ -94,26 +84,23 @@ export class Model extends AsyncInit implements IAsyncInit {
     self.id = id
   }
 
-  async __call__(...args: any[]) {
+  async feed(...args: any[]) {
     let self = this
     await self.ready()
 
-    if (args.length == 1) {
-      return await self.forward(args[0])
-    } else if (args.length == 2) {
-      return await self.forward(args[0], args[1])
-    } else if (args.length == 3) {
-      return await self.forward(args[0], args[1], args[2])
-    }
+    return await self.forward(...args)
   }
 
-  async parameters() {
+  async parameters(): Promise<Tensor[]> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'params'
-    }), 'FloatTensor_list')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'params'
+      }), 'FloatTensor_list'),
+      Array
+    )
   }
 
   async num_parameters() {
@@ -125,13 +112,16 @@ export class Model extends AsyncInit implements IAsyncInit {
     }), 'int')
   }
 
-  async models() {
+  async models(): Promise<Model[]> {
     let self = this
     await self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'models'
-    }), 'Model_list')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'models'
+      }), 'Model_list'),
+      Array
+    )
   }
 
   async set_id(
@@ -164,16 +154,19 @@ export class Model extends AsyncInit implements IAsyncInit {
     await self.ready()
 
     if (Array.isArray(input)) {
-      input = new FloatTensor(input, autograd=true, /*delete_after_use=false*/)
+      input = new FloatTensor(input, /*autograd=true, /*delete_after_use=false*/)
     }
     if (Array.isArray(target)) {
-      target = new FloatTensor(target, autograd=true, /*delete_after_use=false*/)
+      target = new FloatTensor(target, /*autograd=true, /*delete_after_use=false*/)
     }
 
-    let num_batches = await controller.sendJSON(self.cmd({
-      functionCall: 'prepare_to_fit',
-      tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
-    }), 'int')
+    let num_batches = assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'prepare_to_fit',
+        tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
+      }), 'int'),
+      'number'
+    )
 
     console.log(`Number of Batches:${num_batches}`)
 
@@ -182,21 +175,24 @@ export class Model extends AsyncInit implements IAsyncInit {
       // TODO: progress_bars.push(Progress(0,iters-1))
     }
 
-    let start = time.time()
+    let start = Date.now()
     let loss = 100000
     for (let iter = 0; iter < iters; iter++) {
       if (verbose) {
         // TODO: progress_bars.push(Progress(0,num_batches))
       }
 
-      let iter_start = time.time()
+      let iter_start = Date.now()
 
       for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
         let prev_loss = loss
-        let _loss = await controller.sendJSON(self.cmd({
-          functionCall: 'fit',
-          tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
-        }), 'float')
+        let _loss = assertType(
+          await controller.sendJSON(self.cmd({
+            functionCall: 'fit',
+            tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
+          }), 'float'),
+          'number'
+        )
         if (_loss != '0') {
           loss = _loss
         }
@@ -218,7 +214,7 @@ export class Model extends AsyncInit implements IAsyncInit {
           }
         }
 
-        let elapsed = time.time() - iter_start
+        let elapsed = Date.now() - iter_start
         let pace = elapsed / (log_i+1)
         let remaining = Math.floor((num_batches - log_i - 1) * pace)
         let remainingStr = ''
@@ -234,10 +230,10 @@ export class Model extends AsyncInit implements IAsyncInit {
       }
       if (verbose) {
         // TODO: progress_bars[-1].success()
-        // TODO: progress_bars[-1].update(num_batches,[('',str(time.time() - iter_start)),('loss',str(loss)),('batch',str(log_i)+'-'+str(min(log_i+log_interval,num_batches)))])
+        // TODO: progress_bars[-1].update(num_batches,[('',str(Date.now() - iter_start)),('loss',str(loss)),('batch',str(log_i)+'-'+str(min(log_i+log_interval,num_batches)))])
       }
 
-      let elapsed = time.time() - start
+      let elapsed = Date.now() - start
       let pace = elapsed / (iter+1)
       let remaining = Math.floor((iters - iter - 1) * pace)
       let remainingStr = ''
@@ -294,21 +290,13 @@ export class Model extends AsyncInit implements IAsyncInit {
     return
   }
 
-  async __len__() {
+  async length() {
     let self = this
     await self.ready()
 
     return (await self.models()).length
   }
 
-  async __getitem__(
-    idx: number
-  ) {
-    let self = this
-    await self.ready()
-
-    return (await self.parameters())[idx]
-  }
 
   async activation() {
     let self = this
@@ -357,43 +345,50 @@ export class Model extends AsyncInit implements IAsyncInit {
     }), 'FloatTensor' /*, false*/)
   }
 
-  async __repr__(
-    verbose = true
-  ) {
-    let self = this
-    await self.ready()
-
-    if (verbose) {
-      let output = ''
-      output += self.__repr__(false) + '\n'
-      for (let p of await self.parameters()) {
-        output += '\t W:' + p.__repr__(false)
-      }
-      let activation = await self.activation()
-      if (activation) {
-        output += '\t A:' + activation.__repr__(verbose=false) + '\n'
-      }
-      return output
-    } else {
-      return `<syft.nn.${self.layerType} at ${self.id}>`
-    }
-  }
+  // async __repr__(
+  //   verbose = true
+  // ) {
+  //   let self = this
+  //   await self.ready()
+  //
+  //   if (verbose) {
+  //     let output = ''
+  //     output += self.__repr__(false) + '\n'
+  //     for (let p of await self.parameters()) {
+  //       output += '\t W:' + p.__repr__(false)
+  //     }
+  //     let activation = await self.activation()
+  //     if (activation) {
+  //       output += '\t A:' + activation + '\n'
+  //     }
+  //     return output
+  //   } else {
+  //     return `<syft.nn.${self.layerType} at ${self.id}>`
+  //   }
+  // }
 }
 
 export class Policy extends Model {
-  layerType = 'policy'
+  layerType: string
   stateType: string
-  optimizer: Optimizer
-  model: Model
+  optimizer?: Optimizer
+  model?: Model
+
   constructor(
     id: string|undefined,
-    model: Model,
-    optimizer: Optimizer,
+    model?: Model,
+    optimizer?: Optimizer,
     stateType = 'discrete'
   ) {
-    super(void 0, [model.id, optimizer.id])
+    if (model && optimizer) {
+      super(void 0, [model.id, optimizer.id])
+    } else {
+      super(id, [])
+    }
+
     let self = this
 
+    self.layerType = 'policy'
     self.stateType = stateType
     self.model = model
     self.optimizer = optimizer
@@ -415,50 +410,54 @@ export class Policy extends Model {
       let self = this
       await self.ready()
 
-    return self.model.parameters()
+    if (self.model) {
+      return self.model.parameters()
+    }
+
+    return []
   }
 
-  async __call__(
+  async feed(
     ...args: any[]  //TODO: what type is this
   ) {
-      let self = this
-      await self.ready()
+    let self = this
+    await self.ready()
 
     if (self.stateType == 'discrete') {
-      self.sample(...args)
+      return await self.sample(...args)
     } else if (self.stateType == 'continuous') {
-      self.forward(...args)
-    } else {
-      console.log(`Error: State type ${self.stateType} unknown`)
-    }
-  }
-
-  async history() {
-      let self = this
-      await self.ready()
-
-    let raw_history = await controller.sendJSON(self.cmd({
-      functionCall: 'get_history'
-    }), 'string')
-    // TODO: let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
-    let losses = []
-    let rewards = []
-
-    for (let {loss, reward} of history_idx) {
-      if (loss != -1) {
-        losses.push(await controller.get_tensor(loss))
-      } else {
-        losses.push(void 0)
-      }
-      if (reward != -1) {
-        rewards.push(await controller.get_tensor(reward))
-      } else {
-        rewards.push(void 0)
-      }
+      return await self.forward(...args)
     }
 
-    return [losses, rewards]
+    throw new Error(`Unknown State Type: ${self.stateType}`)
   }
+
+  // async history() {
+  //     let self = this
+  //     await self.ready()
+  //
+  //   let raw_history = await controller.sendJSON(self.cmd({
+  //     functionCall: 'get_history'
+  //   }), 'string')
+  //   // TODO: let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
+  //   let losses = []
+  //   let rewards = []
+  //
+  //   for (let {loss, reward} of history_idx) {
+  //     if (loss != -1) {
+  //       losses.push(await controller.get_tensor(loss))
+  //     } else {
+  //       losses.push(void 0)
+  //     }
+  //     if (reward != -1) {
+  //       rewards.push(await controller.get_tensor(reward))
+  //     } else {
+  //       rewards.push(void 0)
+  //     }
+  //   }
+  //
+  //   return [losses, rewards]
+  // }
 }
 
 export class Sequential extends Model {
@@ -503,33 +502,14 @@ export class Sequential extends Model {
     let output = single + header + double
     Async.each
 
-    let mods = await Async.map(await self.models(), async (m) => {
+    let mods = await Async.map(await self.models() as Model[], async (m) => {
       return await m.summary(false, true)
     })
     output += mods.join(single)
     output += double
     //TODO: output += total_params + trainable_params + non_trainable_params + single
     console.log(output)
-}
-
-  async __repr__() {
-    let self = this
-    await self.ready()
-
-    let output = ''
-    for (let m of await self.models()) {
-      output += m.__repr__()
-    }
     return output
-  }
-
-  async __getitem__(
-    idx: number
-  ) {
-    let self = this
-    await self.ready()
-
-    return (await self.models())[idx]
   }
 }
 
@@ -552,8 +532,6 @@ export class Linear extends Model {
     let self = this
 
     self.id = id
-
-    await self.ready()
 
     let params = await self.parameters()
 
@@ -598,7 +576,7 @@ export class Softmax extends Model {
 
   constructor(
     id?: string,
-    dim=1
+    dim = 1
   ) {
     super(id, [dim])
   }
@@ -609,7 +587,7 @@ export class LogSoftmax extends Model {
 
   constructor(
     id?: string,
-    dim=1
+    dim = 1
   ) {
     super(id, [dim])
   }
@@ -619,7 +597,9 @@ export class LogSoftmax extends Model {
 export class Log extends Model {
   layerType = 'log'
 
-  constructor(id?: string) {
+  constructor(
+    id?: string
+  ) {
     super(id)
   }
 }
@@ -627,7 +607,9 @@ export class Log extends Model {
 export class Tanh extends Model {
   layerType = 'tanh'
 
-  constructor(id?: string) {
+  constructor(
+    id?: string
+  ) {
     super(id)
   }
 }
@@ -635,7 +617,9 @@ export class Tanh extends Model {
 export class MSELoss extends Model {
   layerType = 'mseloss'
 
-  constructor(id?: string) {
+  constructor(
+    id?: string
+  ) {
     super(id)
   }
 
@@ -657,7 +641,9 @@ export class MSELoss extends Model {
 export class NLLLoss extends Model {
   layerType = 'nllloss'
 
-  constructor(id?: string) {
+  constructor(
+    id?: string
+  ) {
     super(id)
   }
 

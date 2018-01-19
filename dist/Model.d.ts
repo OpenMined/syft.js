@@ -7,18 +7,17 @@ export declare class Model extends AsyncInit implements IAsyncInit {
     id?: string;
     params: boolean;
     outputShape?: string;
-    static getModel(id: string): Promise<any>;
+    static getModel(id: string): Promise<Sigmoid>;
     constructor(id?: string, params?: any[]);
     finish(id: string): void;
-    __call__(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    parameters(): Promise<Tensor[]>;
     num_parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    models(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    models(): Promise<Model[]>;
     set_id(new_id: string): Promise<this>;
     fit(input: number[] | Tensor, target: number[] | Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
     summary(verbose?: boolean, return_instead_of_print?: boolean): Promise<string | undefined>;
-    __len__(): Promise<any>;
-    __getitem__(idx: number): Promise<any>;
+    length(): Promise<number>;
     activation(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     getLayerType(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     cmd(options: {
@@ -27,26 +26,22 @@ export declare class Model extends AsyncInit implements IAsyncInit {
         tensorIndexParams?: any[];
     }): SocketCMD;
     forward(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __repr__(verbose?: boolean): Promise<string>;
 }
 export declare class Policy extends Model {
     layerType: string;
     stateType: string;
-    optimizer: Optimizer;
-    model: Model;
-    constructor(id: string | undefined, model: Model, optimizer: Optimizer, stateType?: string);
+    optimizer?: Optimizer;
+    model?: Model;
+    constructor(id: string | undefined, model?: Model, optimizer?: Optimizer, stateType?: string);
     sample(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    __call__(...args: any[]): Promise<void>;
-    history(): Promise<(Tensor | undefined)[][]>;
+    parameters(): Promise<Tensor[]>;
+    feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class Sequential extends Model {
     layerType: string;
     constructor(layers?: Model[]);
     add(model: Model): Promise<void>;
-    summary(): Promise<void>;
-    __repr__(): Promise<string>;
-    __getitem__(idx: number): Promise<any>;
+    summary(): Promise<string>;
 }
 export declare class Linear extends Model {
     layerType: string;

@@ -49,12 +49,6 @@ function num_models() {
     });
 }
 exports.num_models = num_models;
-function get_model(id) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return yield Model_1.Model.getModel(id);
-    });
-}
-exports.get_model = get_model;
 function load(filename) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         return sendJSON(cmd({
@@ -150,7 +144,7 @@ function sendJSON(message, return_type) {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
-                        models.push(yield get_model(str_id));
+                        models.push(yield Model_1.Model.getModel(str_id));
                     }
                 }
             }

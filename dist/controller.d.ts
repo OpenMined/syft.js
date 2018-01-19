@@ -6,7 +6,6 @@ export declare function cmd(options: {
     tensorIndexParams?: any[];
 }): SocketCMD;
 export declare function num_models(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function get_model(id: string): Promise<any>;
 export declare function load(filename: string): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 export declare function save(x: Tensor, filename: string): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 export declare function concatenate(tensors: Tensor[], axis?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;

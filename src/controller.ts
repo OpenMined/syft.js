@@ -78,12 +78,6 @@ export async function num_models() {
   }), 'int')
 }
 
-export async function get_model(
-  id: string
-) {
-  return await Model.getModel(id)
-}
-
 export async function load(
   filename: string
 ) {
@@ -196,7 +190,7 @@ export async function sendJSON(
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
-          models.push(await get_model(str_id))
+          models.push(await Model.getModel(str_id))
         }
       }
     }
