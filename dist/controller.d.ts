@@ -1,4 +1,5 @@
 import { Tensor, FloatTensor, IntTensor } from './Tensor';
+export declare const verbose: boolean;
 export declare function log(...args: any[]): void;
 export declare function cmd(options: {
     [key: string]: any;

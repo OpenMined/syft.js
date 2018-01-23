@@ -7,9 +7,9 @@ import {
 } from './Tensor'
 import { WorkQueue } from './WorkQueue'
 import { Model } from './Model'
+import { AsyncInstance } from './AsyncClass'
 
-const verbose = false
-
+export const verbose = !!process.argv[2]
 
 const identity = uuid.v4()
 const socket = zmq.socket('dealer')
@@ -137,7 +137,7 @@ export function new_tensors_allowed(
 export function get_tensor(
   id: string
 ): Tensor {
-  return new FloatTensor(id, true)
+  return new FloatTensor(AsyncInstance, id)
 }
 
 export function __getitem__(
@@ -159,12 +159,12 @@ export async function sendJSON(
     return
   } else if (return_type === 'FloatTensor') {
       if (res !== '-1' && res !== '') {
-        return new FloatTensor(res)
+        return new FloatTensor(AsyncInstance, res)
       }
       return
   } else if (return_type === 'IntTensor') {
     if (res !== '-1' && res !== '') {
-      return new IntTensor(res)
+      return new IntTensor(AsyncInstance, res)
     }
     return
   } else if (return_type === 'FloatTensor_list') {
@@ -174,7 +174,7 @@ export async function sendJSON(
       let ids = res.split(',')
       for (let str_id in ids) {
         if (str_id) {
-          tensors.push(new FloatTensor(str_id))
+          tensors.push(new FloatTensor(AsyncInstance, str_id))
         }
       }
     }

@@ -1,21 +1,22 @@
 import { Optimizer } from './Optimizer';
 import { Tensor, IntTensor, FloatTensor } from './Tensor';
-import { AsyncInit, IAsyncInit } from './AsyncInit';
-export declare class Model extends AsyncInit implements IAsyncInit {
+import { AsyncInstance, IAsyncConstructor } from './AsyncClass';
+export declare class Model extends AsyncInstance {
     type: string;
     layerType: string;
-    id?: string;
     params: boolean;
-    outputShape?: string;
-    static getModel(id: string): Promise<Sigmoid>;
-    constructor(id?: string, params?: any[]);
-    finish(id: string): void;
+    outputShape?: number | string;
+    protected static assertLayerType(a: string, b: Function): void;
+    static newModel($: any, id: string, type: string): Model;
+    static getModelType(id: string): Promise<string>;
+    static getModel(id: string): Promise<Model>;
+    static createModel(layerConstructor: Function, ...params: any[]): Promise<string>;
     feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     parameters(): Promise<Tensor[]>;
     num_parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     models(): Promise<Model[]>;
     set_id(new_id: string): Promise<this>;
-    fit(input: number[] | Tensor, target: number[] | Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
+    fit(input: Tensor, target: Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
     summary(verbose?: boolean, return_instead_of_print?: boolean): Promise<string | undefined>;
     length(): Promise<number>;
     activation(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
@@ -28,66 +29,92 @@ export declare class Model extends AsyncInit implements IAsyncInit {
     forward(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class Policy extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
     stateType: string;
     optimizer?: Optimizer;
     model?: Model;
-    constructor(id: string | undefined, model?: Model, optimizer?: Optimizer, stateType?: string);
+    static get(id: string): Promise<Policy>;
+    static create(model: Model, optimizer: Optimizer, stateType?: string): Promise<Policy>;
     sample(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     parameters(): Promise<Tensor[]>;
     feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class Sequential extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(layers?: Model[]);
+    static get(id: string): Promise<Sequential>;
+    static create(layers?: Model[]): Promise<Sequential>;
     add(model: Model): Promise<void>;
     summary(): Promise<string>;
 }
 export declare class Linear extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string, input_dim?: number, output_dim?: number, initializer?: string);
+    static get(id: string): Promise<Linear>;
+    static create(input_dim?: number, output_dim?: number, initializer?: string): Promise<Linear>;
     finish(id: string): Promise<void>;
 }
 export declare class ReLU extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<ReLU>;
+    static create(): Promise<ReLU>;
 }
 export declare class Dropout extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string, rate?: number);
+    static get(id: string): Promise<Dropout>;
+    static create(rate?: number): Promise<Dropout>;
 }
 export declare class Sigmoid extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<Sigmoid>;
+    static create(): Promise<Sigmoid>;
 }
 export declare class Softmax extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string, dim?: number);
+    static get(id: string): Promise<Softmax>;
+    static create(dim?: number): Promise<Softmax>;
 }
 export declare class LogSoftmax extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string, dim?: number);
+    static get(id: string): Promise<LogSoftmax>;
+    static create(dim?: number): Promise<LogSoftmax>;
 }
 export declare class Log extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<Log>;
+    static create(): Promise<Log>;
 }
 export declare class Tanh extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<Tanh>;
+    static create(): Promise<Tanh>;
 }
 export declare class MSELoss extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<MSELoss>;
+    static create(): Promise<MSELoss>;
     forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class NLLLoss extends Model {
+    static $: IAsyncConstructor;
     layerType: string;
-    constructor(id?: string);
+    static get(id: string): Promise<NLLLoss>;
+    static create(): Promise<NLLLoss>;
     forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }
 export declare class CrossEntropyLoss extends Model {
+    static $: IAsyncConstructor;
     layerType: 'crossentropyloss';
-    constructor(id?: string, dim?: number);
+    static get(id: string): Promise<CrossEntropyLoss>;
+    static create(dim?: number): Promise<CrossEntropyLoss>;
     forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }

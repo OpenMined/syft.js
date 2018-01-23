@@ -1,7 +1,7 @@
 import * as Async from 'promasync'
 import * as controller from './controller'
-import {Optimizer} from './Optimizer'
-import {assertType} from './asserts'
+import { Optimizer } from './Optimizer'
+import { assertType } from './asserts'
 import {
   Tensor,
   IntTensor,
@@ -9,91 +9,112 @@ import {
 } from './Tensor'
 
 import {
-  AsyncInit,
-  IAsyncInit
-} from './AsyncInit'
+  AsyncInstance,
+  IAsyncConstructor
+} from './AsyncClass'
 
-export class Model extends AsyncInit implements IAsyncInit {
+export class Model extends AsyncInstance {
   type = 'model'
   layerType = '(unknown)'
-  id?: string
   params: boolean
-  outputShape?: string = '(dynamic)'
+  outputShape?: number|string = '(dynamic)'
+
+  protected static assertLayerType(
+    a: string,
+    b: Function
+  ) {
+    if (a.toLowerCase() !== b.name.toLowerCase()) {
+      throw new TypeError(`Connat Convert '${a}' to '${b.name}'`)
+    }
+  }
+
+  static newModel(
+    $: any,
+    id: string,
+    type: string
+  ): Model {
+    AsyncInstance.assertCallable($)
+
+    switch(type) {
+      case 'policy':
+        return new Policy(AsyncInstance, id)
+      case 'sequential':
+        return new Sequential(AsyncInstance, id)
+      case 'linear':
+        return new Linear(AsyncInstance, id)
+      case 'relu':
+        return new ReLU(AsyncInstance, id)
+      case 'dropout':
+        return new Dropout(AsyncInstance, id)
+      case 'sigmoid':
+        return new Sigmoid(AsyncInstance, id)
+      case 'softmax':
+        return new Softmax(AsyncInstance, id)
+      case 'logsoftmax':
+        return new LogSoftmax(AsyncInstance, id)
+      case 'log':
+        return new Log(AsyncInstance, id)
+      case 'tanh':
+        return new Tanh(AsyncInstance, id)
+      case 'mseloss':
+        return new MSELoss(AsyncInstance, id)
+      case 'nllloss':
+        return new NLLLoss(AsyncInstance, id)
+      case 'crossentropyloss':
+        return new CrossEntropyLoss(AsyncInstance, id)
+      default:
+        throw new Error(`Unkown Model Type: ${type}`)
+    }
+  }
+
+  static async getModelType(
+    id: string
+  ): Promise<string> {
+    return assertType(
+      controller.sendJSON({
+        functionCall: 'model_type',
+        objectType: 'model',
+        objectIndex: id,
+        tensorIndexParams: []
+      }, 'string'),
+      'string'
+    ) as string
+  }
 
   static async getModel(
     id: string
-  ) {
-    let layerType = await controller.sendJSON({
-      functionCall: 'model_type',
-      objectType: 'model',
-      objectIndex: id,
-      tensorIndexParams: []
-    })
+  ): Promise<Model> {
+    let type = await Model.getModelType(id)
 
-    switch (layerType) {
-    case 'linear':
-      return new Linear(id)
-    case 'sigmoid':
-      return new Sigmoid(id)
-    case 'crossentropyloss':
-      return new CrossEntropyLoss(id)
-    case 'tanh':
-      return new Tanh(id)
-    case 'dropout':
-      return new Dropout(id)
-    case 'softmax':
-      return new Softmax(id)
-    case 'logsoftmax':
-      return new LogSoftmax(id)
-    case 'relu':
-      return new ReLU(id)
-    case 'log':
-      return new Log(id)
-    case 'policy':
-      return new Policy(id)
-    default:
-      throw new Error(`Unsupported Layer Type: '${layerType}'.`)
-    }
+    return Model.newModel(AsyncInstance, id, type)
   }
 
-  constructor(
-    id?: string,
-    params: any[] = []
+  static async createModel(
+    layerConstructor: Function,
+    ...params: any[] // TODO: what type are thses
   ) {
-    super()
+    let layerType = layerConstructor.name.toLowerCase()
 
-    let self = this
-
-    if (id) {
-      self.__finish__(id)
-    } else {
-      controller.sendJSON(self.cmd({
+    return assertType(
+      await controller.sendJSON({
         functionCall: 'create',
-        tensorIndexParams: [self.layerType, ...params]
-      }), 'string')
-        .then(res => self.__finish__(res as string))
-        .catch(err => self.__error__(err))
-    }
-  }
-
-  finish(
-    id: string
-  ) {
-    let self = this
-
-    self.id = id
+        objectType: 'model',
+        tensorIndexParams: [layerType, ...params]
+      }, 'string'),
+      'string'
+    ) as string
   }
 
   async feed(...args: any[]) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return self.forward(...args)
   }
 
   async parameters(): Promise<Tensor[]> {
     let self = this
-    await self.ready()
+    self.ready()
 
     return assertType(
       await controller.sendJSON(self.cmd({
@@ -105,7 +126,7 @@ export class Model extends AsyncInit implements IAsyncInit {
 
   async num_parameters() {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'param_count'
@@ -114,7 +135,7 @@ export class Model extends AsyncInit implements IAsyncInit {
 
   async models(): Promise<Model[]> {
     let self = this
-    await self.ready()
+    self.ready()
 
     return assertType(
       await controller.sendJSON(self.cmd({
@@ -128,7 +149,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     new_id: string
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     await controller.sendJSON(self.cmd({
       functionCall: 'set_id',
@@ -140,10 +161,10 @@ export class Model extends AsyncInit implements IAsyncInit {
   }
 
   async fit(
-    input: number[]|Tensor,
-    target: number[]|Tensor,
-    criterion, // TODO: what type is this
-    optim, // TODO: what type is this
+    input: Tensor,
+    target: Tensor,
+    criterion: any, // TODO: what type is this
+    optim: any, // TODO: what type is this
     batch_size: number,
     iters = 15,
     log_interval = 200,
@@ -151,14 +172,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     verbose = true
   ) {
     let self = this
-    await self.ready()
-
-    if (Array.isArray(input)) {
-      input = new FloatTensor(input, /*autograd=true, /*delete_after_use=false*/)
-    }
-    if (Array.isArray(target)) {
-      target = new FloatTensor(target, /*autograd=true, /*delete_after_use=false*/)
-    }
+    self.ready()
 
     let num_batches = assertType(
       await controller.sendJSON(self.cmd({
@@ -260,7 +274,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     return_instead_of_print = false
   ): Promise<string|undefined> {
     let self = this
-    await self.ready()
+    self.ready()
 
     // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
     let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
@@ -292,7 +306,7 @@ export class Model extends AsyncInit implements IAsyncInit {
 
   async length() {
     let self = this
-    await self.ready()
+    self.ready()
 
     return (await self.models()).length
   }
@@ -300,7 +314,7 @@ export class Model extends AsyncInit implements IAsyncInit {
 
   async activation() {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'activation'
@@ -309,7 +323,7 @@ export class Model extends AsyncInit implements IAsyncInit {
 
   async getLayerType() {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'model_type'
@@ -337,7 +351,7 @@ export class Model extends AsyncInit implements IAsyncInit {
     ...input: Tensor[]
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'forward',
@@ -349,7 +363,7 @@ export class Model extends AsyncInit implements IAsyncInit {
   //   verbose = true
   // ) {
   //   let self = this
-  //   await self.ready()
+  //   self.ready()
   //
   //   if (verbose) {
   //     let output = ''
@@ -369,36 +383,41 @@ export class Model extends AsyncInit implements IAsyncInit {
 }
 
 export class Policy extends Model {
-  layerType: string
+  static $: IAsyncConstructor = Policy
+  layerType = 'policy'
   stateType: string
   optimizer?: Optimizer
   model?: Model
 
-  constructor(
-    id: string|undefined,
-    model?: Model,
-    optimizer?: Optimizer,
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
+    model: Model,
+    optimizer: Optimizer,
     stateType = 'discrete'
   ) {
-    if (model && optimizer) {
-      super(void 0, [model.id, optimizer.id])
-    } else {
-      super(id, [])
-    }
+    let id = await Model.createModel(this, [model.id, optimizer.id])
 
-    let self = this
+    let policy = new this(AsyncInstance, id)
 
-    self.layerType = 'policy'
-    self.stateType = stateType
-    self.model = model
-    self.optimizer = optimizer
+    policy.stateType = stateType
+
+    return policy
   }
 
   async sample(
     ...input: Tensor[]
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'sample',
@@ -408,7 +427,7 @@ export class Policy extends Model {
 
   async parameters() {
       let self = this
-      await self.ready()
+      self.ready()
 
     if (self.model) {
       return self.model.parameters()
@@ -421,7 +440,7 @@ export class Policy extends Model {
     ...args: any[]  // TODO: what type is this
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     if (self.stateType === 'discrete') {
       return self.sample(...args)
@@ -434,7 +453,7 @@ export class Policy extends Model {
 
   // async history() {
   //     let self = this
-  //     await self.ready()
+  //     self.ready()
   //
   //   let raw_history = await controller.sendJSON(self.cmd({
   //     functionCall: 'get_history'
@@ -461,26 +480,40 @@ export class Policy extends Model {
 }
 
 export class Sequential extends Model {
+  static $: IAsyncConstructor = Sequential
   layerType = 'sequential'
 
-  constructor(
-    layers?: Model[] // TODO: what type is this
+  static async get(
+    id: string
   ) {
-    super(void 0)
-    let self = this
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
+    layers?: Model[]
+  ) {
+    let id = await Model.createModel(this, [])
+
+    let model = new this(AsyncInstance, id)
 
     if (Array.isArray(layers)) {
       for (let layer of layers) {
-        self.add(layer)
+        await model.add(layer)
       }
     }
+
+    return model
   }
 
   async add(
     model: Model
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     await controller.sendJSON(self.cmd({
       functionCall: 'add',
@@ -490,7 +523,7 @@ export class Sequential extends Model {
 
   async summary() {
     let self = this
-    await self.ready()
+    self.ready()
 
     let single = '_________________________________________________________________\n'
     let header = 'Layer (type)                 Output Shape              Param #   \n'
@@ -514,16 +547,27 @@ export class Sequential extends Model {
 }
 
 export class Linear extends Model {
+  static $: IAsyncConstructor = Linear
   layerType = 'linear'
 
-  constructor(
-    id?: string,
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
     input_dim = 0,
     output_dim = 0,
     initializer = 'Xavier'
   ) {
+    let id = await Model.createModel(this, [input_dim, output_dim, initializer])
 
-    super(void 0,[input_dim, output_dim, initializer])
+    return new this(AsyncInstance, id)
   }
 
   async finish(
@@ -542,85 +586,176 @@ export class Linear extends Model {
 }
 
 export class ReLU extends Model {
+  static $: IAsyncConstructor = ReLU
   layerType = 'relu'
 
-  constructor(
-    id?: string
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class Dropout extends Model {
+  static $: IAsyncConstructor = Dropout
   layerType = 'dropout'
 
-  constructor(
-    id?: string,
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
     rate = 0.5
   ) {
-    super(id, [rate])
+    let id = await Model.createModel(this, [rate])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class Sigmoid extends Model {
+  static $: IAsyncConstructor = Sigmoid
   layerType = 'sigmoid'
-  constructor(
-    id?: string
+
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class Softmax extends Model {
+  static $: IAsyncConstructor = Softmax
   layerType = 'softmax'
 
-  constructor(
-    id?: string,
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
     dim = 1
   ) {
-    super(id, [dim])
+    let id = await Model.createModel(this, [dim])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class LogSoftmax extends Model {
+  static $: IAsyncConstructor = LogSoftmax
   layerType = 'logsoftmax'
 
-  constructor(
-    id?: string,
-    dim = 1
+  static async get(
+    id: string
   ) {
-    super(id, [dim])
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
   }
 
+  static async create(
+    dim = 1
+  ) {
+    let id = await Model.createModel(this, [dim])
+
+    return new this(AsyncInstance, id)
+  }
 }
 
 export class Log extends Model {
+  static $: IAsyncConstructor = Log
   layerType = 'log'
 
-  constructor(
-    id?: string
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class Tanh extends Model {
+  static $: IAsyncConstructor = Tanh
   layerType = 'tanh'
 
-  constructor(
-    id?: string
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 }
 
 export class MSELoss extends Model {
+  static $: IAsyncConstructor = MSELoss
   layerType = 'mseloss'
 
-  constructor(
-    id?: string
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 
   async forward(
@@ -628,23 +763,33 @@ export class MSELoss extends Model {
     target: Tensor
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'forward',
       tensorIndexParams: [input.id, target.id]
     }), 'FloatTensor' /*delete_after_use=false*/)
   }
-
 }
 
 export class NLLLoss extends Model {
+  static $ : IAsyncConstructor = NLLLoss
   layerType = 'nllloss'
 
-  constructor(
-    id?: string
+  static async get(
+    id: string
   ) {
-    super(id)
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this, [])
+
+    return new this(AsyncInstance, id)
   }
 
 
@@ -653,7 +798,7 @@ export class NLLLoss extends Model {
     target: Tensor
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'forward',
@@ -663,16 +808,28 @@ export class NLLLoss extends Model {
 }
 
 export class CrossEntropyLoss extends Model {
+  static $ : IAsyncConstructor = CrossEntropyLoss
   layerType: 'crossentropyloss'
 
   // TODO: backward() to be implemented: grad = target - prediction
   // TODO: backward(): until IntegerTensor is available assume a one-hot vector is passed in.
 
-  constructor(
-    id?: string,
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create(
     dim = 1
   ) {
-    super(id, [dim])
+    let id = await Model.createModel(this, [dim])
+
+    return new this(AsyncInstance, id)
   }
 
   async forward(
@@ -680,7 +837,7 @@ export class CrossEntropyLoss extends Model {
     target: Tensor
   ) {
     let self = this
-    await self.ready()
+    self.ready()
 
     return controller.sendJSON(self.cmd({
       functionCall: 'forward',

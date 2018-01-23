@@ -6,13 +6,14 @@ const zmq = require("zmq");
 const Tensor_1 = require("./Tensor");
 const WorkQueue_1 = require("./WorkQueue");
 const Model_1 = require("./Model");
-const verbose = false;
+const AsyncClass_1 = require("./AsyncClass");
+exports.verbose = !!process.argv[2];
 const identity = uuid.v4();
 const socket = zmq.socket('dealer');
 socket.identity = identity;
 socket.connect('tcp://localhost:5555');
 function log(...args) {
-    if (verbose) {
+    if (exports.verbose) {
         console.log(...args);
     }
 }
@@ -97,7 +98,7 @@ function new_tensors_allowed(allowed) {
 }
 exports.new_tensors_allowed = new_tensors_allowed;
 function get_tensor(id) {
-    return new Tensor_1.FloatTensor(id, true);
+    return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, id);
 }
 exports.get_tensor = get_tensor;
 function __getitem__(id) {
@@ -113,13 +114,13 @@ function sendJSON(message, return_type) {
         }
         else if (return_type === 'FloatTensor') {
             if (res !== '-1' && res !== '') {
-                return new Tensor_1.FloatTensor(res);
+                return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, res);
             }
             return;
         }
         else if (return_type === 'IntTensor') {
             if (res !== '-1' && res !== '') {
-                return new Tensor_1.IntTensor(res);
+                return new Tensor_1.IntTensor(AsyncClass_1.AsyncInstance, res);
             }
             return;
         }
@@ -129,7 +130,7 @@ function sendJSON(message, return_type) {
                 let ids = res.split(',');
                 for (let str_id in ids) {
                     if (str_id) {
-                        tensors.push(new Tensor_1.FloatTensor(str_id));
+                        tensors.push(new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, str_id));
                     }
                 }
             }
