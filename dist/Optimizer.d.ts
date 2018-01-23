@@ -3,7 +3,7 @@ export declare class Optimizer extends AsyncInstance {
     id: string;
     type: 'Optimizer';
     optimizer_type: string;
-    static createOptomizer(optimizer_type: Function, params?: any[], h_params?: any[]): Promise<string>;
+    static createOptomizer(optimizer_type: Function, params?: any[], hyperParams?: any[]): Promise<string>;
     finish(id: string): void;
     zero_grad(): Promise<any>;
     step(batch_size: number, iteration: number): Promise<any>;

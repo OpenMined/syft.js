@@ -29,14 +29,14 @@ export class Optimizer extends AsyncInstance {
   static async createOptomizer(
     optimizer_type: Function,
     params: any[] = [],
-    h_params: any[] = []
+    hyperParams: any[] = []
   ): Promise<string> {
     return assertType(
-      controller.sendJSON({
+      await controller.sendJSON({
         objectType: 'Optimizer',
         functionCall: 'create',
         tensorIndexParams: [optimizer_type.name.toLowerCase(), ...params],
-        h_params
+        hyperParams
       }, 'string'),
       'string'
     ) as string
