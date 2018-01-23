@@ -1,13 +1,8 @@
 import { DimArray, IntDimArray, FloatDimArray } from './DimArray';
-import { AsyncInit, IAsyncInit } from './AsyncInit';
-export declare class Tensor extends AsyncInit implements IAsyncInit {
-    static __tensor__: {
-        [id: string]: Tensor;
-    };
-    id: string;
+import { AsyncInstance, IAsyncConstructor } from './AsyncClass';
+export declare class Tensor extends AsyncInstance {
     data: DimArray;
     type: string;
-    constructor($?: any);
     static deserialize(str: string): Tensor;
     serialize(optimizeStorage?: boolean): {
         data: ArrayBuffer;
@@ -146,12 +141,16 @@ export declare class Tensor extends AsyncInit implements IAsyncInit {
     mean(dim?: number, keepdim?: boolean): Promise<this>;
 }
 export declare class IntTensor extends Tensor {
+    static $: IAsyncConstructor;
     data: IntDimArray;
     type: string;
-    constructor(data: string | any[] | IntDimArray);
+    static get(id: string): Promise<IntTensor>;
+    static create(arr: any[], autograd?: boolean): Promise<IntTensor>;
 }
 export declare class FloatTensor extends Tensor {
+    static $: IAsyncConstructor;
     data: FloatDimArray;
     type: string;
-    constructor(data: string | any[] | FloatDimArray, autograd?: boolean);
+    static get(id: string): Promise<FloatTensor>;
+    static create(arr: any[], autograd?: boolean): Promise<FloatTensor>;
 }
