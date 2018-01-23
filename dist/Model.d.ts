@@ -7,7 +7,7 @@ export declare class Model extends AsyncInstance {
     params: boolean;
     outputShape?: number | string;
     protected static assertLayerType(a: string, b: Function): void;
-    static newModel($: any, id: string, type: string): Model;
+    protected static newModel($: any, id: string, type: string): Model;
     static getModelType(id: string): Promise<string>;
     static getModel(id: string): Promise<Model>;
     static createModel(layerConstructor: Function, ...params: any[]): Promise<string>;
@@ -116,5 +116,12 @@ export declare class CrossEntropyLoss extends Model {
     layerType: 'crossentropyloss';
     static get(id: string): Promise<CrossEntropyLoss>;
     static create(dim?: number): Promise<CrossEntropyLoss>;
+    forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+}
+export declare class Categorical_CrossEntropy extends Model {
+    static $: IAsyncConstructor;
+    layerType: 'categorical_crossentropy';
+    static get(id: string): Promise<Categorical_CrossEntropy>;
+    static create(): Promise<Categorical_CrossEntropy>;
     forward(input: Tensor, target: Tensor): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
 }

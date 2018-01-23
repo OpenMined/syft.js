@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
 const uuid = require("uuid");
 const zmq = require("zmq");
 const Tensor_1 = require("./Tensor");
@@ -42,21 +41,17 @@ socket.on('message', (res) => {
         }
     }
 });
-function num_models() {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return sendJSON(cmd({
-            functionCall: 'num_models'
-        }), 'int');
-    });
+async function num_models() {
+    return sendJSON(cmd({
+        functionCall: 'num_models'
+    }), 'int');
 }
 exports.num_models = num_models;
-function load(filename) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return sendJSON(cmd({
-            functionCall: 'load_floattensor',
-            tensorIndexParams: [filename]
-        }), 'FloatTensor');
-    });
+async function load(filename) {
+    return sendJSON(cmd({
+        functionCall: 'load_floattensor',
+        tensorIndexParams: [filename]
+    }), 'FloatTensor');
 }
 exports.load = load;
 function save(x, filename) {
@@ -105,65 +100,63 @@ function __getitem__(id) {
     return get_tensor(id);
 }
 exports.__getitem__ = __getitem__;
-function sendJSON(message, return_type) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let data = JSON.stringify(message);
-        let res = yield wq.queue(data);
-        if (return_type == null) {
-            return;
+async function sendJSON(message, return_type) {
+    let data = JSON.stringify(message);
+    let res = await wq.queue(data);
+    if (return_type == null) {
+        return;
+    }
+    else if (return_type === 'FloatTensor') {
+        if (res !== '-1' && res !== '') {
+            return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, res);
         }
-        else if (return_type === 'FloatTensor') {
-            if (res !== '-1' && res !== '') {
-                return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, res);
-            }
-            return;
+        return;
+    }
+    else if (return_type === 'IntTensor') {
+        if (res !== '-1' && res !== '') {
+            return new Tensor_1.IntTensor(AsyncClass_1.AsyncInstance, res);
         }
-        else if (return_type === 'IntTensor') {
-            if (res !== '-1' && res !== '') {
-                return new Tensor_1.IntTensor(AsyncClass_1.AsyncInstance, res);
-            }
-            return;
-        }
-        else if (return_type === 'FloatTensor_list') {
-            let tensors = [];
-            if (res !== '') {
-                let ids = res.split(',');
-                for (let str_id in ids) {
-                    if (str_id) {
-                        tensors.push(new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, str_id));
-                    }
+        return;
+    }
+    else if (return_type === 'FloatTensor_list') {
+        let tensors = [];
+        if (res !== '') {
+            let ids = res.split(',');
+            for (let str_id in ids) {
+                if (str_id) {
+                    tensors.push(new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, str_id));
                 }
             }
-            return tensors;
         }
-        else if (return_type === 'Model_list') {
-            let models = [];
-            if (res !== '') {
-                let ids = res.split(',');
-                for (let str_id in ids) {
-                    if (str_id) {
-                        models.push(yield Model_1.Model.getModel(str_id));
-                    }
+        return tensors;
+    }
+    else if (return_type === 'Model_list') {
+        let models = [];
+        if (res !== '') {
+            let ids = res.split(',');
+            for (let str_id in ids) {
+                if (str_id) {
+                    models.push(await Model_1.Model.getModel(str_id));
                 }
             }
-            return models;
         }
-        else if (return_type === 'int') {
-            return Number(res);
+        return models;
+    }
+    else if (return_type === 'int' || return_type === 'float') {
+        return Number(res);
+    }
+    else if (return_type === 'string') {
+        return String(res);
+    }
+    else if (return_type === 'bool') {
+        if (res === 'True') {
+            return true;
         }
-        else if (return_type === 'string') {
-            return String(res);
+        else if (res === 'False') {
+            return false;
         }
-        else if (return_type === 'bool') {
-            if (res === 'True') {
-                return true;
-            }
-            else if (res === 'False') {
-                return false;
-            }
-        }
-        return res;
-    });
+    }
+    return res;
 }
 exports.sendJSON = sendJSON;
 //# sourceMappingURL=controller.js.map

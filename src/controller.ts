@@ -193,7 +193,7 @@ export async function sendJSON(
     }
 
     return models
-  } else if (return_type === 'int') {
+  } else if (return_type === 'int' || return_type === 'float') {
     return Number(res)
   } else if (return_type === 'string') {
     return String(res)

@@ -28,7 +28,7 @@ export class Model extends AsyncInstance {
     }
   }
 
-  static newModel(
+  protected static newModel(
     $: any,
     id: string,
     type: string
@@ -62,6 +62,8 @@ export class Model extends AsyncInstance {
         return new NLLLoss(AsyncInstance, id)
       case 'crossentropyloss':
         return new CrossEntropyLoss(AsyncInstance, id)
+      case 'categorical_crossentropy':
+        return new Categorical_CrossEntropy(AsyncInstance, id)
       default:
         throw new Error(`Unkown Model Type: ${type}`)
     }
@@ -71,7 +73,7 @@ export class Model extends AsyncInstance {
     id: string
   ): Promise<string> {
     return assertType(
-      controller.sendJSON({
+      await controller.sendJSON({
         functionCall: 'model_type',
         objectType: 'model',
         objectIndex: id,
@@ -404,7 +406,7 @@ export class Policy extends Model {
     optimizer: Optimizer,
     stateType = 'discrete'
   ) {
-    let id = await Model.createModel(this, [model.id, optimizer.id])
+    let id = await Model.createModel(this, model.id, optimizer.id)
 
     let policy = new this(AsyncInstance, id)
 
@@ -496,7 +498,7 @@ export class Sequential extends Model {
   static async create(
     layers?: Model[]
   ) {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     let model = new this(AsyncInstance, id)
 
@@ -565,7 +567,7 @@ export class Linear extends Model {
     output_dim = 0,
     initializer = 'Xavier'
   ) {
-    let id = await Model.createModel(this, [input_dim, output_dim, initializer])
+    let id = await Model.createModel(this, String(input_dim), String(output_dim), initializer)
 
     return new this(AsyncInstance, id)
   }
@@ -600,7 +602,7 @@ export class ReLU extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -623,7 +625,7 @@ export class Dropout extends Model {
   static async create(
     rate = 0.5
   ) {
-    let id = await Model.createModel(this, [rate])
+    let id = await Model.createModel(this, String(rate))
 
     return new this(AsyncInstance, id)
   }
@@ -644,7 +646,7 @@ export class Sigmoid extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -667,7 +669,7 @@ export class Softmax extends Model {
   static async create(
     dim = 1
   ) {
-    let id = await Model.createModel(this, [dim])
+    let id = await Model.createModel(this, String(dim))
 
     return new this(AsyncInstance, id)
   }
@@ -690,7 +692,7 @@ export class LogSoftmax extends Model {
   static async create(
     dim = 1
   ) {
-    let id = await Model.createModel(this, [dim])
+    let id = await Model.createModel(this, String(dim))
 
     return new this(AsyncInstance, id)
   }
@@ -711,7 +713,7 @@ export class Log extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -732,7 +734,7 @@ export class Tanh extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -753,7 +755,7 @@ export class MSELoss extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -787,7 +789,7 @@ export class NLLLoss extends Model {
   }
 
   static async create() {
-    let id = await Model.createModel(this, [])
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
@@ -827,7 +829,41 @@ export class CrossEntropyLoss extends Model {
   static async create(
     dim = 1
   ) {
-    let id = await Model.createModel(this, [dim])
+    let id = await Model.createModel(this, String(dim))
+
+    return new this(AsyncInstance, id)
+  }
+
+  async forward(
+    input: Tensor,
+    target: Tensor
+  ) {
+    let self = this
+    self.ready()
+
+    return controller.sendJSON(self.cmd({
+      functionCall: 'forward',
+      tensorIndexParams: [input.id, target.id]
+    }), 'FloatTensor' /*delete_after_use=false*/)
+  }
+}
+
+export class Categorical_CrossEntropy extends Model {
+  static $ : IAsyncConstructor = Categorical_CrossEntropy
+  layerType: 'categorical_crossentropy'
+
+  static async get(
+    id: string
+  ) {
+    let type = await Model.getModelType(id)
+
+    Model.assertLayerType(type, this)
+
+    return new this(AsyncInstance, id)
+  }
+
+  static async create() {
+    let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
