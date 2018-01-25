@@ -1,16 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function flatten(data, arr = []) {
-    for (let item of data) {
-        if (Array.isArray(item)) {
-            flatten(item, arr);
-        }
-        else {
-            arr.push(item);
-        }
-    }
-    return arr;
-}
 class DimArray {
     constructor(data) {
         let self = this;
@@ -26,16 +15,25 @@ class DimArray {
         self.size = size;
         self.shape = new Uint32Array(shape);
     }
-    __fillData__(data, arr = []) {
+    __fillData__(data) {
         let self = this;
-        let d = flatten(data);
-        if (d.length !== self.size) {
-            throw new Error('Invalid Data Structure');
-        }
-        for (let i in d) {
-            let v = d[i];
+        let size = self.size;
+        let shape = self.shape;
+        let shapeLength = shape.length;
+        for (let i = 0; i < size; i++) {
+            let p = i;
+            let z = size;
+            let v = data;
+            for (let k = 0; k < shapeLength; k++) {
+                z = Math.floor(z / shape[k]);
+                v = v[Math.floor(p / z)];
+                if (v == null) {
+                    throw new Error(`Invid Data Format`);
+                }
+                p %= z;
+            }
             if (typeof v !== 'number') {
-                throw new Error('Invalid Data Type');
+                throw new Error(`Invid Data Type ${typeof v} ${v}`);
             }
             self.data[i] = v;
         }

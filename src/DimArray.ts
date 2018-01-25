@@ -1,14 +1,3 @@
-function flatten(data: any[], arr: any[] = []) {
-  for (let item of data) {
-      if (Array.isArray(item)) {
-        flatten(item, arr)
-      } else {
-        arr.push(item)
-      }
-    }
-  return arr
-}
-
 export class DimArray {
   shape: Uint32Array
   data: Int32Array|Float64Array
@@ -32,20 +21,30 @@ export class DimArray {
     self.shape = new Uint32Array(shape)
   }
 
-  __fillData__(data: any[], arr: any[] = []) {
+  __fillData__(data: any[]) {
     let self = this
+    let size = self.size
+    let shape = self.shape
+    let shapeLength = shape.length
 
-    let d = flatten(data)
+    for (let i = 0; i < size; i++) {
+      let p = i
+      let z = size
+      let v: any = data
 
-    if (d.length !== self.size) {
-      throw new Error('Invalid Data Structure')
-    }
-
-    for (let i in d) {
-      let v = d[i]
-      if (typeof v !== 'number') {
-        throw new Error('Invalid Data Type')
+      for (let k = 0; k < shapeLength; k++) {
+        z = Math.floor(z / shape[k])
+        v = v[Math.floor(p / z)]
+        if (v == null) {
+          throw new Error(`Invid Data Format`)
+        }
+        p %= z
       }
+
+      if (typeof v !== 'number') {
+        throw new Error(`Invid Data Type ${typeof v} ${v}`)
+      }
+
       self.data[i] = v
     }
   }
