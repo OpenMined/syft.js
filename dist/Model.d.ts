@@ -16,7 +16,8 @@ export declare class Model extends AsyncInstance {
     num_parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
     models(): Promise<Model[]>;
     set_id(new_id: string): Promise<this>;
-    fit(input: Tensor, target: Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
+    fit(input: Tensor, target: Tensor, criterion: Model, optim: Optimizer, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
+    fitOld(input: Tensor, target: Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
     summary(verbose?: boolean, return_instead_of_print?: boolean): Promise<string | undefined>;
     length(): Promise<number>;
     activation(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
