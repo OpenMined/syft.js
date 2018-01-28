@@ -20,9 +20,9 @@ export class Tensor extends AsyncInstance {
   data: DimArray
   type: string
 
-  static deserialize(
+  static async deserialize(
     str: string
-  ): Tensor {
+  ): Promise<Tensor> {
     return tensorSerializer.deserialize(str)
   }
 

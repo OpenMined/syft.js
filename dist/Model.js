@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Async = require("promasync");
 const controller = require("./controller");
 const asserts_1 = require("./asserts");
+const Tensor_1 = require("./Tensor");
 const AsyncClass_1 = require("./AsyncClass");
 class Model extends AsyncClass_1.AsyncInstance {
     constructor() {
@@ -86,9 +86,9 @@ class Model extends AsyncClass_1.AsyncInstance {
     async num_parameters() {
         let self = this;
         self.ready();
-        return controller.sendJSON(self.cmd({
+        return asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'param_count'
-        }), 'int');
+        }), 'int'), 'number');
     }
     async models() {
         let self = this;
@@ -100,10 +100,10 @@ class Model extends AsyncClass_1.AsyncInstance {
     async set_id(new_id) {
         let self = this;
         self.ready();
-        await controller.sendJSON(self.cmd({
+        asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'set_id',
             tensorIndexParams: [new_id]
-        }), 'string');
+        }), 'string'), 'string');
         self.id = new_id;
         return self;
     }
@@ -142,105 +142,6 @@ class Model extends AsyncClass_1.AsyncInstance {
         }
         return loss;
     }
-    async fitOld(input, target, criterion, optim, batch_size, iters = 15, log_interval = 200, metrics = [], verbose = true) {
-        let self = this;
-        self.ready();
-        let num_batches = asserts_1.assertType(await controller.sendJSON(self.cmd({
-            functionCall: 'prepare_to_fit',
-            tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
-        }), 'int'), 'number');
-        console.log(`Number of Batches:${num_batches}`);
-        let progress_bars = [];
-        if (verbose) {
-        }
-        let start = Date.now();
-        let loss = 100000;
-        for (let iter = 0; iter < iters; iter++) {
-            if (verbose) {
-            }
-            let iter_start = Date.now();
-            for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
-                let prev_loss = loss;
-                let _loss = asserts_1.assertType(await controller.sendJSON(self.cmd({
-                    functionCall: 'fit',
-                    tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
-                }), 'float'), 'number');
-                if (_loss !== '0') {
-                    loss = _loss;
-                }
-                if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
-                    if (verbose) {
-                    }
-                    break;
-                }
-                else if (loss > prev_loss) {
-                    if (verbose) {
-                    }
-                }
-                else {
-                    if (verbose) {
-                    }
-                }
-                let elapsed = Date.now() - iter_start;
-                let pace = elapsed / (log_i + 1);
-                let remaining = Math.floor((num_batches - log_i - 1) * pace);
-                let remainingStr = '';
-                if (remaining > 60) {
-                    remainingStr += Math.floor(remaining / 60) + 'm' + (remaining % 60) + 's';
-                }
-                else {
-                    remainingStr += remaining + 's';
-                }
-                if (verbose) {
-                }
-            }
-            if (verbose) {
-            }
-            let elapsed = Date.now() - start;
-            let pace = elapsed / (iter + 1);
-            let remaining = Math.floor((iters - iter - 1) * pace);
-            let remainingStr = '';
-            if (remaining > 60) {
-                remainingStr += Math.floor(remaining / 60) + 'm' + (remaining % 60) + 's';
-            }
-            else {
-                remainingStr += remaining + 's';
-            }
-            if (verbose) {
-            }
-            if (Number.isNaN(loss)) {
-                break;
-            }
-        }
-        if (verbose) {
-        }
-        return loss;
-    }
-    async summary(verbose = true, return_instead_of_print = false) {
-        let self = this;
-        self.ready();
-        let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`;
-        let outputShape = '';
-        if (typeof self.outputShape === 'number') {
-            outputShape = String(self.outputShape);
-        }
-        else {
-            outputShape = String(self.outputShape);
-        }
-        let n_param = String(await self.num_parameters());
-        let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n';
-        if (verbose) {
-            let single = '_________________________________________________________________\n';
-            let header = 'Layer (type)                 Output Shape              Param #   \n';
-            let double = '=================================================================\n';
-            let non_trainable_params = 'Non-trainable params: 0' + '\n';
-        }
-        if (return_instead_of_print) {
-            return output;
-        }
-        console.log(output);
-        return;
-    }
     async length() {
         let self = this;
         self.ready();
@@ -249,16 +150,16 @@ class Model extends AsyncClass_1.AsyncInstance {
     async activation() {
         let self = this;
         self.ready();
-        return controller.sendJSON(self.cmd({
+        return asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'activation'
-        }), 'FloatTensor');
+        }), 'FloatTensor'), Tensor_1.FloatTensor);
     }
     async getLayerType() {
         let self = this;
         self.ready();
-        return controller.sendJSON(self.cmd({
+        return asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'model_type'
-        }), 'string');
+        }), 'string'), 'string');
     }
     cmd(options) {
         let self = this;
@@ -267,10 +168,10 @@ class Model extends AsyncClass_1.AsyncInstance {
     async forward(...input) {
         let self = this;
         self.ready();
-        return controller.sendJSON(self.cmd({
+        return asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'forward',
             tensorIndexParams: input.map(t => t.id)
-        }), 'FloatTensor');
+        }), 'FloatTensor'), Tensor_1.FloatTensor);
     }
 }
 exports.Model = Model;
@@ -293,10 +194,10 @@ class Policy extends Model {
     async sample(...input) {
         let self = this;
         self.ready();
-        return controller.sendJSON(self.cmd({
+        return asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'sample',
             tensorIndexParams: input.map(t => t.id)
-        }), 'IntTensor');
+        }), 'IntTensor'), Tensor_1.IntTensor);
     }
     async parameters() {
         let self = this;
@@ -348,23 +249,6 @@ class Sequential extends Model {
             tensorIndexParams: [model.id]
         }));
     }
-    async summary() {
-        let self = this;
-        self.ready();
-        let single = '_________________________________________________________________\n';
-        let header = 'Layer (type)                 Output Shape              Param #   \n';
-        let double = '=================================================================\n';
-        let non_trainable_params = 'Non-trainable params: 0' + '\n';
-        let output = single + header + double;
-        Async.each;
-        let mods = await Async.map(await self.models(), async (m) => {
-            return m.summary(false, true);
-        });
-        output += mods.join(single);
-        output += double;
-        console.log(output);
-        return output;
-    }
 }
 Sequential.$ = Sequential;
 exports.Sequential = Sequential;
@@ -385,7 +269,6 @@ class Linear extends Model {
     async finish(id) {
         let self = this;
         self.id = id;
-        let params = await self.parameters();
     }
 }
 Linear.$ = Linear;

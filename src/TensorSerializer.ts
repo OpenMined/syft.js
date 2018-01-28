@@ -556,9 +556,9 @@ export class TensorSerializer {
     }
 
     if (dimData instanceof FloatDimArray) {
-      return new FloatTensor(dimData)
+      return FloatTensor.create(dimData)
     }
 
-    return new IntTensor(dimData)
+    return IntTensor.create(dimData)
   }
 }

@@ -366,9 +366,9 @@ class TensorSerializer {
             offset += self.byteSize(props.dataTypeSetting);
         }
         if (dimData instanceof DimArray_1.FloatDimArray) {
-            return new Tensor_1.FloatTensor(dimData);
+            return Tensor_1.FloatTensor.create(dimData);
         }
-        return new Tensor_1.IntTensor(dimData);
+        return Tensor_1.IntTensor.create(dimData);
     }
 }
 exports.TensorSerializer = TensorSerializer;

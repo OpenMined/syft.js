@@ -3,7 +3,7 @@ import { AsyncInstance, IAsyncConstructor } from './AsyncClass';
 export declare class Tensor extends AsyncInstance {
     data: DimArray;
     type: string;
-    static deserialize(str: string): Tensor;
+    static deserialize(str: string): Promise<Tensor>;
     serialize(optimizeStorage?: boolean): {
         data: ArrayBuffer;
         view: DataView;

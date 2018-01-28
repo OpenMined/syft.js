@@ -11,23 +11,21 @@ export declare class Model extends AsyncInstance {
     static getModelType(id: string): Promise<string>;
     static getModel(id: string): Promise<Model>;
     static createModel(layerConstructor: Function, ...params: any[]): Promise<string>;
-    feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    feed(...args: any[]): Promise<any>;
     parameters(): Promise<Tensor[]>;
-    num_parameters(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    num_parameters(): Promise<any>;
     models(): Promise<Model[]>;
     set_id(new_id: string): Promise<this>;
-    fit(input: Tensor, target: Tensor, criterion: Model, optim: Optimizer, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
-    fitOld(input: Tensor, target: Tensor, criterion: any, optim: any, batch_size: number, iters?: number, log_interval?: number, metrics?: never[], verbose?: boolean): Promise<number>;
-    summary(verbose?: boolean, return_instead_of_print?: boolean): Promise<string | undefined>;
+    fit(input: Tensor, target: Tensor, criterion: Model, optim: Optimizer, batch_size: number, iters?: number, log_interval?: number, metrics?: string[], verbose?: boolean): Promise<number>;
     length(): Promise<number>;
-    activation(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-    getLayerType(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    activation(): Promise<any>;
+    getLayerType(): Promise<any>;
     cmd(options: {
         [key: string]: any;
         functionCall: string;
         tensorIndexParams?: any[];
     }): SocketCMD;
-    forward(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    forward(...input: Tensor[]): Promise<any>;
 }
 export declare class Policy extends Model {
     static $: IAsyncConstructor;
@@ -37,9 +35,9 @@ export declare class Policy extends Model {
     model?: Model;
     static get(id: string): Promise<Policy>;
     static create(model: Model, optimizer: Optimizer, stateType?: string): Promise<Policy>;
-    sample(...input: Tensor[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    sample(...input: Tensor[]): Promise<any>;
     parameters(): Promise<Tensor[]>;
-    feed(...args: any[]): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+    feed(...args: any[]): Promise<any>;
 }
 export declare class Sequential extends Model {
     static $: IAsyncConstructor;
@@ -47,7 +45,6 @@ export declare class Sequential extends Model {
     static get(id: string): Promise<Sequential>;
     static create(layers?: Model[]): Promise<Sequential>;
     add(model: Model): Promise<void>;
-    summary(): Promise<string>;
 }
 export declare class Linear extends Model {
     static $: IAsyncConstructor;

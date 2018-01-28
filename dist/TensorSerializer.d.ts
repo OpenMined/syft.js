@@ -1,4 +1,4 @@
-import { Tensor } from './Tensor';
+import { Tensor, IntTensor, FloatTensor } from './Tensor';
 export declare enum TSTypes {
     int8 = 0,
     uint8 = 0,
@@ -48,5 +48,5 @@ export declare class TensorSerializer {
         view: DataView;
         toString: any;
     };
-    deserialize(str: string): any;
+    deserialize(str: string): Promise<FloatTensor> | Promise<IntTensor>;
 }
