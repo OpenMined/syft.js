@@ -145,12 +145,18 @@ export declare class IntTensor extends Tensor {
     data: IntDimArray;
     type: string;
     static get(id: string): Promise<IntTensor>;
-    static create(arr: any[], autograd?: boolean): Promise<IntTensor>;
+    static create(arr: any[] | {
+        data: ArrayLike<number>;
+        shape: ArrayLike<number>;
+    }, autograd?: boolean): Promise<IntTensor>;
 }
 export declare class FloatTensor extends Tensor {
     static $: IAsyncConstructor;
     data: FloatDimArray;
     type: string;
     static get(id: string): Promise<FloatTensor>;
-    static create(arr: any[], autograd?: boolean): Promise<FloatTensor>;
+    static create(arr: any[] | {
+        data: ArrayLike<number>;
+        shape: ArrayLike<number>;
+    }, autograd?: boolean): Promise<FloatTensor>;
 }

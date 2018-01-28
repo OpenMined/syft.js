@@ -110,6 +110,7 @@ class Model extends AsyncClass_1.AsyncInstance {
     async fit(input, target, criterion, optim, batch_size, iters = 15, log_interval = 200, metrics = [], verbose = true) {
         let self = this;
         self.ready();
+        console.log('fit');
         let num_batches = asserts_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'prepare_to_fit',
             tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
@@ -117,14 +118,19 @@ class Model extends AsyncClass_1.AsyncInstance {
         let loss = 100000;
         for (let iter = 0; iter < iters; iter++) {
             for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
-                console.log(`iter ${iter}/${iters}\n log_i ${log_i}/${log_interval}`);
                 let prev_loss = loss;
                 let _loss = asserts_1.assertType(await controller.sendJSON(self.cmd({
                     functionCall: 'fit',
                     tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
                 }), 'float'), 'number');
+                if (log_i % 10 === 0) {
+                    console.log(`iter ${iter}/${iters} - ${log_i}/${num_batches} -- ${_loss}`);
+                }
                 if (_loss) {
                     loss = _loss;
+                }
+                else {
+                    console.log(_loss);
                 }
                 if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
                     break;

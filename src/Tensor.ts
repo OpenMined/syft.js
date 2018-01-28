@@ -2549,10 +2549,15 @@ export class IntTensor extends Tensor {
   }
 
   static async create(
-    arr: any[],
+    arr: any[] | {data: ArrayLike<number>, shape:ArrayLike<number>},
     autograd = false
   ) {
-    let data = new IntDimArray(arr)
+    let data
+    if (Array.isArray(arr)) {
+      data = new FloatDimArray(arr)
+    } else {
+      data = arr
+    }
 
     let id = assertType(
       await controller.sendJSON({
@@ -2588,10 +2593,15 @@ export class FloatTensor extends Tensor {
   }
 
   static async create(
-    arr: any[],
+    arr: any[] | {data: ArrayLike<number>, shape:ArrayLike<number>},
     autograd = false
   ) {
-    let data = new FloatDimArray(arr)
+    let data
+    if (Array.isArray(arr)) {
+      data = new FloatDimArray(arr)
+    } else {
+      data = arr
+    }
 
     let id = assertType(
       await controller.sendJSON({

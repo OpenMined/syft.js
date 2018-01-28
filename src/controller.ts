@@ -172,7 +172,7 @@ export async function sendJSON(
 
     if (res !== '') {
       let ids = res.split(',')
-      for (let str_id in ids) {
+      for (let str_id of ids) {
         if (str_id) {
           tensors.push(new FloatTensor(AsyncInstance, str_id))
         }
@@ -185,7 +185,7 @@ export async function sendJSON(
 
     if (res !== '') {
       let ids = res.split(',')
-      for (let str_id in ids) {
+      for (let str_id of ids) {
         if (str_id) {
           models.push(await Model.getModel(str_id))
         }
