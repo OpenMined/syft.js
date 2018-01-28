@@ -39,9 +39,9 @@
     "declaration": true
   },
   "exclude": [
+    "index.d.ts",
     "node_modules",
-    "dist",
-    "build"
+    "dist"
   ],
   "filesGlob": [
     "./src//.ts",

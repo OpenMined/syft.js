@@ -7,7 +7,7 @@ const asserts_1 = require("./asserts");
 const TensorSerializer_1 = require("./TensorSerializer");
 const tensorSerializer = new TensorSerializer_1.TensorSerializer;
 class Tensor extends AsyncClass_1.AsyncInstance {
-    static deserialize(str) {
+    static async deserialize(str) {
         return tensorSerializer.deserialize(str);
     }
     serialize(optimizeStorage = false) {

@@ -1,4 +1,4 @@
-import * as Async from 'promasync'
+// import * as Async from 'promasync'
 import * as controller from './controller'
 import { Optimizer } from './Optimizer'
 import { assertType } from './asserts'
@@ -130,9 +130,12 @@ export class Model extends AsyncInstance {
     let self = this
     self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'param_count'
-    }), 'int')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'param_count'
+      }), 'int'),
+      'number'
+    )
   }
 
   async models(): Promise<Model[]> {
@@ -153,10 +156,13 @@ export class Model extends AsyncInstance {
     let self = this
     self.ready()
 
-    await controller.sendJSON(self.cmd({
-      functionCall: 'set_id',
-      tensorIndexParams: [new_id]
-    }), 'string')
+    assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'set_id',
+        tensorIndexParams: [new_id]
+      }), 'string'),
+      'string'
+    )
 
     self.id = new_id
     return self
@@ -170,7 +176,7 @@ export class Model extends AsyncInstance {
     batch_size: number,
     iters = 15,
     log_interval = 200,
-    metrics = [],
+    metrics: string[] = [],
     verbose = true
   ) {
     let self = this
@@ -218,150 +224,41 @@ export class Model extends AsyncInstance {
     }
     return loss
   }
-
-  async fitOld(
-    input: Tensor,
-    target: Tensor,
-    criterion: any, // TODO: what type is this
-    optim: any, // TODO: what type is this
-    batch_size: number,
-    iters = 15,
-    log_interval = 200,
-    metrics = [],
-    verbose = true
-  ) {
-    let self = this
-    self.ready()
-
-    let num_batches = assertType(
-      await controller.sendJSON(self.cmd({
-        functionCall: 'prepare_to_fit',
-        tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
-      }), 'int'),
-      'number'
-    )
-
-    console.log(`Number of Batches:${num_batches}`)
-
-    let progress_bars = []
-    if (verbose) {
-      // TODO: progress_bars.push(Progress(0,iters-1))
-    }
-
-    let start = Date.now()
-    let loss = 100000
-    for (let iter = 0; iter < iters; iter++) {
-      if (verbose) {
-        // TODO: progress_bars.push(Progress(0,num_batches))
-      }
-
-      let iter_start = Date.now()
-
-      for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
-        let prev_loss = loss
-        let _loss = assertType(
-          await controller.sendJSON(self.cmd({
-            functionCall: 'fit',
-            tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
-          }), 'float'),
-          'number'
-        )
-        if (_loss !== '0') {
-          loss = _loss
-        }
-        if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
-          if (verbose) {
-            // TODO: progress_bars[0].danger()
-            // TODO: progress_bars[-1].danger()
-          }
-          break
-        } else if (loss > prev_loss) {
-          if (verbose) {
-            // TODO: progress_bars[0].info()
-            // TODO: progress_bars[-1].info()
-          }
-        } else {
-          if (verbose) {
-            // TODO: progress_bars[0].normal()
-            // TODO: progress_bars[-1].normal()
-          }
-        }
-
-        let elapsed = Date.now() - iter_start
-        let pace = elapsed / (log_i + 1)
-        let remaining = Math.floor((num_batches - log_i - 1) * pace)
-        let remainingStr = ''
-
-        if (remaining > 60) {
-          remainingStr += Math.floor(remaining / 60) + 'm' + (remaining % 60) + 's'
-        } else {
-          remainingStr += remaining + 's'
-        }
-        if (verbose) {
-          // TODO: progress_bars[-1].update(log_i + 1, [('', remaining), ('loss', str(loss)), ('batch', str(log_i) + '-' + str(min(log_i + log_interval, num_batches)))])
-        }
-      }
-      if (verbose) {
-        // TODO: progress_bars[-1].success()
-        // TODO: progress_bars[-1].update(num_batches, [('', str(Date.now() - iter_start)), ('loss', str(loss)), ('batch', str(log_i) + '-' + str(min(log_i + log_interval, num_batches)))])
-      }
-
-      let elapsed = Date.now() - start
-      let pace = elapsed / (iter + 1)
-      let remaining = Math.floor((iters - iter - 1) * pace)
-      let remainingStr = ''
-      if (remaining > 60) {
-        remainingStr += Math.floor(remaining / 60) + 'm' + (remaining % 60) + 's'
-      } else {
-        remainingStr += remaining + 's'
-      }
-      if (verbose) {
-        // TODO: progress_bars[0].update(iter, [('', remaining), ('loss', loss)])
-      }
-      if (Number.isNaN(loss)) {
-        break
-      }
-    }
-    if (verbose) {
-      // TODO: progress_bars[0].success()
-    }
-    return loss
-  }
-
-  async summary(
-    verbose = true,
-    return_instead_of_print = false
-  ): Promise<string|undefined> {
-    let self = this
-    self.ready()
-
-    // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
-    let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
-    let outputShape = ''
-    if (typeof self.outputShape === 'number') {
-      outputShape = String(self.outputShape)
-    } else {
-      outputShape = String(self.outputShape)
-    }
-
-    let n_param = String(await self.num_parameters())
-    let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n'
-    if (verbose) {
-      let single = '_________________________________________________________________\n'
-      let header = 'Layer (type)                 Output Shape              Param #   \n'
-      let double = '=================================================================\n'
-      // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-      // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-      let non_trainable_params = 'Non-trainable params: 0' + '\n'
-      // TODO: output = single + header + double + output + double + total_params + trainable_params + non_trainable_params + single
-    }
-
-    if (return_instead_of_print) {
-      return output
-    }
-    console.log(output)
-    return
-  }
+  //
+  // async summary(
+  //   verbose = true,
+  //   return_instead_of_print = false
+  // ): Promise<string|undefined> {
+  //   let self = this
+  //   self.ready()
+  //
+  //   // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
+  //   let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
+  //   let outputShape = ''
+  //   if (typeof self.outputShape === 'number') {
+  //     outputShape = String(self.outputShape)
+  //   } else {
+  //     outputShape = String(self.outputShape)
+  //   }
+  //
+  //   let n_param = String(await self.num_parameters())
+  //   let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n'
+  //   if (verbose) {
+  //     let single = '_________________________________________________________________\n'
+  //     let header = 'Layer (type)                 Output Shape              Param #   \n'
+  //     let double = '=================================================================\n'
+  //     // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+  //     // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+  //     let non_trainable_params = 'Non-trainable params: 0' + '\n'
+  //     // TODO: output = single + header + double + output + double + total_params + trainable_params + non_trainable_params + single
+  //   }
+  //
+  //   if (return_instead_of_print) {
+  //     return output
+  //   }
+  //   console.log(output)
+  //   return
+  // }
 
   async length() {
     let self = this
@@ -375,18 +272,24 @@ export class Model extends AsyncInstance {
     let self = this
     self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'activation'
-    }), 'FloatTensor', /*delete_after_use=false*/)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'activation'
+      }), 'FloatTensor', /*delete_after_use=false*/),
+      FloatTensor
+    )
   }
 
   async getLayerType() {
     let self = this
     self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'model_type'
-    }), 'string')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'model_type'
+      }), 'string'),
+      'string'
+    )
   }
 
   cmd(
@@ -412,10 +315,13 @@ export class Model extends AsyncInstance {
     let self = this
     self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'forward',
-      tensorIndexParams: input.map(t => t.id)
-    }), 'FloatTensor' /*, false*/)
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'forward',
+        tensorIndexParams: input.map(t => t.id)
+      }), 'FloatTensor' /*, false*/),
+      FloatTensor
+    )
   }
 
   // async __repr__(
@@ -478,10 +384,13 @@ export class Policy extends Model {
     let self = this
     self.ready()
 
-    return controller.sendJSON(self.cmd({
-      functionCall: 'sample',
-      tensorIndexParams: input.map(t => t.id)
-    }), 'IntTensor')
+    return assertType(
+      await controller.sendJSON(self.cmd({
+        functionCall: 'sample',
+        tensorIndexParams: input.map(t => t.id)
+      }), 'IntTensor'),
+      IntTensor
+    )
   }
 
   async parameters() {
@@ -580,29 +489,29 @@ export class Sequential extends Model {
     }), /*delete_after_use=false*/)
   }
 
-  async summary() {
-    let self = this
-    self.ready()
-
-    let single = '_________________________________________________________________\n'
-    let header = 'Layer (type)                 Output Shape              Param #   \n'
-    let double = '=================================================================\n'
-    // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-    // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-    let non_trainable_params = 'Non-trainable params: 0' + '\n'
-
-    let output = single + header + double
-    Async.each
-
-    let mods = await Async.map(await self.models() as Model[], async (m) => {
-      return m.summary(false, true)
-    })
-    output += mods.join(single)
-    output += double
-    // TODO: output += total_params + trainable_params + non_trainable_params + single
-    console.log(output)
-    return output
-  }
+  // async summary() {
+  //   let self = this
+  //   self.ready()
+  //
+  //   let single = '_________________________________________________________________\n'
+  //   let header = 'Layer (type)                 Output Shape              Param #   \n'
+  //   let double = '=================================================================\n'
+  //   // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+  //   // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
+  //   let non_trainable_params = 'Non-trainable params: 0' + '\n'
+  //
+  //   let output = single + header + double
+  //   Async.each
+  //
+  //   let mods = await Async.map(await self.models() as Model[], async (m) => {
+  //     return m.summary(false, true)
+  //   })
+  //   output += mods.join(single)
+  //   output += double
+  //   // TODO: output += total_params + trainable_params + non_trainable_params + single
+  //   console.log(output)
+  //   return output
+  // }
 }
 
 export class Linear extends Model {
@@ -636,7 +545,7 @@ export class Linear extends Model {
 
     self.id = id
 
-    let params = await self.parameters()
+    // let params = await self.parameters()
 
     // TODO: self.outputShape = Number(params[0].shape()[-1])
     // TODO: self.input_shape = Number(params[0].shape()[0])
