@@ -1044,7 +1044,13 @@ class IntTensor extends Tensor {
         return new IntTensor(AsyncClass_1.AsyncInstance, id);
     }
     static async create(arr, autograd = false) {
-        let data = new DimArray_1.IntDimArray(arr);
+        let data;
+        if (Array.isArray(arr)) {
+            data = new DimArray_1.FloatDimArray(arr);
+        }
+        else {
+            data = arr;
+        }
         let id = asserts_1.assertType(await controller.sendJSON({
             objectType: 'IntTensor',
             tensorIndexParams: [],
@@ -1070,7 +1076,13 @@ class FloatTensor extends Tensor {
         return new FloatTensor(AsyncClass_1.AsyncInstance, id);
     }
     static async create(arr, autograd = false) {
-        let data = new DimArray_1.FloatDimArray(arr);
+        let data;
+        if (Array.isArray(arr)) {
+            data = new DimArray_1.FloatDimArray(arr);
+        }
+        else {
+            data = arr;
+        }
         let id = asserts_1.assertType(await controller.sendJSON({
             objectType: 'FloatTensor',
             tensorIndexParams: [],
