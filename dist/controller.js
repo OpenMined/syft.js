@@ -2,10 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const uuid = require("uuid");
 const zmq = require("zmq");
-const Tensor_1 = require("./Tensor");
-const WorkQueue_1 = require("./WorkQueue");
-const Model_1 = require("./Model");
-const AsyncClass_1 = require("./AsyncClass");
+const syft_1 = require("./syft");
+const lib_1 = require("./lib");
 exports.verbose = !!process.argv[2];
 const identity = uuid.v4();
 const socket = zmq.socket('dealer');
@@ -21,7 +19,7 @@ function cmd(options) {
     return Object.assign({ objectType: 'controller', objectIndex: '-1', tensorIndexParams: [] }, options);
 }
 exports.cmd = cmd;
-const wq = new WorkQueue_1.WorkQueue(job => {
+const wq = new lib_1.WorkQueue(job => {
     log('sending:', job.data);
     socket.send(job.data);
 }, 1);
@@ -42,64 +40,56 @@ socket.on('message', (res) => {
     }
 });
 async function num_models() {
-    return sendJSON(cmd({
+    return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'num_models'
-    }), 'int');
+    }), 'int'), 'number');
 }
 exports.num_models = num_models;
 async function load(filename) {
-    return sendJSON(cmd({
+    return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'load_floattensor',
         tensorIndexParams: [filename]
-    }), 'FloatTensor');
+    }), 'FloatTensor'), syft_1.FloatTensor);
 }
 exports.load = load;
-function save(x, filename) {
+async function save(x, filename) {
     return x.save(filename);
 }
 exports.save = save;
-function concatenate(tensors, axis = 0) {
+async function concatenate(tensors, axis = 0) {
     let ids = tensors.map(t => t.id);
-    return sendJSON(cmd({
+    return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'concatenate',
         tensorIndexParams: [axis, ...ids]
-    }), 'FloatTensor');
+    }), 'FloatTensor'), syft_1.FloatTensor);
 }
 exports.concatenate = concatenate;
-function num_tensors() {
-    return sendJSON(cmd({
+async function num_tensors() {
+    return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'num_tensors'
-    }), 'int');
+    }), 'int'), 'number');
 }
 exports.num_tensors = num_tensors;
-function new_tensors_allowed(allowed) {
+async function new_tensors_allowed(allowed) {
     if (allowed == null) {
-        return sendJSON(cmd({
+        return lib_1.assertType(await sendJSON(cmd({
             functionCall: 'new_tensors_allowed'
-        }), 'bool');
+        }), 'bool'), 'boolean');
     }
     else if (allowed) {
-        return sendJSON(cmd({
+        return lib_1.assertType(await sendJSON(cmd({
             functionCall: 'new_tensors_allowed',
             tensorIndexParams: ['True']
-        }), 'bool');
+        }), 'bool'), 'boolean');
     }
     else {
-        return sendJSON(cmd({
+        return lib_1.assertType(await sendJSON(cmd({
             functionCall: 'new_tensors_allowed',
             tensorIndexParams: ['False']
-        }), 'bool');
+        }), 'bool'), 'boolean');
     }
 }
 exports.new_tensors_allowed = new_tensors_allowed;
-function get_tensor(id) {
-    return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, id);
-}
-exports.get_tensor = get_tensor;
-function __getitem__(id) {
-    return get_tensor(id);
-}
-exports.__getitem__ = __getitem__;
 async function sendJSON(message, return_type) {
     let data = JSON.stringify(message);
     let res = await wq.queue(data);
@@ -108,13 +98,13 @@ async function sendJSON(message, return_type) {
     }
     else if (return_type === 'FloatTensor') {
         if (res !== '-1' && res !== '') {
-            return new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, res);
+            return new syft_1.FloatTensor(lib_1.AsyncInstance, res);
         }
         return;
     }
     else if (return_type === 'IntTensor') {
         if (res !== '-1' && res !== '') {
-            return new Tensor_1.IntTensor(AsyncClass_1.AsyncInstance, res);
+            return new syft_1.IntTensor(lib_1.AsyncInstance, res);
         }
         return;
     }
@@ -124,7 +114,7 @@ async function sendJSON(message, return_type) {
             let ids = res.split(',');
             for (let str_id of ids) {
                 if (str_id) {
-                    tensors.push(new Tensor_1.FloatTensor(AsyncClass_1.AsyncInstance, str_id));
+                    tensors.push(new syft_1.FloatTensor(lib_1.AsyncInstance, str_id));
                 }
             }
         }
@@ -136,7 +126,7 @@ async function sendJSON(message, return_type) {
             let ids = res.split(',');
             for (let str_id of ids) {
                 if (str_id) {
-                    models.push(await Model_1.Model.getModel(str_id));
+                    models.push(await syft_1.Model.getModel(str_id));
                 }
             }
         }

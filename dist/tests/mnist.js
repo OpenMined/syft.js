@@ -6,21 +6,21 @@ global.syft = syft;
 let dataset = mnist(60000, 10000);
 async function test() {
     let training = {
-        input: await syft.FloatTensor.create(dataset.training.input),
-        output: await syft.FloatTensor.create(dataset.training.output),
+        input: await syft.Tensor.FloatTensor.create(dataset.training.input),
+        output: await syft.Tensor.FloatTensor.create(dataset.training.output),
     };
     let testing = {
-        input: await syft.FloatTensor.create(dataset.test.input),
-        output: await syft.FloatTensor.create(dataset.test.output),
+        input: await syft.Tensor.FloatTensor.create(dataset.test.input),
+        output: await syft.Tensor.FloatTensor.create(dataset.test.output),
     };
-    let model = await syft.Sequential.create([
-        await syft.Linear.create(784, 10),
-        await syft.ReLU.create(),
-        await syft.Softmax.create()
+    let model = await syft.Model.Sequential.create([
+        await syft.Model.Linear.create(784, 10),
+        await syft.Model.ReLU.create(),
+        await syft.Model.Softmax.create()
     ]);
-    global.model = model;
-    let loss = await syft.CrossEntropyLoss.create();
-    let optim = await syft.SGD.create(await model.parameters());
+    global.Model = model;
+    let loss = await syft.Model.CrossEntropyLoss.create();
+    let optim = await syft.Optimizer.SGD.create(await model.parameters());
     let metric = ['accuracy'];
     let train = async () => {
         let error = await model.fit(training.input, training.output, loss, optim, 100, 10, 1, metric, true);

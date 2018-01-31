@@ -1,4 +1,4 @@
-import { Tensor, FloatTensor, IntTensor } from './Tensor';
+import { Tensor, FloatTensor, IntTensor, Model } from './syft';
 export declare const verbose: boolean;
 export declare function log(...args: any[]): void;
 export declare function cmd(options: {
@@ -6,12 +6,10 @@ export declare function cmd(options: {
     functionCall: string;
     tensorIndexParams?: any[];
 }): SocketCMD;
-export declare function num_models(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function load(filename: string): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function save(x: Tensor, filename: string): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function concatenate(tensors: Tensor[], axis?: number): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function num_tensors(): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function new_tensors_allowed(allowed?: boolean): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
-export declare function get_tensor(id: string): Tensor;
-export declare function __getitem__(id: string): Tensor;
-export declare function sendJSON(message: SocketCMD, return_type?: string): Promise<string | number | boolean | any[] | FloatTensor | IntTensor | undefined>;
+export declare function num_models(): Promise<any>;
+export declare function load(filename: string): Promise<any>;
+export declare function save(x: Tensor, filename: string): Promise<any>;
+export declare function concatenate(tensors: Tensor[], axis?: number): Promise<any>;
+export declare function num_tensors(): Promise<number>;
+export declare function new_tensors_allowed(allowed?: boolean): Promise<boolean>;
+export declare function sendJSON(message: SocketCMD, return_type?: string): Promise<string | number | boolean | FloatTensor | IntTensor | Tensor[] | Model[] | undefined>;

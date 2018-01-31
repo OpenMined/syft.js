@@ -1,13 +1,18 @@
 import * as uuid from 'uuid'
 import * as zmq from 'zmq'
+
 import {
   Tensor,
   FloatTensor,
-  IntTensor
-} from './Tensor'
-import { WorkQueue } from './WorkQueue'
-import { Model } from './Model'
-import { AsyncInstance } from './AsyncClass'
+  IntTensor,
+  Model
+} from './syft'
+
+import {
+  assertType,
+  WorkQueue,
+  AsyncInstance
+} from './lib'
 
 export const verbose = !!process.argv[2]
 
@@ -74,76 +79,86 @@ socket.on('message', (res) => {
 
 // Introspection
 export async function num_models() {
-  return sendJSON(cmd({
-    functionCall: 'num_models'
-  }), 'int')
+  return assertType(
+    await sendJSON(cmd({
+      functionCall: 'num_models'
+    }), 'int'),
+    'number'
+  )
 }
 
 export async function load(
   filename: string
 ) {
-  return sendJSON(cmd({
-    functionCall: 'load_floattensor',
-    tensorIndexParams: [filename]
-  }), 'FloatTensor')
+  return assertType(
+    await sendJSON(cmd({
+      functionCall: 'load_floattensor',
+      tensorIndexParams: [filename]
+    }), 'FloatTensor'),
+    FloatTensor
+  )
+
 }
 
-export function save(
+export async function save(
   x: Tensor,
   filename: string
 ) {
   return x.save(filename)
 }
 
-export function concatenate(
+export async function concatenate(
   tensors: Tensor[],
   axis = 0
 ) {
 
   let ids = tensors.map(t => t.id)
 
-  return sendJSON(cmd({
-    functionCall: 'concatenate',
-    tensorIndexParams: [axis, ...ids]
-  }), 'FloatTensor')
+  return assertType(
+    await sendJSON(cmd({
+      functionCall: 'concatenate',
+      tensorIndexParams: [axis, ...ids]
+    }), 'FloatTensor'),
+    FloatTensor
+  )
 }
 
-export function num_tensors() {
-  return sendJSON(cmd({
-    functionCall: 'num_tensors'
-  }), 'int')
+export async function num_tensors() {
+  return assertType(
+    await sendJSON(cmd({
+      functionCall: 'num_tensors'
+    }), 'int'),
+    'number'
+  ) as number
 }
 
-export function new_tensors_allowed(
+export async function new_tensors_allowed(
   allowed?: boolean
 ) {
     if (allowed == null) {
-      return sendJSON(cmd({
-        functionCall:'new_tensors_allowed'
-      }), 'bool')
+      return assertType(
+        await sendJSON(cmd({
+          functionCall:'new_tensors_allowed'
+        }), 'bool'),
+        'boolean'
+      ) as boolean
     } else if (allowed) {
-      return sendJSON(cmd({
-        functionCall:'new_tensors_allowed',
-        tensorIndexParams: ['True']
-      }), 'bool')
+      return assertType(
+        await sendJSON(cmd({
+          functionCall:'new_tensors_allowed',
+          tensorIndexParams: ['True']
+        }), 'bool'),
+        'boolean'
+      ) as boolean
     } else {
-      return sendJSON(cmd({
-        functionCall:'new_tensors_allowed',
-        tensorIndexParams: ['False']
-      }), 'bool')
+      return assertType(
+        await sendJSON(cmd({
+          functionCall:'new_tensors_allowed',
+          tensorIndexParams: ['False']
+        }), 'bool'),
+        'boolean'
+      ) as boolean
     }
-}
-
-export function get_tensor(
-  id: string
-): Tensor {
-  return new FloatTensor(AsyncInstance, id)
-}
-
-export function __getitem__(
-  id: string
-) {
-  return get_tensor(id)
 }
 
 export async function sendJSON(
@@ -181,7 +196,7 @@ export async function sendJSON(
 
     return tensors
   } else if (return_type === 'Model_list') {
-    let models: any[] = []
+    let models: Model[] = []
 
     if (res !== '') {
       let ids = res.split(',')
