@@ -20,16 +20,10 @@ JavaScript example:
 ```javascript
 const syft = require('syft')
 
-let t = new Tensor([
+let t = await syft.FloatTensor.create([
   [1,2],
   [3,4]
 ])
 
-t.ready()
-  .then(() => {
-    console.log('ready', t)
-  })
-  .catch((err) => {
-    console.log('error', err)
-  })
+console.log(await t.toString())
 ```
