@@ -2,10 +2,10 @@ import * as syft from '../../../syft'
 
 import { Layer } from './Layer'
 
-export class _Dense implements Layer {
+export class Dense implements Layer {
   // sometimes keras has single layers that actually correspond
   // to multiple syft layers - so they end up getting stored in
-  // an ordered list called "ordered_syft"
+  // an ordered list called 'ordered_syft'
   ordered_syft: syft.Model[] = []
 
   syft_layer: syft.Model
@@ -38,14 +38,14 @@ export class _Dense implements Layer {
     )
     self.ordered_syft.push(self.syft_layer)
 
-    if (self.activation_str != null && self.activation_str != "linear") {
-      if (self.activation_str == 'relu') {
+    if (self.activation_str != null && self.activation_str !== 'linear') {
+      if (self.activation_str === 'relu') {
         self.syft_activation = await syft.Model.ReLU.create()
-      } else if (self.activation_str == 'softmax') {
+      } else if (self.activation_str === 'softmax') {
         self.syft_activation = await syft.Model.Softmax.create()
-      } else if (self.activation_str == 'sigmoid') {
+      } else if (self.activation_str === 'sigmoid') {
         self.syft_activation = await syft.Model.Sigmoid.create()
-      } else if (self.activation_str == 'tanh') {
+      } else if (self.activation_str === 'tanh') {
         self.syft_activation = await syft.Model.Tanh.create()
       }
     }
@@ -56,12 +56,4 @@ export class _Dense implements Layer {
 
     return self
   }
-}
-
-export function Dense(
-  units: number,
-  input_shape?: number,
-  activation?: string
-) {
-  return new _Dense(units, input_shape, activation)
 }

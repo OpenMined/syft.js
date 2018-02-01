@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const syft = require("../../../syft");
-class _Dense {
+class Dense {
     constructor(units, input_shape, activation) {
         this.ordered_syft = [];
         let self = this;
@@ -14,17 +14,17 @@ class _Dense {
         let self = this;
         self.syft_layer = await syft.Model.Linear.create(self.input_shape, self.units);
         self.ordered_syft.push(self.syft_layer);
-        if (self.activation_str != null && self.activation_str != "linear") {
-            if (self.activation_str == 'relu') {
+        if (self.activation_str != null && self.activation_str !== 'linear') {
+            if (self.activation_str === 'relu') {
                 self.syft_activation = await syft.Model.ReLU.create();
             }
-            else if (self.activation_str == 'softmax') {
+            else if (self.activation_str === 'softmax') {
                 self.syft_activation = await syft.Model.Softmax.create();
             }
-            else if (self.activation_str == 'sigmoid') {
+            else if (self.activation_str === 'sigmoid') {
                 self.syft_activation = await syft.Model.Sigmoid.create();
             }
-            else if (self.activation_str == 'tanh') {
+            else if (self.activation_str === 'tanh') {
                 self.syft_activation = await syft.Model.Tanh.create();
             }
         }
@@ -33,10 +33,6 @@ class _Dense {
         }
         return self;
     }
-}
-exports._Dense = _Dense;
-function Dense(units, input_shape, activation) {
-    return new _Dense(units, input_shape, activation);
 }
 exports.Dense = Dense;
 //# sourceMappingURL=Dense.js.map
