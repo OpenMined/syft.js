@@ -4,13 +4,15 @@ function arrMul<T>(
 ) {
   let res: T[] = []
   for (let i = 0; i < n; i++) {
-    res = res.concat(arr);
+    res = res.concat(arr)
   }
   return res
 }
 
 import * as syft from '..'
-;(global as any).syft = syft
+
+let g = (global as any)
+g.syft = syft
 
 async function test() {
   let training = {
@@ -30,7 +32,7 @@ async function test() {
     await syft.Model.Log.create()
   ])
 
-  ;(global as any).model = model
+  g.model = model
 
   let loss = await syft.Model.NLLLoss.create()
   let optim = await syft.Optimizer.SGD.create(await model.parameters())
@@ -53,9 +55,9 @@ async function test() {
 
   await train()
 
-  ;(global as any).train = train
+  g.train = train
 
-  ;(global as any).perd = await model.forward(training.input)
+  g.perd = await model.forward(training.input)
 
   console.log(await (global as any).perd.toString())
 

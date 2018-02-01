@@ -1,6 +1,6 @@
 import * as syft from '../../../syft';
 import { Layer } from './Layer';
-export declare class _Dense implements Layer {
+export declare class Dense implements Layer {
     ordered_syft: syft.Model[];
     syft_layer: syft.Model;
     units: number;
@@ -12,4 +12,3 @@ export declare class _Dense implements Layer {
     constructor(units: number, input_shape?: number, activation?: string);
     create(): Promise<this>;
 }
-export declare function Dense(units: number, input_shape?: number, activation?: string): _Dense;

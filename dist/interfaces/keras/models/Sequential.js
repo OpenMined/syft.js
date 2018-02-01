@@ -25,10 +25,10 @@ class Sequential {
         let self = this;
         if (!self.compiled) {
             self.compiled = true;
-            if (loss == 'categorical_crossentropy') {
+            if (loss === 'categorical_crossentropy') {
                 self.loss = await syft.Model.Categorical_CrossEntropy.create();
             }
-            else if (loss == 'mean_squared_error') {
+            else if (loss === 'mean_squared_error') {
                 self.loss = await syft.Model.MSELoss.create();
             }
             self.optimizer = optimizer;

@@ -33,7 +33,7 @@ export class Model extends AsyncInstance {
   ): Model {
     AsyncInstance.assertCallable($)
 
-    switch(type) {
+    switch (type) {
       case 'policy':
         return new this.Policy(AsyncInstance, id)
       case 'sequential':
@@ -207,7 +207,7 @@ export class Model extends AsyncInstance {
           console.log(`iter ${iter}/${iters} - ${log_i}/${num_batches} -- ${_loss}`)
         }
 
-        if(_loss) {
+        if (_loss) {
           loss = _loss
         } else {
           console.log(_loss)
@@ -244,7 +244,7 @@ export class Model extends AsyncInstance {
   //   if (verbose) {
   //     let single = '_________________________________________________________________\n'
   //     let header = 'Layer (type)                 Output Shape              Param #   \n'
-  //     let double = '=================================================================\n'
+  //     let double = '===\n'
   //     // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
   //     // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
   //     let non_trainable_params = 'Non-trainable params: 0' + '\n'
@@ -592,7 +592,7 @@ export class Sequential extends Model {
   //
   //   let single = '_________________________________________________________________\n'
   //   let header = 'Layer (type)                 Output Shape              Param #   \n'
-  //   let double = '=================================================================\n'
+  //   let double = '===\n'
   //   // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
   //   // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
   //   let non_trainable_params = 'Non-trainable params: 0' + '\n'

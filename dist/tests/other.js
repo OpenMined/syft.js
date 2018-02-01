@@ -8,7 +8,8 @@ function arrMul(arr, n) {
     return res;
 }
 const syft = require("..");
-global.syft = syft;
+let g = global;
+g.syft = syft;
 async function test() {
     let training = {
         input: await syft.Tensor.FloatTensor.create(arrMul([[0, 0, 1], [0, 1.0, 1], [1, 0, 1], [1, 1, 1]], 2000)),
@@ -21,7 +22,7 @@ async function test() {
         await syft.Model.Softmax.create(1),
         await syft.Model.Log.create()
     ]);
-    global.model = model;
+    g.model = model;
     let loss = await syft.Model.NLLLoss.create();
     let optim = await syft.Optimizer.SGD.create(await model.parameters());
     let metric = ['accuracy'];
@@ -30,8 +31,8 @@ async function test() {
         console.log('trained!', error);
     };
     await train();
-    global.train = train;
-    global.perd = await model.forward(training.input);
+    g.train = train;
+    g.perd = await model.forward(training.input);
     console.log(await global.perd.toString());
 }
 test();

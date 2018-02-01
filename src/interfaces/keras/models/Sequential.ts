@@ -47,12 +47,12 @@ export class Sequential implements Model {
   ) {
     let self = this
 
-    if (!self.compiled){
+    if (!self.compiled) {
       self.compiled = true
 
-      if (loss == 'categorical_crossentropy') {
+      if (loss === 'categorical_crossentropy') {
         self.loss = await syft.Model.Categorical_CrossEntropy.create()
-      } else if(loss == 'mean_squared_error') {
+      } else if (loss === 'mean_squared_error') {
         self.loss = await syft.Model.MSELoss.create()
       }
 
@@ -100,7 +100,7 @@ export class Sequential implements Model {
     test_target: syft.Tensor,
     batch_size: number,
     metrics: string[] = [],
-    verbose=true
+    verbose = true
   ) {
     // TODO: let self = this
     // return self.syft_model.evaluate(
@@ -117,9 +117,9 @@ export class Sequential implements Model {
     x: syft.Tensor
   ) {
     let self = this
-    // if(type(x) == list):
+    // if (type(x) === list):
     // x = np.array(x).astype('float')
-    // if(type(x) == np.array or type(x) == np.ndarray):
+    // if (type(x) === np.array or type(x) === np.ndarray):
     // x = FloatTensor(x,autograd=true, delete_after_use=false)
 
     return (await self.syft_model.forward(x)).to_numpy()
@@ -140,13 +140,13 @@ export class Sequential implements Model {
     //
     // let new_config: any [] = []
     // for (let layer of o['config']) {
-    //   if (layer['class_name'] == 'Linear') {
+    //   if (layer['class_name'] === 'Linear') {
     //     layer['class_name'] = 'Sequential'
     //     layer['config']['name'] = 'dense_' + layer['config']['name'].split('_')[-1]
-    //   } else if (layer['class_name'] == 'Softmax'){
+    //   } else if (layer['class_name'] === 'Softmax') {
     //     new_config[-1]['config']['activation'] = 'softmax'
     //     continue
-    //   } else if (layer['class_name'] == 'ReLU') {
+    //   } else if (layer['class_name'] === 'ReLU') {
     //     new_config[-1]['config']['activation'] = 'relu'
     //     continue
     //   }
