@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "dependencies": {
+    "fs-extra": "^5.0.0",
     "mnist": "github:Mike96Angelo/MNIST.js",
     "promasync": "^1.2.2",
     "tslib": "^1.8.1",
@@ -30,6 +31,7 @@
     "zmq": "^2.15.3"
   },
   "devDependencies": {
+    "@types/fs-extra": "^5.0.0",
     "@types/uuid": "^3.4.3",
     "@types/zmq": "0.0.22"
   }
