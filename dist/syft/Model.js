@@ -178,6 +178,7 @@ class Policy extends Model {
     constructor() {
         super(...arguments);
         this.layerType = 'policy';
+        this.stateType = 'discrete';
     }
     static async get(id) {
         let type = await Model.getModelType(id);
@@ -442,6 +443,10 @@ class NLLLoss extends Model {
 NLLLoss.$ = NLLLoss;
 exports.NLLLoss = NLLLoss;
 class CrossEntropyLoss extends Model {
+    constructor() {
+        super(...arguments);
+        this.layerType = 'crossentropyloss';
+    }
     static async get(id) {
         let type = await Model.getModelType(id);
         Model.assertLayerType(type, this);
@@ -463,6 +468,10 @@ class CrossEntropyLoss extends Model {
 CrossEntropyLoss.$ = CrossEntropyLoss;
 exports.CrossEntropyLoss = CrossEntropyLoss;
 class Categorical_CrossEntropy extends Model {
+    constructor() {
+        super(...arguments);
+        this.layerType = 'categorical_crossentropy';
+    }
     static async get(id) {
         let type = await Model.getModelType(id);
         Model.assertLayerType(type, this);
@@ -483,4 +492,18 @@ class Categorical_CrossEntropy extends Model {
 }
 Categorical_CrossEntropy.$ = Categorical_CrossEntropy;
 exports.Categorical_CrossEntropy = Categorical_CrossEntropy;
+Model.Policy = Policy;
+Model.Sequential = Sequential;
+Model.Linear = Linear;
+Model.ReLU = ReLU;
+Model.Dropout = Dropout;
+Model.Sigmoid = Sigmoid;
+Model.Softmax = Softmax;
+Model.LogSoftmax = LogSoftmax;
+Model.Log = Log;
+Model.Tanh = Tanh;
+Model.MSELoss = MSELoss;
+Model.NLLLoss = NLLLoss;
+Model.CrossEntropyLoss = CrossEntropyLoss;
+Model.Categorical_CrossEntropy = Categorical_CrossEntropy;
 //# sourceMappingURL=Model.js.map

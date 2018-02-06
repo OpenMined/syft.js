@@ -52,5 +52,5 @@ async function test() {
   console.log(await (global as any).perd.toString())
 
 }
-
-test()
+let done = (res: any) => console.log(res)
+test().then(done).catch(done)
