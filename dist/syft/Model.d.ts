@@ -4,7 +4,6 @@ import { Tensor } from './Tensor';
 export declare class Model extends AsyncInstance {
     type: string;
     layerType: string;
-    params: boolean;
     outputShape?: number | string;
     protected static assertLayerType(a: string, b: Function): void;
     protected static newModel($: any, id: string, type: string): Model;
@@ -195,14 +194,14 @@ export declare class NLLLoss extends Model {
 }
 export declare class CrossEntropyLoss extends Model {
     static $: IAsyncConstructor;
-    layerType: 'crossentropyloss';
+    layerType: string;
     static get(id: string): Promise<CrossEntropyLoss>;
     static create(dim?: number): Promise<CrossEntropyLoss>;
     forward(input: Tensor, target: Tensor): Promise<any>;
 }
 export declare class Categorical_CrossEntropy extends Model {
     static $: IAsyncConstructor;
-    layerType: 'categorical_crossentropy';
+    layerType: string;
     static get(id: string): Promise<Categorical_CrossEntropy>;
     static create(): Promise<Categorical_CrossEntropy>;
     forward(input: Tensor, target: Tensor): Promise<any>;

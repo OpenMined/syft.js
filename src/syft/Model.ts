@@ -14,7 +14,6 @@ import { Tensor } from './Tensor'
 export class Model extends AsyncInstance {
   type = 'model'
   layerType = '(unknown)'
-  params: boolean
   outputShape?: number|string = '(dynamic)'
 
   protected static assertLayerType(
@@ -447,7 +446,7 @@ export interface Categorical_CrossEntropyConstructor extends IAsyncConstructor {
 export class Policy extends Model {
   static $: IAsyncConstructor = Policy
   layerType = 'policy'
-  stateType: string
+  stateType: string = 'discrete'
   optimizer?: Optimizer
   model?: Model
 
@@ -880,7 +879,7 @@ export class NLLLoss extends Model {
 
 export class CrossEntropyLoss extends Model {
   static $ : IAsyncConstructor = CrossEntropyLoss
-  layerType: 'crossentropyloss'
+  layerType = 'crossentropyloss'
 
   // TODO: backward() to be implemented: grad = target - prediction
   // TODO: backward(): until IntegerTensor is available assume a one-hot vector is passed in.
@@ -922,7 +921,7 @@ export class CrossEntropyLoss extends Model {
 
 export class Categorical_CrossEntropy extends Model {
   static $ : IAsyncConstructor = Categorical_CrossEntropy
-  layerType: 'categorical_crossentropy'
+  layerType = 'categorical_crossentropy'
 
   static async get(
     id: string
@@ -956,3 +955,19 @@ export class Categorical_CrossEntropy extends Model {
     )
   }
 }
+
+
+Model.Policy = Policy
+Model.Sequential = Sequential
+Model.Linear = Linear
+Model.ReLU = ReLU
+Model.Dropout = Dropout
+Model.Sigmoid = Sigmoid
+Model.Softmax = Softmax
+Model.LogSoftmax = LogSoftmax
+Model.Log = Log
+Model.Tanh = Tanh
+Model.MSELoss = MSELoss
+Model.NLLLoss = NLLLoss
+Model.CrossEntropyLoss = CrossEntropyLoss
+Model.Categorical_CrossEntropy = Categorical_CrossEntropy

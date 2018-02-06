@@ -31,5 +31,6 @@ async function test() {
     global.perd = await model.forward(testing.input);
     console.log(await global.perd.toString());
 }
-test();
+let done = (res) => console.log(res);
+test().then(done).catch(done);
 //# sourceMappingURL=mnist.js.map
