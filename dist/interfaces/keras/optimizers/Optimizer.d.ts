@@ -1,5 +1,6 @@
 import * as syft from '../../../syft';
 export interface Optimizer {
-    hyperparameters: any[];
-    syft_optim: syft.Optimizer;
+    hyperparameters?: number[];
+    syft_optim?: syft.Optimizer;
+    create(params: syft.Tensor[]): Promise<void>;
 }

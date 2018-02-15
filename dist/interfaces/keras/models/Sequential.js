@@ -17,14 +17,17 @@ class Sequential {
             await layer.create();
         }
         self.layers.push(layer);
-        for (let l of layer.ordered_syft) {
-            self.syft_model.add(l);
-        }
     }
     async compile(loss, optimizer, metrics = []) {
         let self = this;
         if (!self.compiled) {
             self.compiled = true;
+            self.syft_model = await syft.Model.Sequential.create();
+            for (let layer of self.layers) {
+                for (let l of layer.ordered_syft) {
+                    self.syft_model.add(l);
+                }
+            }
             if (loss === 'categorical_crossentropy') {
                 self.loss = await syft.Model.Categorical_CrossEntropy.create();
             }
@@ -33,6 +36,7 @@ class Sequential {
             }
             self.optimizer = optimizer;
             self.metrics = metrics;
+            self.optimizer.create(await self.syft_model.parameters());
         }
         else {
             console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things');
@@ -43,16 +47,32 @@ class Sequential {
     }
     async fit(x_train, y_train, batch_size, epochs = 1, validation_data = null, log_interval = 1, verbose = false) {
         let self = this;
+        if (self.syft_model == null ||
+            self.loss == null ||
+            self.optimizer == null ||
+            self.optimizer.syft_optim == null) {
+            throw new Error('Not Compiled');
+        }
         return self.syft_model.fit(x_train, y_train, self.loss, self.optimizer.syft_optim, batch_size, epochs, log_interval, self.metrics, verbose);
     }
     async evaluate(test_input, test_target, batch_size, metrics = [], verbose = true) {
     }
     async predict(x) {
         let self = this;
+        if (self.syft_model == null ||
+            self.loss == null ||
+            self.optimizer == null) {
+            throw new Error('Not Compiled');
+        }
         return (await self.syft_model.forward(x)).to_numpy();
     }
     async get_weights() {
         let self = this;
+        if (self.syft_model == null ||
+            self.loss == null ||
+            self.optimizer == null) {
+            throw new Error('Not Compiled');
+        }
         return self.syft_model.parameters();
     }
     async to_json() {

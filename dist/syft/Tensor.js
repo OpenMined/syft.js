@@ -5,11 +5,22 @@ const lib_1 = require("../lib");
 const TensorSerializer_1 = require("./TensorSerializer");
 const tensorSerializer = new TensorSerializer_1.TensorSerializer;
 class Tensor extends lib_1.AsyncInstance {
+    constructor() {
+        super(...arguments);
+        this.type = '';
+    }
     static async deserialize(str) {
-        return tensorSerializer.deserialize(str);
+        let dimData = tensorSerializer.deserialize(str);
+        if (dimData instanceof lib_1.FloatDimArray) {
+            return Tensor.FloatTensor.create(dimData);
+        }
+        return Tensor.IntTensor.create(dimData);
     }
     serialize(optimizeStorage = false) {
-        return tensorSerializer.serialize(this, optimizeStorage);
+        if (this.data == null) {
+            throw new Error('NO');
+        }
+        return tensorSerializer.serialize(this.data, optimizeStorage);
     }
     finish(id) {
         let self = this;

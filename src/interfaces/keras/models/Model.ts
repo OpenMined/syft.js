@@ -4,9 +4,9 @@ import { Layer } from '../layers'
 import { Optimizer } from '../optimizers'
 
 export interface Model {
-  syft_model: syft.Model
-  loss: syft.Model
-  optimizer: Optimizer
+  syft_model?: syft.Model
+  loss?: syft.Model
+  optimizer?: Optimizer
   input_shape?: number
   output_shape?: number
   layers: Layer[]

@@ -10,6 +10,11 @@ function get_param_ids(params = []) {
     return param_ids;
 }
 class Optimizer extends lib_1.AsyncInstance {
+    constructor() {
+        super(...arguments);
+        this.type = 'Optimizer';
+        this.optimizer_type = '';
+    }
     static async createOptomizer(optimizer_type, params = [], hyperParams = []) {
         return lib_1.assertType(await controller.sendJSON({
             objectType: 'Optimizer',

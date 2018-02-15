@@ -21,9 +21,8 @@ function get_param_ids(
 * Base class for all Optimizers to inherit from
 */
 export class Optimizer extends AsyncInstance {
-  id: string
-  type: 'Optimizer'
-  optimizer_type: string
+  type = 'Optimizer'
+  optimizer_type: string = ''
 
   static async createOptomizer(
     optimizer_type: Function,
@@ -63,7 +62,7 @@ export class Optimizer extends AsyncInstance {
 
   async step(
     batch_size: number,
-    iteration: number // TODO: what type is this
+    iteration: number
   ) {
     let self = this
     self.ready()
@@ -103,19 +102,37 @@ export class Optimizer extends AsyncInstance {
 export interface SGDConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): SGD
   get(id: string): Promise<SGD>
-  create(...args: any[]):  Promise<SGD>
+  create(
+    params: any[],
+    lr?: number,
+    momentum?: number,
+    decay?: number
+  ):  Promise<SGD>
 }
 
 export interface RMSPropConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): RMSProp
   get(id: string): Promise<RMSProp>
-  create(...args: any[]):  Promise<RMSProp>
+  create(
+    params: any[],
+    lr?: number,
+    rho?: number,
+    epsilon?: number,
+    decay?: number
+  ): Promise<RMSProp>
 }
 
 export interface AdamConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): Adam
   get(id: string): Promise<Adam>
-  create(...args: any[]):  Promise<Adam>
+  create(
+    params: any[],
+    lr?: number,
+    beta_1?: number,
+    beta_2?: number,
+    epsilon?: number,
+    decay?: number
+  ): Promise<Adam>
 }
 
 /*
