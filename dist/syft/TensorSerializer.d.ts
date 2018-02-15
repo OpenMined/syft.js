@@ -1,4 +1,4 @@
-import { Tensor } from './Tensor';
+import { DimArray } from '../lib';
 export declare enum TSTypes {
     int8 = 0,
     uint8 = 0,
@@ -42,11 +42,11 @@ export declare class TensorSerializer {
         shapeTypeSetting: TSTypes;
         dataShapeTypeSetting: TSTypes;
         dataTypeSetting: TSTypes;
-    }, t: Tensor): number;
-    serialize(t: Tensor, optimizeStorage?: boolean): {
+    }, t: DimArray): number;
+    serialize(t: DimArray, optimizeStorage?: boolean): {
         data: ArrayBuffer;
         view: DataView;
         toString: any;
     };
-    deserialize(str: string): Promise<Tensor>;
+    deserialize(str: string): Promise<DimArray>;
 }

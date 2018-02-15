@@ -115,7 +115,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="_lib_asyncclass_.iasyncconstructor.html">IAsyncConstructor</a>.<a href="_lib_asyncclass_.iasyncconstructor.html#constructor">constructor</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/syft/Optimizer.ts#L115">syft/Optimizer.ts:115</a></li>
+									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/syft/Optimizer.ts#L125">syft/Optimizer.ts:125</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -138,20 +138,35 @@
 					<a name="create" class="tsd-anchor"></a>
 					<h3>create</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface tsd-is-overwrite">
-						<li class="tsd-signature tsd-kind-icon">create<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">...</span>args<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_syft_optimizer_.adam.html" class="tsd-signature-type">Adam</a><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">create<span class="tsd-signature-symbol">(</span>params<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span>, lr<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, beta_1<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, beta_2<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, epsilon<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, decay<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_syft_optimizer_.adam.html" class="tsd-signature-type">Adam</a><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<p>Overrides <a href="_lib_asyncclass_.iasyncconstructor.html">IAsyncConstructor</a>.<a href="_lib_asyncclass_.iasyncconstructor.html#create">create</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/syft/Optimizer.ts#L118">syft/Optimizer.ts:118</a></li>
+									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/syft/Optimizer.ts#L128">syft/Optimizer.ts:128</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>args: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
+									<h5>params: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> lr: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> beta_1: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> beta_2: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> epsilon: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> decay: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../classes/_syft_optimizer_.adam.html" class="tsd-signature-type">Adam</a><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -169,7 +184,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="_lib_asyncclass_.iasyncconstructor.html">IAsyncConstructor</a>.<a href="_lib_asyncclass_.iasyncconstructor.html#get">get</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/syft/Optimizer.ts#L117">syft/Optimizer.ts:117</a></li>
+									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/syft/Optimizer.ts#L127">syft/Optimizer.ts:127</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>

@@ -115,19 +115,25 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new SGD<span class="tsd-signature-symbol">(</span>hyperparameters<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_interfaces_keras_optimizers_sgd_.sgd.html" class="tsd-signature-type">SGD</a></li>
+						<li class="tsd-signature tsd-kind-icon">new SGD<span class="tsd-signature-symbol">(</span>lr<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span>, momentum<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span>, decay<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_interfaces_keras_optimizers_sgd_.sgd.html" class="tsd-signature-type">SGD</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/interfaces/keras/optimizers/SGD.ts#L7">interfaces/keras/optimizers/SGD.ts:7</a></li>
+									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/interfaces/keras/optimizers/SGD.ts#L7">interfaces/keras/optimizers/SGD.ts:7</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>hyperparameters: <span class="tsd-signature-type">any</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> lr: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;0.01</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> momentum: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;0</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> decay: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;0</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="_interfaces_keras_optimizers_sgd_.sgd.html" class="tsd-signature-type">SGD</a></h4>
@@ -140,22 +146,22 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="hyperparameters" class="tsd-anchor"></a>
 					<h3>hyperparameters</h3>
-					<div class="tsd-signature tsd-kind-icon">hyperparameters<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
+					<div class="tsd-signature tsd-kind-icon">hyperparameters<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<p>Implementation of <a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html">Optimizer</a>.<a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html#hyperparameters">hyperparameters</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/interfaces/keras/optimizers/SGD.ts#L7">interfaces/keras/optimizers/SGD.ts:7</a></li>
+							<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/interfaces/keras/optimizers/SGD.ts#L7">interfaces/keras/optimizers/SGD.ts:7</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
 					<a name="syft_optim" class="tsd-anchor"></a>
-					<h3>syft_<wbr>optim</h3>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> syft_<wbr>optim</h3>
 					<div class="tsd-signature tsd-kind-icon">syft_<wbr>optim<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">syft.SGD</span></div>
 					<aside class="tsd-sources">
 						<p>Implementation of <a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html">Optimizer</a>.<a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html#syft_optim">syft_optim</a></p>
 						<ul>
-							<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/interfaces/keras/optimizers/SGD.ts#L6">interfaces/keras/optimizers/SGD.ts:6</a></li>
+							<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/interfaces/keras/optimizers/SGD.ts#L6">interfaces/keras/optimizers/SGD.ts:6</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -166,19 +172,20 @@
 					<a name="create" class="tsd-anchor"></a>
 					<h3>create</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">create<span class="tsd-signature-symbol">(</span>syft_params<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">syft.Tensor</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">create<span class="tsd-signature-symbol">(</span>syft_params<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">syft.Tensor</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
+								<p>Implementation of <a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html">Optimizer</a>.<a href="../interfaces/_interfaces_keras_optimizers_optimizer_.optimizer.html#create">create</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/8d3a844/src/interfaces/keras/optimizers/SGD.ts#L17">interfaces/keras/optimizers/SGD.ts:17</a></li>
+									<li>Defined in <a href="https://github.com/OpenMined/syft.js/blob/82111ee/src/interfaces/keras/optimizers/SGD.ts#L18">interfaces/keras/optimizers/SGD.ts:18</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>syft_params: <span class="tsd-signature-type">syft.Tensor</span></h5>
+									<h5>syft_params: <span class="tsd-signature-type">syft.Tensor</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>

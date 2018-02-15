@@ -1,6 +1,6 @@
 import { DimArray, IntDimArray, FloatDimArray, AsyncInstance, IAsyncConstructor } from '../lib';
 export declare class Tensor extends AsyncInstance {
-    data: DimArray;
+    data?: DimArray;
     type: string;
     static deserialize(str: string): Promise<Tensor>;
     serialize(optimizeStorage?: boolean): {
@@ -153,7 +153,7 @@ export interface FloatTensorConstructor extends IAsyncConstructor {
 }
 export declare class IntTensor extends Tensor {
     static $: IAsyncConstructor;
-    data: IntDimArray;
+    data?: IntDimArray;
     type: string;
     static get(id: string): Promise<IntTensor>;
     static create(arr: any[] | {
@@ -163,7 +163,7 @@ export declare class IntTensor extends Tensor {
 }
 export declare class FloatTensor extends Tensor {
     static $: IAsyncConstructor;
-    data: FloatDimArray;
+    data?: FloatDimArray;
     type: string;
     static get(id: string): Promise<FloatTensor>;
     static create(arr: any[] | {

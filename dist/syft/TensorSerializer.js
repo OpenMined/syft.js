@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Tensor_1 = require("./Tensor");
 const lib_1 = require("../lib");
 var TSTypes;
 (function (TSTypes) {
@@ -115,13 +114,13 @@ class TensorSerializer {
             + shapeLengthBytes
             + dataLengthShapeBytes
             + dataLengthBytes
-            + shapeTypeBytes * t.data.shape.length
-            + dataShapeTypeBytes * t.data.shape.length
-            + dataTypeBytes * t.data.data.length;
+            + shapeTypeBytes * t.shape.length
+            + dataShapeTypeBytes * t.shape.length
+            + dataTypeBytes * t.data.length;
     }
     serialize(t, optimizeStorage = false) {
         let self = this;
-        let dataType = t.type === 'IntTensor' ? TSTypes.int32 : TSTypes.float32;
+        let dataType = t instanceof lib_1.IntDimArray ? TSTypes.int32 : TSTypes.float32;
         let props = {
             shapeLengthSetting: TSTypes.uint32,
             dataShapeLengthSetting: TSTypes.uint32,
@@ -131,13 +130,13 @@ class TensorSerializer {
             dataTypeSetting: dataType
         };
         if (optimizeStorage) {
-            props.shapeLengthSetting = self.lenType(t.data.shape.length);
-            props.dataShapeLengthSetting = self.lenType(t.data.shape.length);
-            props.dataLengthSetting = self.lenType(t.data.data.length);
-            props.shapeTypeSetting = self.lenType(t.data.shape);
-            props.dataShapeTypeSetting = self.lenType(t.data.shape);
-            if (t.type === 'IntTensor') {
-                props.dataTypeSetting = self.dataType(t.data.data);
+            props.shapeLengthSetting = self.lenType(t.shape.length);
+            props.dataShapeLengthSetting = self.lenType(t.shape.length);
+            props.dataLengthSetting = self.lenType(t.data.length);
+            props.shapeTypeSetting = self.lenType(t.shape);
+            props.dataShapeTypeSetting = self.lenType(t.shape);
+            if (t instanceof lib_1.IntDimArray) {
+                props.dataTypeSetting = self.dataType(t.data);
             }
         }
         let size = self.calcContentLength(props, t);
@@ -148,13 +147,13 @@ class TensorSerializer {
         offset += 2;
         switch (props.shapeLengthSetting) {
             case TSTypes.uint8:
-                view.setUint8(offset, t.data.shape.length);
+                view.setUint8(offset, t.shape.length);
                 break;
             case TSTypes.uint16:
-                view.setUint16(offset, t.data.shape.length);
+                view.setUint16(offset, t.shape.length);
                 break;
             case TSTypes.uint32:
-                view.setUint32(offset, t.data.shape.length);
+                view.setUint32(offset, t.shape.length);
                 break;
             default:
                 throw new Error(`Unsupported Type: ${TSTypes[props.shapeLengthSetting]}`);
@@ -162,13 +161,13 @@ class TensorSerializer {
         offset += self.byteSize(props.shapeLengthSetting);
         switch (props.dataShapeLengthSetting) {
             case TSTypes.uint8:
-                view.setUint8(offset, t.data.shape.length);
+                view.setUint8(offset, t.shape.length);
                 break;
             case TSTypes.uint16:
-                view.setUint16(offset, t.data.shape.length);
+                view.setUint16(offset, t.shape.length);
                 break;
             case TSTypes.uint32:
-                view.setUint32(offset, t.data.shape.length);
+                view.setUint32(offset, t.shape.length);
                 break;
             default:
                 throw new Error(`Unsupported Type: ${TSTypes[props.dataShapeLengthSetting]}`);
@@ -176,66 +175,66 @@ class TensorSerializer {
         offset += self.byteSize(props.dataShapeLengthSetting);
         switch (props.dataLengthSetting) {
             case TSTypes.uint8:
-                view.setUint8(offset, t.data.data.length);
+                view.setUint8(offset, t.data.length);
                 break;
             case TSTypes.uint16:
-                view.setUint16(offset, t.data.data.length);
+                view.setUint16(offset, t.data.length);
                 break;
             case TSTypes.uint32:
-                view.setUint32(offset, t.data.data.length);
+                view.setUint32(offset, t.data.length);
                 break;
             default:
                 throw new Error(`Unsupported Type: ${TSTypes[props.dataLengthSetting]}`);
         }
         offset += self.byteSize(props.dataLengthSetting);
-        for (let i = 0; i < t.data.shape.length; i++) {
+        for (let i = 0; i < t.shape.length; i++) {
             sw: switch (props.shapeTypeSetting) {
                 case TSTypes.uint8:
-                    view.setUint8(offset, t.data.shape[i]);
+                    view.setUint8(offset, t.shape[i]);
                     break sw;
                 case TSTypes.uint16:
-                    view.setUint16(offset, t.data.shape[i]);
+                    view.setUint16(offset, t.shape[i]);
                     break sw;
                 case TSTypes.uint32:
-                    view.setUint32(offset, t.data.shape[i]);
+                    view.setUint32(offset, t.shape[i]);
                     break sw;
                 default:
                     throw new Error(`Unsupported Type: ${TSTypes[props.shapeTypeSetting]}`);
             }
             offset += self.byteSize(props.shapeTypeSetting);
         }
-        for (let i = 0; i < t.data.shape.length; i++) {
+        for (let i = 0; i < t.shape.length; i++) {
             sw: switch (props.dataShapeTypeSetting) {
                 case TSTypes.uint8:
-                    view.setUint8(offset, t.data.shape[i]);
+                    view.setUint8(offset, t.shape[i]);
                     break sw;
                 case TSTypes.uint16:
-                    view.setUint16(offset, t.data.shape[i]);
+                    view.setUint16(offset, t.shape[i]);
                     break sw;
                 case TSTypes.uint32:
-                    view.setUint32(offset, t.data.shape[i]);
+                    view.setUint32(offset, t.shape[i]);
                     break sw;
                 default:
                     throw new Error(`Unsupported Type: ${TSTypes[props.dataShapeTypeSetting]}`);
             }
             offset += self.byteSize(props.dataShapeTypeSetting);
         }
-        for (let i = 0; i < t.data.data.length; i++) {
+        for (let i = 0; i < t.data.length; i++) {
             sw: switch (props.dataTypeSetting) {
                 case TSTypes.int8:
-                    view.setInt8(offset, t.data.data[i]);
+                    view.setInt8(offset, t.data[i]);
                     break sw;
                 case TSTypes.int16:
-                    view.setInt16(offset, t.data.data[i]);
+                    view.setInt16(offset, t.data[i]);
                     break sw;
                 case TSTypes.int32:
-                    view.setInt32(offset, t.data.data[i]);
+                    view.setInt32(offset, t.data[i]);
                     break sw;
                 case TSTypes.float32:
-                    view.setFloat32(offset, t.data.data[i]);
+                    view.setFloat32(offset, t.data[i]);
                     break sw;
                 case TSTypes.float64:
-                    view.setFloat64(offset, t.data.data[i]);
+                    view.setFloat64(offset, t.data[i]);
                     break sw;
                 default:
                     throw new Error(`Unsupported Type: ${TSTypes[props.dataTypeSetting]}`);
@@ -365,10 +364,7 @@ class TensorSerializer {
             }
             offset += self.byteSize(props.dataTypeSetting);
         }
-        if (dimData instanceof lib_1.FloatDimArray) {
-            return Tensor_1.Tensor.FloatTensor.create(dimData);
-        }
-        return Tensor_1.Tensor.IntTensor.create(dimData);
+        return dimData;
     }
 }
 exports.TensorSerializer = TensorSerializer;

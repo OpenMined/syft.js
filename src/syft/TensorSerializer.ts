@@ -1,6 +1,5 @@
-import { Tensor } from './Tensor'
-
 import {
+  DimArray,
   IntDimArray,
   FloatDimArray
 } from '../lib'
@@ -22,7 +21,9 @@ export enum TSTypes {
   float128 = 8
 }
 
-function toArrayBuffer(buf: Buffer) {
+function toArrayBuffer(
+  buf: Buffer
+) {
     var ab = new ArrayBuffer(buf.length)
     var view = new Uint8Array(ab)
     for (var i = 0; i < buf.length; ++i) {
@@ -63,7 +64,9 @@ export class TensorSerializer {
     }
   }
 
-  dataType(data: ArrayLike<number>) {
+  dataType(
+    data: ArrayLike<number>
+  ) {
     let max = data[0]
     let min = data[0]
     let len = data.length
@@ -85,7 +88,9 @@ export class TensorSerializer {
     return TSTypes.int32
   }
 
-  lenType(data: number|ArrayLike<number>) {
+  lenType(
+    data: number|ArrayLike<number>
+  ) {
     let max = -1
     if (typeof data === 'number') {
       max = data
@@ -110,7 +115,9 @@ export class TensorSerializer {
     return TSTypes.uint32
   }
 
-  byteSize(n: TSTypes) {
+  byteSize(
+    n: TSTypes
+  ) {
     switch (n) {
     case TSTypes.int8:
       return 1
@@ -138,7 +145,7 @@ export class TensorSerializer {
       dataShapeTypeSetting   : TSTypes
       dataTypeSetting        : TSTypes
     },
-    t: Tensor
+    t: DimArray
   ) {
     let self = this
 
@@ -154,18 +161,18 @@ export class TensorSerializer {
       + shapeLengthBytes
       + dataLengthShapeBytes
       + dataLengthBytes
-      + shapeTypeBytes * t.data.shape.length
-      + dataShapeTypeBytes * t.data.shape.length
-      + dataTypeBytes * t.data.data.length
+      + shapeTypeBytes * t.shape.length
+      + dataShapeTypeBytes * t.shape.length
+      + dataTypeBytes * t.data.length
   }
 
   serialize(
-    t: Tensor,
+    t: DimArray,
     optimizeStorage = false
   ) {
     let self = this
 
-    let dataType = t.type === 'IntTensor' ? TSTypes.int32 : TSTypes.float32
+    let dataType = t instanceof IntDimArray ? TSTypes.int32 : TSTypes.float32
 
     let props = {
       shapeLengthSetting     : TSTypes.uint32,
@@ -177,14 +184,14 @@ export class TensorSerializer {
     }
 
     if (optimizeStorage) {
-      props.shapeLengthSetting     = self.lenType(t.data.shape.length)
-      props.dataShapeLengthSetting = self.lenType(t.data.shape.length)
-      props.dataLengthSetting      = self.lenType(t.data.data.length)
-      props.shapeTypeSetting       = self.lenType(t.data.shape)
-      props.dataShapeTypeSetting   = self.lenType(t.data.shape)
+      props.shapeLengthSetting     = self.lenType(t.shape.length)
+      props.dataShapeLengthSetting = self.lenType(t.shape.length)
+      props.dataLengthSetting      = self.lenType(t.data.length)
+      props.shapeTypeSetting       = self.lenType(t.shape)
+      props.dataShapeTypeSetting   = self.lenType(t.shape)
 
-      if (t.type === 'IntTensor') {
-        props.dataTypeSetting = self.dataType(t.data.data)
+      if (t instanceof IntDimArray) {
+        props.dataTypeSetting = self.dataType(t.data)
       }
     }
 
@@ -201,20 +208,20 @@ export class TensorSerializer {
     // shape length header
     switch (props.shapeLengthSetting) {
     case TSTypes.uint8:
-      view.setUint8(offset, t.data.shape.length)
+      view.setUint8(offset, t.shape.length)
       break
     case TSTypes.uint16:
-      view.setUint16(offset, t.data.shape.length)
+      view.setUint16(offset, t.shape.length)
       break
     case TSTypes.uint32:
-      view.setUint32(offset, t.data.shape.length)
+      view.setUint32(offset, t.shape.length)
       break
     // NOTE: not supported
     // case TSTypes.uint64:
-    //   view.setUint64(offset, t.data.shape.length)
+    //   view.setUint64(offset, t.shape.length)
     //   break
     // case TSTypes.uint128:
-    //   view.setUint128(offset, t.data.shape.length)
+    //   view.setUint128(offset, t.shape.length)
     //   break
     default:
       throw new Error(`Unsupported Type: ${TSTypes[props.shapeLengthSetting]}`)
@@ -224,20 +231,20 @@ export class TensorSerializer {
     // data shape length header
     switch (props.dataShapeLengthSetting) {
     case TSTypes.uint8:
-      view.setUint8(offset, t.data.shape.length)
+      view.setUint8(offset, t.shape.length)
       break
     case TSTypes.uint16:
-      view.setUint16(offset, t.data.shape.length)
+      view.setUint16(offset, t.shape.length)
       break
     case TSTypes.uint32:
-      view.setUint32(offset, t.data.shape.length)
+      view.setUint32(offset, t.shape.length)
       break
     // NOTE: not supported
     // case TSTypes.uint64:
-    //   view.setUint64(offset, t.data.shape.length)
+    //   view.setUint64(offset, t.shape.length)
     //   break
     // case TSTypes.uint128:
-    //   view.setUint128(offset, t.data.shape.length)
+    //   view.setUint128(offset, t.shape.length)
     //   break
     default:
       throw new Error(`Unsupported Type: ${TSTypes[props.dataShapeLengthSetting]}`)
@@ -247,20 +254,20 @@ export class TensorSerializer {
     // data length header
     switch (props.dataLengthSetting) {
     case TSTypes.uint8:
-      view.setUint8(offset, t.data.data.length)
+      view.setUint8(offset, t.data.length)
       break
     case TSTypes.uint16:
-      view.setUint16(offset, t.data.data.length)
+      view.setUint16(offset, t.data.length)
       break
     case TSTypes.uint32:
-      view.setUint32(offset, t.data.data.length)
+      view.setUint32(offset, t.data.length)
       break
     // NOTE: not supported
     // case TSTypes.uint64:
-    //   view.setUint64(offset, t.data.data.length)
+    //   view.setUint64(offset, t.data.length)
     //   break
     // case TSTypes.uint128:
-    //   view.setUint128(offset, t.data.data.length)
+    //   view.setUint128(offset, t.data.length)
     //   break
     default:
       throw new Error(`Unsupported Type: ${TSTypes[props.dataLengthSetting]}`)
@@ -268,24 +275,24 @@ export class TensorSerializer {
     offset += self.byteSize(props.dataLengthSetting)
 
     // shape data
-    for (let i = 0; i < t.data.shape.length; i++) {
+    for (let i = 0; i < t.shape.length; i++) {
       // data shape length header
       sw: switch (props.shapeTypeSetting) {
       case TSTypes.uint8:
-        view.setUint8(offset, t.data.shape[i])
+        view.setUint8(offset, t.shape[i])
         break sw
       case TSTypes.uint16:
-        view.setUint16(offset, t.data.shape[i])
+        view.setUint16(offset, t.shape[i])
         break sw
       case TSTypes.uint32:
-        view.setUint32(offset, t.data.shape[i])
+        view.setUint32(offset, t.shape[i])
         break sw
       // NOTE: not supported
       // case TSTypes.uint64:
-      //   view.setUint64(offset, t.data.shape[i])
+      //   view.setUint64(offset, t.shape[i])
       //   break sw
       // case TSTypes.uint128:
-      //   view.setUint128(offset, t.data.shape[i])
+      //   view.setUint128(offset, t.shape[i])
       //   break sw
       default:
         throw new Error(`Unsupported Type: ${TSTypes[props.shapeTypeSetting]}`)
@@ -294,24 +301,24 @@ export class TensorSerializer {
     }
 
     // data shape data
-    for (let i = 0; i < t.data.shape.length; i++) {
+    for (let i = 0; i < t.shape.length; i++) {
       // data shape length header
       sw: switch (props.dataShapeTypeSetting) {
       case TSTypes.uint8:
-        view.setUint8(offset, t.data.shape[i])
+        view.setUint8(offset, t.shape[i])
         break sw
       case TSTypes.uint16:
-        view.setUint16(offset, t.data.shape[i])
+        view.setUint16(offset, t.shape[i])
         break sw
       case TSTypes.uint32:
-        view.setUint32(offset, t.data.shape[i])
+        view.setUint32(offset, t.shape[i])
         break sw
       // NOTE: not supported
       // case TSTypes.uint64:
-      //   view.setUint64(offset, t.data.shape[i])
+      //   view.setUint64(offset, t.shape[i])
       //   break sw
       // case TSTypes.uint128:
-      //   view.setUint128(offset, t.data.shape[i])
+      //   view.setUint128(offset, t.shape[i])
       //   break sw
       default:
         throw new Error(`Unsupported Type: ${TSTypes[props.dataShapeTypeSetting]}`)
@@ -320,37 +327,37 @@ export class TensorSerializer {
     }
 
     // data data
-    for (let i = 0; i < t.data.data.length; i++) {
+    for (let i = 0; i < t.data.length; i++) {
       // data shape length header
       sw: switch (props.dataTypeSetting) {
       case TSTypes.int8:
-        view.setInt8(offset, t.data.data[i])
+        view.setInt8(offset, t.data[i])
         break sw
       case TSTypes.int16:
-        view.setInt16(offset, t.data.data[i])
+        view.setInt16(offset, t.data[i])
         break sw
       case TSTypes.int32:
-        view.setInt32(offset, t.data.data[i])
+        view.setInt32(offset, t.data[i])
         break sw
       // NOTE: not supported
       // case TSTypes.int64:
-      //   view.setInt64(offset, t.data.data[i])
+      //   view.setInt64(offset, t.data[i])
       //   break sw
       // case TSTypes.int128:
-      //   view.setInt128(offset, t.data.data[i])
+      //   view.setInt128(offset, t.data[i])
       //   break sw
       // case TSTypes.float16:
-      //   view.setFloat16(offset, t.data.data[i])
+      //   view.setFloat16(offset, t.data[i])
       //   break sw
       case TSTypes.float32:
-        view.setFloat32(offset, t.data.data[i])
+        view.setFloat32(offset, t.data[i])
         break sw
       case TSTypes.float64:
-        view.setFloat64(offset, t.data.data[i])
+        view.setFloat64(offset, t.data[i])
         break sw
       // NOTE: not supported
       // case TSTypes.float128:
-      //   view.setFloat128(offset, t.data.data[i])
+      //   view.setFloat128(offset, t.data[i])
       //   break sw
       default:
         throw new Error(`Unsupported Type: ${TSTypes[props.dataTypeSetting]}`)
@@ -363,7 +370,7 @@ export class TensorSerializer {
 
   async deserialize(
     str: string
-  ): Promise<Tensor> {
+  ): Promise<DimArray> {
     let self = this
 
     let buf = toArrayBuffer(new Buffer(str, 'base64'))
@@ -551,10 +558,6 @@ export class TensorSerializer {
       offset += self.byteSize(props.dataTypeSetting)
     }
 
-    if (dimData instanceof FloatDimArray) {
-      return Tensor.FloatTensor.create(dimData)
-    }
-
-    return Tensor.IntTensor.create(dimData)
+    return dimData
   }
 }

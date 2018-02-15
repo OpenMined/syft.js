@@ -4,9 +4,9 @@ import { Optimizer } from '../optimizers'
 import { Model } from '.'
 
 export class Sequential implements Model {
-  syft_model: syft.Sequential
-  loss: syft.Model
-  optimizer: Optimizer
+  syft_model?: syft.Sequential
+  loss?: syft.Model
+  optimizer?: Optimizer
 
   layers: Layer[] = []
   metrics: string[] = []
@@ -31,24 +31,27 @@ export class Sequential implements Model {
     }
 
     self.layers.push(layer)
-
-    // sometimes keras has single layers that actually correspond
-    // to multiple syft layers - so they end up getting stored in
-    // an ordered list called 'ordered_syft'
-    for (let l of layer.ordered_syft) {
-      self.syft_model.add(l)
-    }
   }
 
   async compile(
     loss: string,
-    optimizer: any,
+    optimizer: Optimizer,
     metrics: string[] = []
   ) {
     let self = this
 
     if (!self.compiled) {
       self.compiled = true
+      self.syft_model = await syft.Model.Sequential.create()
+
+      // sometimes keras has single layers that actually correspond
+      // to multiple syft layers - so they end up getting stored in
+      // an ordered list called 'ordered_syft'
+      for (let layer of self.layers) {
+        for (let l of layer.ordered_syft) {
+          self.syft_model.add(l)
+        }
+      }
 
       if (loss === 'categorical_crossentropy') {
         self.loss = await syft.Model.Categorical_CrossEntropy.create()
@@ -59,7 +62,7 @@ export class Sequential implements Model {
       self.optimizer = optimizer
       self.metrics = metrics
 
-      // TODO: self.optimizer.init(syft_params=self.syft.parameters())
+      self.optimizer.create(await self.syft_model.parameters())
     } else {
       console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things')
     }
@@ -82,6 +85,15 @@ export class Sequential implements Model {
     verbose = false
   ) {
     let self = this
+    if (
+      self.syft_model == null ||
+      self.loss == null ||
+      self.optimizer == null ||
+      self.optimizer.syft_optim == null
+    ) {
+      throw new Error('Not Compiled')
+    }
+
     return self.syft_model.fit(
       x_train,
       y_train,
@@ -122,11 +134,28 @@ export class Sequential implements Model {
     // if (type(x) === np.array or type(x) === np.ndarray):
     // x = FloatTensor(x,autograd=true, delete_after_use=false)
 
+    if (
+      self.syft_model == null ||
+      self.loss == null ||
+      self.optimizer == null
+    ) {
+      throw new Error('Not Compiled')
+    }
+
     return (await self.syft_model.forward(x)).to_numpy()
   }
 
   async get_weights(): Promise<syft.Tensor[]> {
     let self = this
+
+    if (
+      self.syft_model == null ||
+      self.loss == null ||
+      self.optimizer == null
+    ) {
+      throw new Error('Not Compiled')
+    }
+
     return self.syft_model.parameters()
   }
 

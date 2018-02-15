@@ -14,19 +14,28 @@ import { TensorSerializer } from './TensorSerializer'
 const tensorSerializer = new TensorSerializer
 
 export class Tensor extends AsyncInstance {
-  data: DimArray
-  type: string
+  data?: DimArray
+  type: string = ''
 
   static async deserialize(
     str: string
   ): Promise<Tensor> {
-    return tensorSerializer.deserialize(str)
+    let dimData = tensorSerializer.deserialize(str)
+    if (dimData instanceof FloatDimArray) {
+      return Tensor.FloatTensor.create(dimData)
+    }
+
+    return Tensor.IntTensor.create(dimData)
   }
 
   serialize(
     optimizeStorage = false
   ) {
-    return tensorSerializer.serialize(this, optimizeStorage)
+    if (this.data == null) {
+      throw new Error('NO') // TODO: better error message
+    }
+
+    return tensorSerializer.serialize(this.data, optimizeStorage)
   }
 
   finish(
@@ -2577,7 +2586,7 @@ export interface FloatTensorConstructor extends IAsyncConstructor {
 export class IntTensor extends Tensor {
   static $: IAsyncConstructor = IntTensor
 
-  data: IntDimArray
+  data?: IntDimArray
   type = 'IntTensor'
 
   static async get(id: string) {
@@ -2621,7 +2630,7 @@ export class IntTensor extends Tensor {
 export class FloatTensor extends Tensor {
   static $: IAsyncConstructor = FloatTensor
 
-  data: FloatDimArray
+  data?: FloatDimArray
   type = 'FloatTensor'
 
   static async get(id: string) {
