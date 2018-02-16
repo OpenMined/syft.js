@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const syft = require("../../../syft");
 class Dense {
-    constructor(units, input_shape, activation) {
+    constructor(activation, units, input_shape) {
         this.ordered_syft = [];
         let self = this;
         self.units = units;

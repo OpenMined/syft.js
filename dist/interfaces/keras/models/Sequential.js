@@ -14,7 +14,6 @@ class Sequential {
             if (layer.output_shape == null) {
                 layer.output_shape = layer.input_shape;
             }
-            await layer.create();
         }
         self.layers.push(layer);
     }
@@ -25,6 +24,7 @@ class Sequential {
             self.syft_model = await syft.Model.Sequential.create();
             for (let layer of self.layers) {
                 for (let l of layer.ordered_syft) {
+                    await layer.create();
                     self.syft_model.add(l);
                 }
             }
@@ -34,9 +34,9 @@ class Sequential {
             else if (loss === 'mean_squared_error') {
                 self.loss = await syft.Model.MSELoss.create();
             }
+            await optimizer.create(await self.syft_model.parameters());
             self.optimizer = optimizer;
             self.metrics = metrics;
-            self.optimizer.create(await self.syft_model.parameters());
         }
         else {
             console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things');
@@ -45,7 +45,7 @@ class Sequential {
     }
     async summary() {
     }
-    async fit(x_train, y_train, batch_size, epochs = 1, validation_data = null, log_interval = 1, verbose = false) {
+    async fit(input, target, batch_size, epochs = 1, validation_data = null, log_interval = 1, verbose = false) {
         let self = this;
         if (self.syft_model == null ||
             self.loss == null ||
@@ -53,7 +53,7 @@ class Sequential {
             self.optimizer.syft_optim == null) {
             throw new Error('Not Compiled');
         }
-        return self.syft_model.fit(x_train, y_train, self.loss, self.optimizer.syft_optim, batch_size, epochs, log_interval, self.metrics, verbose);
+        return self.syft_model.fit(input, target, self.loss, self.optimizer.syft_optim, batch_size, epochs, log_interval, self.metrics, verbose);
     }
     async evaluate(test_input, test_target, batch_size, metrics = [], verbose = true) {
     }
@@ -64,7 +64,7 @@ class Sequential {
             self.optimizer == null) {
             throw new Error('Not Compiled');
         }
-        return (await self.syft_model.forward(x)).to_numpy();
+        return (await self.syft_model.forward(x));
     }
     async get_weights() {
         let self = this;

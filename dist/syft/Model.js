@@ -109,11 +109,12 @@ class Model extends lib_1.AsyncInstance {
     async fit(input, target, criterion, optim, batch_size, iters = 15, log_interval = 200, metrics = [], verbose = true) {
         let self = this;
         self.ready();
-        console.log('fit');
+        console.log('prepare_to_fit');
         let num_batches = lib_1.assertType(await controller.sendJSON(self.cmd({
             functionCall: 'prepare_to_fit',
             tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
         }), 'int'), 'number');
+        console.log('fit');
         let loss = 100000;
         for (let iter = 0; iter < iters; iter++) {
             for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
