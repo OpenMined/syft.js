@@ -26,8 +26,6 @@ export class Sequential implements Model {
       if (layer.output_shape == null) {
         layer.output_shape = layer.input_shape
       }
-
-      await layer.create()
     }
 
     self.layers.push(layer)
@@ -49,6 +47,7 @@ export class Sequential implements Model {
       // an ordered list called 'ordered_syft'
       for (let layer of self.layers) {
         for (let l of layer.ordered_syft) {
+          await layer.create()
           self.syft_model.add(l)
         }
       }
@@ -58,11 +57,10 @@ export class Sequential implements Model {
       } else if (loss === 'mean_squared_error') {
         self.loss = await syft.Model.MSELoss.create()
       }
+      await optimizer.create(await self.syft_model.parameters())
 
       self.optimizer = optimizer
       self.metrics = metrics
-
-      self.optimizer.create(await self.syft_model.parameters())
     } else {
       console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things')
     }
@@ -76,8 +74,8 @@ export class Sequential implements Model {
   }
 
   async fit(
-    x_train: syft.Tensor,
-    y_train: syft.Tensor,
+    input: syft.Tensor,
+    target: syft.Tensor,
     batch_size: number,
     epochs = 1,
     validation_data = null,
@@ -95,8 +93,8 @@ export class Sequential implements Model {
     }
 
     return self.syft_model.fit(
-      x_train,
-      y_train,
+      input,
+      target,
       self.loss,
       self.optimizer.syft_optim,
       batch_size,
@@ -142,7 +140,7 @@ export class Sequential implements Model {
       throw new Error('Not Compiled')
     }
 
-    return (await self.syft_model.forward(x)).to_numpy()
+    return (await self.syft_model.forward(x))
   }
 
   async get_weights(): Promise<syft.Tensor[]> {

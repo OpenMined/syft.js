@@ -1,56 +1,51 @@
+import * as syft from '..'
 
 let mnist = require('mnist')(false)
 
-import * as syft from '..'
-;(global as any).syft = syft
+let g = global as any
 let dataset = mnist(60000, 10000)
+
+g.syft = syft
 
 async function test() {
   let training = {
     input: await syft.Tensor.FloatTensor.create(dataset.training.input),
-    output: await syft.Tensor.FloatTensor.create(dataset.training.output),
+    output: await syft.Tensor.FloatTensor.create(dataset.training.output)
   }
   let testing = {
     input: await syft.Tensor.FloatTensor.create(dataset.test.input),
-    output: await syft.Tensor.FloatTensor.create(dataset.test.output),
+    output: await syft.Tensor.FloatTensor.create(dataset.test.output)
   }
 
   let model = await syft.Model.Sequential.create([
-    await syft.Model.Linear.create(784, 10),
-    await syft.Model.ReLU.create(),
-    // await syft.Linear.create(16, 10),
-    await syft.Model.Softmax.create()
+    await syft.Model.Linear.create(784, 10)
   ])
 
-  ;(global as any).Model = model
+  g.model = model
 
-  let loss = await syft.Model.CrossEntropyLoss.create()
-  let optim = await syft.Optimizer.SGD.create(await model.parameters())
+  let criterion = await syft.Model.CrossEntropyLoss.create()
+  let optim = await syft.Optimizer.SGD.create(await model.parameters(), 0.06)
   let metric = ['accuracy']
 
-  let train = async () => {
-    let error = await model.fit(
-      training.input,
-      training.output,
-      loss,
-      optim,
-      100,
-      10,
-      1,
-      metric,
-      true
-    )
-    console.log('trained!', error)
-  }
+  let loss = await model.fit(
+    training.input,
+    training.output,
+    criterion,
+    optim,
+    32,
+    4,
+    1,
+    metric,
+    true
+  )
 
-  await train()
+  console.log('trained!', loss)
 
-  ;(global as any).train = train
+  g.perd = await model.forward(testing.input)
+  criterion.forward(g.perd, testing.output)
 
-  ;(global as any).perd = await model.forward(testing.input)
-
-  console.log(await (global as any).perd.toString())
-
+  console.log(await g.perd.shape())
 }
+
 let done = (res: any) => console.log(res)
 test().then(done).catch(done)

@@ -179,7 +179,7 @@ export class Model extends AsyncInstance {
     let self = this
     self.ready()
 
-    console.log('fit')
+    console.log('prepare_to_fit')
 
     let num_batches = assertType(
       await controller.sendJSON(self.cmd({
@@ -188,6 +188,7 @@ export class Model extends AsyncInstance {
       }), 'int'),
       'number'
     )
+    console.log('fit')
 
     let loss = 100000
     for (let iter = 0; iter < iters; iter++) {

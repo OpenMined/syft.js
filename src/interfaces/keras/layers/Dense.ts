@@ -8,8 +8,8 @@ export class Dense implements Layer {
   // an ordered list called 'ordered_syft'
   ordered_syft: syft.Model[] = []
 
-  syft_layer: syft.Model
-  units: number
+  syft_layer?: syft.Model
+  units?: number
   input_shape?: number
   output_shape?: number
   activation?: syft.Tensor
@@ -17,9 +17,9 @@ export class Dense implements Layer {
   syft_activation?: syft.Model
 
   constructor(
+    activation: string,
     units: number,
     input_shape?: number,
-    activation?: string
   ) {
     let self = this
 
