@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class AsyncInstance {
     constructor($, id) {
+        this.__error__ = null;
         AsyncInstance.assertConstructable($);
         this.id = id;
     }

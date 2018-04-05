@@ -2,7 +2,7 @@ export class IDManager {
   __id__ = 0
   __rs__: number [] = []
 
-  __max__: number
+  __max__: number = Number.MAX_SAFE_INTEGER
 
   constructor(
     max = Number.MAX_SAFE_INTEGER

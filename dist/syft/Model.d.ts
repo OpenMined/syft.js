@@ -5,21 +5,31 @@ export declare class Model extends AsyncInstance {
     type: string;
     layerType: string;
     outputShape?: number | string;
-    protected static assertLayerType(a: string, b: Function): void;
+    protected static assertLayerType(layerType: string, modelConstructor: Function): void;
     protected static newModel($: any, id: string, type: string): Model;
     static getModelType(id: string): Promise<string>;
     static getModel(id: string): Promise<Model>;
     static createModel(layerConstructor: Function, ...params: any[]): Promise<string>;
     feed(...args: any[]): Promise<any>;
     parameters(): Promise<Tensor[]>;
-    num_parameters(): Promise<any>;
+    numParameters(): Promise<any>;
     models(): Promise<Model[]>;
     set_id(new_id: string): Promise<this>;
-    fit(input: Tensor, target: Tensor, criterion: Model, optim: Optimizer, batch_size: number, iters?: number, log_interval?: number, metrics?: string[], verbose?: boolean): Promise<number>;
+    fit({input, target, criterion, optimizer, batchSize, iterations, logInterval, metrics, verbose}: {
+        input: Tensor;
+        target: Tensor;
+        criterion: Model;
+        optimizer: Optimizer;
+        batchSize: number;
+        iterations?: number;
+        logInterval?: number;
+        metrics?: string[];
+        verbose?: boolean;
+    }): Promise<number>;
     length(): Promise<number>;
     activation(): Promise<any>;
     getLayerType(): Promise<any>;
-    cmd(options: {
+    protected cmd(options: {
         [key: string]: any;
         functionCall: string;
         tensorIndexParams?: any[];
@@ -133,8 +143,7 @@ export declare class Linear extends Model {
     static $: IAsyncConstructor;
     layerType: string;
     static get(id: string): Promise<Linear>;
-    static create(input_dim?: number, output_dim?: number, initializer?: string): Promise<Linear>;
-    finish(id: string): Promise<void>;
+    static create(inputDim?: number, outputDim?: number, initializer?: string): Promise<Linear>;
 }
 export declare class ReLU extends Model {
     static $: IAsyncConstructor;

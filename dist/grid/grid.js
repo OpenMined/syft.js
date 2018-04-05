@@ -19,15 +19,14 @@ class Grid {
         return new GridConfiguration(model, lr, criterion, iters);
     }
     async learn(input, target, configurations, name) {
-        let self = this;
         let configurations_json = configurations.map(item => JSON.stringify(item));
-        self.jobId = lib_1.assertType(await controller.sendJSON({
+        this.jobId = lib_1.assertType(await controller.sendJSON({
             objectType: 'Grid',
             functionCall: 'learn',
             tensorIndexParams: [input.id, target.id],
             configurations: configurations_json
         }, 'string'), 'string');
-        self.store_job(self.jobId, name);
+        this.store_job(this.jobId, name);
     }
     async check_experiment_status(experiments, status_widgets) {
         for (let i = 0; i < experiments.length; i++) {
@@ -62,7 +61,6 @@ class Grid {
         await fs.writeJSON('.openmined/grid/experiments.json', json);
     }
     async get_results(experiment) {
-        let self = this;
         let json;
         try {
             json = await fs.readJSON('.openmined/grid/experiments.json');
@@ -81,8 +79,8 @@ class Grid {
         if (usedJob == null && experiment != null) {
             throw new Error(`No experiments matching '${experiment}'`);
         }
-        if (usedJob == null && self.jobId != null) {
-            usedJob = self.jobId;
+        if (usedJob == null && this.jobId != null) {
+            usedJob = this.jobId;
         }
         if (usedJob == null) {
             throw new Error('There are no saved experiments and you have not submitted a job.');
@@ -102,26 +100,23 @@ exports.Grid = Grid;
 class ExperimentResults {
     constructor(models) {
         this.results = [];
-        let self = this;
-        self.results = models;
+        this.results = models;
     }
 }
 exports.ExperimentResults = ExperimentResults;
 class GridConfiguration {
     constructor(model, lr, criterion, iters, name) {
-        let self = this;
-        self.model = model;
-        self.lr = lr;
-        self.criterion = criterion;
-        self.iters = iters;
+        this.model = model;
+        this.lr = lr;
+        this.criterion = criterion;
+        this.iters = iters;
     }
     toJSON() {
-        let self = this;
         return {
-            model: self.model.id,
-            lr: self.lr,
-            criterion: self.criterion,
-            iters: self.iters
+            model: this.model.id,
+            lr: this.lr,
+            criterion: this.criterion,
+            iters: this.iters
         };
     }
 }

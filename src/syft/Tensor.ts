@@ -2,100 +2,77 @@ import * as controller from '../controller'
 
 import {
   assertType,
-  DimArray,
-  IntDimArray,
-  FloatDimArray,
   AsyncInstance,
   IAsyncConstructor,
+  FloatDimArray,
+  IntDimArray
 } from '../lib'
 
-import { TensorSerializer } from './TensorSerializer'
-
-const tensorSerializer = new TensorSerializer
-
+/**
+* A base-class for Syft Tensor to inherit from.
+*/
 export class Tensor extends AsyncInstance {
-  data?: DimArray
+  /**
+  * Syft object type.
+  */
   type: string = ''
 
-  static async deserialize(
-    str: string
-  ): Promise<Tensor> {
-    let dimData = tensorSerializer.deserialize(str)
-    if (dimData instanceof FloatDimArray) {
-      return Tensor.FloatTensor.create(dimData)
-    }
-
-    return Tensor.IntTensor.create(dimData)
-  }
-
-  serialize(
-    optimizeStorage = false
-  ) {
-    if (this.data == null) {
-      throw new Error('NO') // TODO: better error message
-    }
-
-    return tensorSerializer.serialize(this.data, optimizeStorage)
-  }
-
-  finish(
-    id: string
-  ): void {
-    let self = this
-
-    self.id = id
-  }
-
-  /*
+  /**
   * Deletes the input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
   */
   async delete(): Promise<void> {
-    let self = this
 
-    self.__delete__()
+    this.__delete__()
 
-    self.ready()
+    this.ready()
 
-    if (self.id) {
-      await controller.sendJSON(self.cmd({
+    if (this.id) {
+      await controller.sendJSON(this.cmd({
         functionCall: 'delete'
       }))
     }
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param state  TODO document this?
+  */
   async autograd(
     state: boolean
   ): Promise<void> {
-    let self = this
-    self.ready()
+    this.ready()
 
     // do nothing
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param paramName         TODO document this?
+  * @param responseAsTensor  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async get(
-    param_name = 'size',
-    response_as_tensor = false
+    paramName = 'size',
+    responseAsTensor = false
   ): Promise<Tensor|string> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    if (response_as_tensor) {
+    if (responseAsTensor) {
       return assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'get',
-          tensorIndexParams: [param_name]
-        }), self.type),
-        self.constructor
+          tensorIndexParams: [paramName]
+        }), this.type),
+        this.constructor
       )
     } else {
       return assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'get',
-          tensorIndexParams: [param_name]
+          tensorIndexParams: [paramName]
         }), 'string'),
         'string'
       )
@@ -109,39 +86,45 @@ export class Tensor extends AsyncInstance {
       tensorIndexParams?: any[],
     }
   ): SocketCMD {
-    let self = this
 
     return {
-      objectType: self.type,
-      objectIndex: self.id,
+      objectType: this.type,
+      objectIndex: this.id,
       tensorIndexParams: [],
       hyperParams: [],
       ...options
     }
   }
 
-  async is_contiguous(): Promise<boolean> {
-    let self = this
-    self.ready()
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async isContiguous(): Promise<boolean> {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'is_contiguous'
       }), 'bool'),
       'boolean'
     )
   }
 
-  // TODO: figure this out
-  async to_numpy() {
-    let self = this
-    self.ready()
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async getData(): Promise<number[]|string> {
+    this.ready()
 
     let res
 
-    if (await self.is_contiguous()) {
+    if (await this.isContiguous()) {
       res = assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'to_numpy'
         }), 'string'),
         'string'
@@ -153,35 +136,41 @@ export class Tensor extends AsyncInstance {
     }
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param verbose  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async __repr__(
     verbose = true
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let tensor_str = await self.to_numpy()
+    let tensorStr = await this.getData()
 
-    let type_str = (await self.shape() as number[]).join('x')
+    let typeStr = (await this.shape() as number[]).join('x')
 
-    let grad = await self.get('grad')
+    let grad = await this.get('grad')
     if (grad === '') {
       grad = 'None'
     }
 
-    let co = String(await self.creation_op())
+    let co = String(await this.creationOp())
 
-    let desc = `[syft.${self.type}: ${self.id} grad: ${grad} size: ${type_str} init: ${co}]\n`
+    let desc = `[syft.${this.type}: ${this.id} grad: ${grad} size: ${typeStr} init: ${co}]\n`
 
     if (verbose) {
-      let children = await self.children()
-      let creators = await self.creators()
+      let children = await this.children()
+      let creators = await this.creators()
 
       if (children.length > 0) {
-        // tensor_str = '\n -------------------------------\n' + tensor_str
+        // tensorStr = '\n -------------------------------\n' + tensorStr
         desc += '\n\t-----------children-----------\n'
       }
-      for (let child_id of children) {
-        let child = new FloatTensor(AsyncInstance, child_id)
+      for (let childId of children) {
+        let child = new FloatTensor(AsyncInstance, childId)
         desc += '\t' + await child.__repr__(false)
       }
       if (children.length > 0) {
@@ -193,81 +182,82 @@ export class Tensor extends AsyncInstance {
         }
       }
       if (creators.length > 0) {
-        // tensor_str = '\n -------------------------------\n' + tensor_str
+        // tensorStr = '\n -------------------------------\n' + tensorStr
         desc += '\n\t-----------creators-----------\n'
       }
-      for (let parent_id of creators) {
-        let parent = new FloatTensor(AsyncInstance, parent_id)
+      for (let parentId of creators) {
+        let parent = new FloatTensor(AsyncInstance, parentId)
         desc += '\t' + await parent.__repr__(false)
       }
       if (creators.length > 0) {
         desc += '\t------------------------------\n\n\n'
       }
-      return tensor_str + '\n' + desc
+      return tensorStr + '\n' + desc
     }
     return desc
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  * @param batchSize  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async batchify(
     dim: number,
-    batch_size: number
-  ) {
-    let self = this
-    self.ready()
+    batchSize: number
+  ): Promise<this[]> {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'batchify',
-        tensorIndexParams: [dim, batch_size]
+        tensorIndexParams: [dim, batchSize]
       }), 'FloatTensor_list'),
       Array
     )
   }
 
-  /*
-  * Clamp all elements in input into the range [min, max]
-  * Parameters
-  * ----------
-  * min : float
-  *     lower-bound of the range to be clamped to
-  * max : float
-  *     upper-bound of the range to be clamped to
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Clamp all elements in input into the range [min, max].
+  *
+  * @param min  Lower-bound of the range to be clamped to.
+  * @param max  Upper-bound of the range to be clamped to.
+  *
+  * @returns  Output tensor
   */
   // TODO: is this inline or not?
   async clamp(
     min?: number,
     max?: number
-  ) {
-    let self = this
-    self.ready()
+  ): Promise<this> {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'clamp',
         tensorIndexParams: [min, max]
-      }), self.type),
+      }), this.type),
       this.constructor
     )
   }
 
-  /*
+  /**
   * Determines whether the given tensor has the same size and elements as this instance.
   *
-  * :param x: IntTensor
-  * :return: True if the given tensor has the same size and elements as this instance. Otherwise, False.
+  * @param x  An other Tensor to compare.
+  *
+  * @returns  True if the given Tensor has the same size and elements as this instance. Otherwise, False.
   */
   async equal(
     x: this
   ): Promise<boolean> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'equal',
         tensorIndexParams: [x.id]
       }), 'bool'),
@@ -275,77 +265,60 @@ export class Tensor extends AsyncInstance {
     )
   }
 
-  /*
+  /**
   * Performs element-wise > comparison and returns 1 if the element
   * is less than a corresponding element in other Tensor, and 0 otherwise.
-  * Returns a new Tensor with results of the comparison.
   *
-  * Parameters
-  * __________
-  * other: IntTensor to compare with
+  * @param x  An other Tensor to compare.
   *
-  * Returns
-  * _________
-  * IntTensor
-  *     Output tensor
+  * @returns  A new Tensor with results of the comparison.
   */
   async lt(
     x: this
-  ): Promise<boolean> {
-    let self = this
-    self.ready()
+  ): Promise<this> {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'lt',
         tensorIndexParams: [x.id]
-      }), 'bool'),
-      'boolean'
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs inline element-wise > comparison and returns 1 if the element
   * is less than a corresponding element in other Tensor, and 0 otherwise.
   *
-  * Parameters
-  * __________
-  * other: IntTensor to compare with
+  * @param x  An other Tensor to compare.
   *
-  * Returns
-  * _________
-  * IntTensor
-  *     Output tensor
+  * @returns  This instance.
   */
   async lt_(
     x: this
-  ): Promise<boolean> {
-    let self = this
-    self.ready()
+  ): Promise<this> {
+    this.ready()
 
-    return assertType(
-      await controller.sendJSON(self.cmd({
+    assertType(
+      await controller.sendJSON(this.cmd({
         functionCall: 'lt_',
         tensorIndexParams: [x.id]
-      }), 'bool'),
-      'boolean'
+      }), this.type),
+      this.constructor
     )
+
+    return this
   }
 
-  /*
+  /**
   * Returns the p-norm of each row of the input tensor in the given dimension dim.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * p: float
-  *     the exponent value in the norm formulation
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce
+  * @param keepdim  Whether the output tensors have dim retained or not
+  * @param p        The exponent value in the norm formulation
+  *
+  * @returns  Output tensor
   */
   // TODO: is this inline or not?
   async norm(
@@ -353,68 +326,68 @@ export class Tensor extends AsyncInstance {
     keepdim = false,
     p = 2
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'norm',
         tensorIndexParams: [dim, keepdim, p]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns a tensor filled with random numbers from a uniform distribution on the interval [0,1)
-  * The shape of the tensor is defined by the varargs sizes.
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async random_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'random_'
-    }), self.type)
+    }), this.type)
 
-    return self
+    return this
   }
 
-  /*
-  * Splits the tensor into chunks. If split_size_or_sections is an integer type, then tensor will be split into chunks of size split_size_or_sections (if possible). Last chunk will be smaller if the tensor size along a given dimension is not divisible by split_size. If split_size_or_sections is a list, then tensor will be split into len(split_size_or_sections) chunks with sizes in dim according to split_size_or_sections.
-  * Parameters
-  * ----------
-  * split_size_or_sections : int or list(int)
-  *     size of a single chunk or of sizes for each chunk
-  * dim: int
-  *     dimension along which to split the tensor.
+  /**
+  * Splits the tensor into chunks. If splitSizeOrSections is an integer type,
+  * then tensor will be split into chunks of size splitSizeOrSections (if possible).
+  * Last chunk will be smaller if the tensor size along a given dimension is not
+  * divisible by split_size. If splitSizeOrSections is a list, then tensor will
+  * be split into len(splitSizeOrSections) chunks with sizes in dim according to
+  * splitSizeOrSections.
+  *
+  * @param  splitSizeOrSections  Size of a single chunk or of sizes for each chunk.
+  * @param  dim  Dimension along which to split the tensor.
   */
   // TODO: figure this out
   async split(
-    split_size_or_sections: number,
+    splitSizeOrSections: number,
     dim = 0
-  ) {
-    let self = this
-    self.ready()
+  ): Promise<this[]> {
+    this.ready()
 
-    // if (typeof split_size_or_sections === 'number') {
+    // if (typeof splitSizeOrSections === 'number') {
       return assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'split_by_size',
-          tensorIndexParams: [split_size_or_sections, dim]
+          tensorIndexParams: [splitSizeOrSections, dim]
         }), 'FloatTensor_list'),
         Array
       )
     // }
-    // split_size_or_sections = list(split_size_or_sections)
-    // assert type(split_size_or_sections) === list
-    // assert type(split_size_or_sections[0]) === int
-    // return self.controller.params_func(cmd_func=self.cmd,name='split_by_sections', params=split_size_or_sections+[dim], return_type='FloatTensor_list')
+    // splitSizeOrSections = list(splitSizeOrSections)
+    // assert type(splitSizeOrSections) === list
+    // assert type(splitSizeOrSections[0]) === int
+    // return this.controller.params_func(
+    //   cmd_func=this.cmd,
+    //   name='split_by_sections',
+    //   params=splitSizeOrSections+[dim],
+    //   return_type='FloatTensor_list'
+    // )
   }
 
 
@@ -424,497 +397,391 @@ export class Tensor extends AsyncInstance {
   // Tensor Manipulation Functions //
   ///////////////////////////////////
 
-  /*
-  * Returns absolute value of tensor as a new tensor
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor:
-  *     Output tensor
+  /**
+  * Returns absolute value of tensor as a new tensor.
+  *
+  * @returns  Output tensor.
   */
   async abs(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'abs'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
-  * Replaces tensor values with its absolute value
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Replaces tensor values with its absolute value.
+  *
+  * @returns  This Tensor.
   */
   async abs_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'abs_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new Tensor with the arccosine of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async acos(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'acos'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs inplace arccosine operation of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async acos_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'acos_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Performs a matrix multiplication of the matrices 'x' and 'y'.
-  * The caller matrix 'self' is added to the final result inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     First tensor for multiplication
-  * y : FloatTensor
-  *     Second tensor for multiplication
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  * The caller matrix 'this' is added to the final result inplace.
+  *
+  * @param x  First tensor for multiplication.
+  * @param y  Second tensor for multiplication.
+  *
+  * @returns  This Tensor.
   */
   async addmm_(
     x: Tensor,
     y: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready(),
       y.ready()
     ])
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'addmm_',
       tensorIndexParams: [x.id, y.id]
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Performs a matrix multiplication of the matrices 'x' and 'y'.
-  * The caller matrix 'self' is added to the final result.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     First tensor for multiplication
-  * y : FloatTensor
-  *     Second tensor for multiplication
-  * Returns
-  * -------
-  * copy : FloatTensor
-  *     Output tensor
+  * The caller matrix 'this' is added to the final result.
+  *
+  * @param x  First tensor for multiplication.
+  * @param y  Second tensor for multiplication.
+  *
+  * @returns  Output tensor.
   */
   async addmm(
     x: Tensor,
     y: Tensor
   ): Promise<this> {
-    let self = this
 
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready(),
       y.ready()
     ])
 
-    let copy = await self.copy()
+    let copy = await this.copy()
     await copy.addmm_(x, y)
 
     return copy
   }
 
-  /*
+  /**
   * Performs a matrix-vector product of the matrix x and the vector vec.
   * The vector tensor is added to the final result inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     tensor for multiplication
-  * vec : FloatTensor
-  *     Vector for Matrix-Vector Product
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @param x  Tensor for multiplication.
+  * @param vec  Vector for Matrix-Vector Product.
+  *
+  * @returns  This Tensor.
   */
   async addmv_(
     x: Tensor,
     y: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready(),
       y.ready()
     ])
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'addmv_',
       tensorIndexParams: [x.id, y.id]
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Performs a matrix-vector product of the matrix x and the vector vec.
   * The vector tensor is added to the final result.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  * tensor for multiplication
-  * y : FloatTensor
-  * Vector for Matrix-Vector Product
-  * Returns
-  * -------
-  * copy : FloatTensor
-  * Output tensor
+  *
+  * @param x  Tensor for multiplication.
+  * @param y  Vector for Matrix-Vector Product.
+  *
+  * @returns  Output tensor.
   */
   async addmv(
     x: Tensor,
     y: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready(),
       y.ready()
     ])
 
-    let copy = await self.copy()
+    let copy = await this.copy()
     await copy.addmv_(x, y)
 
     return copy
   }
 
-  /*
+  /**
   * Returns a new Tensor with the arcsine of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async asin(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'asin'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs inplace arcsine operation of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async asin_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'asin_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new Tensor with the arctangent of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async atan(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'atan'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs inplace arctangent operation of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async atan_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'atan_'
     }))
 
-    return self
+    return this
   }
 
-  // TODO: get the type of grad
+  /**
+  * TODO document this?
+  *
+  * @param grad  TODO document this?
+  */
   async backward(
-    grad?: any
+    grad?: any // TODO: get the type of grad
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     if (grad == null) {
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'backward'
       }))
     } else {
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'backward',
         tensorIndexParams: [grad.id]
       }))
     }
   }
 
-  /*
+  /**
   * Performs the ceiling of the input tensor element-wise.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async ceil(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'ceil'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs the inplace ceiling of the input tensor element-wise.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async ceil_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'ceil_'
     }))
 
-    return self
+    return this
   }
 
-  /*
-  * Returns a copy of the input
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Returns a copy of the input.
+  *
+  * @returns  Output tensor.
   */
   async contiguous(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'contiguous'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
-  * Returns a copy of the input
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Returns a copy of the input.
+  *
+  * @returns  Output tensor.
   */
   async copy(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'copy'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns a new Tensor with the cosine of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async cos(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'cos'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs the cosine of the input tensor inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async cos_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'cos_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new Tensor with hyperbolic cosine of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor
   */
   async cosh(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'cosh'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the hyperbolic cosine of the input inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async cosh_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'cosh_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns an iterator over immediate children modules.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * Iterable
-  *     Returns a list of children
+  *
+  * @returns eturns a list of children
   */
   async children() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let res = await self.get('children')
+    let res = await this.get('children')
     if (res && typeof res === 'string') {
       // TODO: figure this out
       return [] // list(map(lambda x: Number(x), res.split(',')[0:-1]))
@@ -922,26 +789,21 @@ export class Tensor extends AsyncInstance {
     return []
   }
 
-  async creation_op() {
-    let self = this
-    self.ready()
+  async creationOp() {
+    this.ready()
 
-    return self.get('creation_op')
+    return this.get('creation_op')
   }
 
-  /*
+  /**
   * Returns an iterator over immediate creators of input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * Returns a list of creators
+  *
+  * @returns  A list of creators.
   */
   async creators() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let res = await self.get('creators')
+    let res = await this.get('creators')
     if (typeof res === 'string' && res.length > 0) {
       // TODO: figure this out
       // list(map(lambda x: Number(x), res.split(',')[0:-1]))
@@ -950,398 +812,374 @@ export class Tensor extends AsyncInstance {
     return []
   }
 
-  /*
+  /**
   * Returns the sum of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  * TODO: Remove this???  duplicate of sum(dim, keepdim)
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
-  // TODO: Remove this???  duplicate of sum(dim, keepdim)
   async cumsum(dim = 0): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'cumsum',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * Tells if this Tensor's data is on GPU memory.
+  *
+  * @returns  True if data is on GPU memory. False otherwise.
+  */
   async dataOnGpu() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    if (await self.get('dataOnGpu') === '1') {
+    if (await this.get('dataOnGpu') === '1') {
       return true
     }
     return false
   }
 
-  /*
+  /**
   * Computes the exponential of each element of input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor
   */
   async exp(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'exp'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes the exponential of each element of input tensor inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async exp_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'exp_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the tensor, with values repeated across one dimension
-  * Parameters
-  * ----------
-  * args : list
-  *        the new, expanded size
-  * Returns
-  * -------
-  * FloatTensor
-  *     the new, expanded tensor.
+  * TODO: @justin is this inline or does it return a new tensor?
+  *
+  * @param args  The new, expanded size.
+  *
+  * @returns  The new, expanded tensor.
   */
-  // TODO: @justin is this inline or does it return a new tensor?
   async expand(
     ...args: number[]
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'expand',
         tensorIndexParams: args
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  // TODO: figure this out
-  async index_add(
-    indices: any, // what type is this?
+  /**
+  * TODO document this?
+  *
+  * @param indices  TODO document this?
+  * @param dim      TODO document this?
+  * @param x        TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async indexAdd(
+    indices: any, // TODO: what type is this?
     dim: number,
     x: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready()
     ])
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'index_add',
         tensorIndexParams: [indices.id, dim, x.id]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  // TODO: figure this out
-  async index_add_(
-    indices: any, // what type is this?
+  /**
+  * TODO document this?
+  *
+  * @param indices  TODO document this?
+  * @param dim      TODO document this?
+  * @param x        TODO document this?
+  *
+  * @returns  This Tensor.
+  */
+  async indexAdd_(
+    indices: any, // TODO: what type is this?
     dim: number,
     x: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready()
     ])
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'index_add_',
       tensorIndexParams: [indices.id, dim, x.id]
-    }), self.type)
+    }), this.type)
 
-    return self
+    return this
   }
 
-  // TODO: figure this out
-  async index_select(
+  /**
+  * TODO document this?
+  *
+  * @param indices  TODO document this?
+  * @param dim      TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async indexSelect(
     dim: number,
-    indices: any // what type is this?
+    indices: any // TODO: what type is this?
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'index_select',
         tensorIndexParams: [indices.id, dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async keepgrad() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    if (await self.get('keepgrad') === '1') {
+    if (await this.get('keepgrad') === '1') {
         return true
     } else {
       return false
     }
   }
 
-  /*
-  * Takes the power of each element in input ('self') with 'x' and
+  /**
+  * Takes the power of each element in input ('this') with 'x' and
   * returns a tensor with the result.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Exponent tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param x  Exponent tensor.
+  *
+  * @returns  Output tensor.
   */
   async pow(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'pow', false)
+    return this.arithmeticOperation(x, 'pow', false)
   }
 
-  /*
-  * Takes the power of each element in input ('self') with 'x', inplace.
-  * Parameters
-  * ----------
-  * x : FloatTensor
-  *     Exponent tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  /**
+  * Takes the power of each element in input ('this') with 'x', inplace.
+  *
+  * @param x  Exponent tensor.
+  *
+  * @returns  This Tensor.
   */
   async pow_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'pow', true)
+    return this.arithmeticOperation(x, 'pow', true)
   }
 
-  /*
+  /**
   * Performs the floor of the input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor
   */
   async floor(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'floor'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs the inplace floor of the input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async floor_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'floor_'
     }))
 
-    return self
+    return this
   }
 
-  /*
-  * Performs Round-ing to the nearest decimal,
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Performs Round-ing to the nearest decimal.
+  *
+  * @returns  Output tensor.
   */
   async round(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'round'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Performs Round-ing to the nearest decimal inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async round_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'round_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Performs a matrix multiplication of two tensors.
-  * Parameters
-  * ----------
-  * other : FloatTensor
-  *     Second tensor to be multiplied with
-  * Returns
-  * -------
-  * FloatTensor
-  *     n x m Output tensor
+  *
+  * @param other  Second tensor to be multiplied with.
+  *
+  * @returns  n x m Output tensor.
   */
   async mm(
     x: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready()
     ])
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'mm',
         tensorIndexParams: [x.id]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async grad() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    return self.get('grad', true)
+    return this.get('grad', true)
   }
 
-  /*
+  /**
   * Sets negative of the elements of tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async neg(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'neg'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Sets negative of the elements of tensor inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async neg_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'neg_'
     }))
 
-    return self
+    return this
   }
 
+  /**
+  * TODO document this?
+  *
+  * @returns  Output Tensor.
+  */
   async relu(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'relu'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param filename  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async save(
     filename: string
-  ) {
-    let self = this
-    self.ready()
+  ): Promise<boolean> {
+    this.ready()
 
     return assertType(
-      controller.sendJSON(self.cmd({
+      controller.sendJSON(this.cmd({
         functionCall: 'save',
         tensorIndexParams: [filename]
       }), 'bool'),
@@ -1349,1221 +1187,1165 @@ export class Tensor extends AsyncInstance {
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param paramName  TODO document this?
+  * @param params     TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async set(
-    param_name = 'size',
+    paramName = 'size',
     params: any[] = []
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'set',
-      tensorIndexParams: [...param_name, params]
+      tensorIndexParams: [...paramName, params]
     }))
   }
 
-  /*
+  /**
   * Performs inplace sigmoid function on the tensor element-wise.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace.
+  *
+  * @returns  This Tensor.
   */
   async sigmoid_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'sigmoid_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new tensor holding element wise values of Sigmoid function.
   * Sigmoid(x) = 1 / 1+exp(-x)
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async sigmoid(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sigmoid'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes sign of each element of the tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async sign(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sign'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
-  * Computes the sign of each element of the tensor inplace
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  /**
+  * Computes the sign of each element of the tensor inplace.
+  *
+  * @returns  This Tensor.
   */
   async sign_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'sign_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Computes sin of each element of the tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async sin(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sin'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
-  * Computes the sine of each element of the tensor inplace
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  /**
+  * Computes the sine of each element of the tensor inplace.
+  *
+  * @returns  This Tensor.
   */
   async sin_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'sin_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the size of tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * int
-  *     int with value of size
+  *
+  * Returns  Int with value of size
   */
   async size() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    return self.get('size')
+    return this.get('size')
   }
 
-  /*
-  * Returns the size of the self tensor as a FloatTensor (or as List).
+  /**
+  * Returns the size of the this tensor as a FloatTensor (or as List).
   * Note:
   *     The returned value currently is a FloatTensor because it leverages
   *     the messaging mechanism with Unity.
-  * Parameters
-  * ----------
-  * as_list : bool
-  *     Value retruned as list if true; else as tensor
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
-  * (or)
-  * Iterable
-  *     Output list
+  *
+  * @param asList  Value retruned as list if true; else as tensor. (default true)
+  *
+  * @return  Output tensor (or) Output list.
   */
   async shape(
-    as_list = true
+    asList = true
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let res = assertType(await self.get('shape'), 'string') as string
+    let res = assertType(await this.get('shape'), 'string') as string
 
     return res.split(',').slice(0, -1).map(a => Number(a))
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async softmax(
     dim = -1
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'softmax',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async std(
     dim = -1
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'std',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the stride of tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     dimension of expected return
-
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor.
-  * (or)
-  * numpy.ndarray
-  *     NumPy Array as Long
+  *
+  * @param dim  Dimension of expected return.
+  *
+  * @returns  Output tensor (or) NumPy Array as Long.
   */
   async stride(
     dim = -1
-  ) {
-    let self = this
-    self.ready()
+  ): Promise<number|number[]> {
+    this.ready()
 
     if (dim === -1) {
       return assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'stride'
-        }), 'string'),
-        'string'
+        }), 'int'),
+        'number'
       )
     } else {
       // TODO: figure out this
       let strides = assertType(
-        await controller.sendJSON(self.cmd({
+        await controller.sendJSON(this.cmd({
           functionCall: 'stride',
           tensorIndexParams: [dim]
-        }), 'string'),
-        'string'
+        }), 'int'),
+        'number'
       )
-      return (strides as string).split(' ')
+      return (strides as string).split(' ').map(Number)
     }
   }
 
-  /*
+  /**
   * Returns a new tensor with the square-root of the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor:
-  *     Output Tensor
+  *
+  * @returns  Output Tensor
   */
   async sqrt(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sqrt'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * Returns this tensor with the square-root of the elements of input.
+  *
+  * @returns  This Tensor.
+  */
   async sqrt_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'sqrt_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new tensor with the sum along diagonals of a 2D tensor.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async trace(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'trace'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async trunc(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'trunc'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  // TODO: figure this out (any)?
+  /**
+  * TODO document this?
+  * figure this out (any)?
+  *
+  * @param args  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async view(
     ...args: any[]
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'view',
         tensorIndexParams: args
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  // TODO: figure this out (any)?
+  /**
+  * TODO document this?
+  * figure this out (any)?
+  *
+  * @param args  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async view_(
     ...args: any[]
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'view_',
       tensorIndexParams: args
     }))
 
-    return self
+    return this
   }
 
-  async view_as(
+  /**
+  * TODO document this?
+  * figure this out (any)?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async viewAs(
     x: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready()
     ])
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'view_as',
         tensorIndexParams: [x.id]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  async view_as_(
+  /**
+  * TODO document this?
+  * figure this out (any)?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async viewAs_(
     x: Tensor
   ): Promise<this> {
-    let self = this
     await Promise.all([
-      self.ready(),
+      this.ready(),
       x.ready()
     ])
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'view_as_',
       tensorIndexParams: [x.id]
     }))
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a tensor that is a transposed version of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async T(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'transpose'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-
+  /**
+  * TODO document this?
+  *
+  * @param k  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async triu(
     k = 0
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'triu',
         tensorIndexParams: [k]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param k  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async triu_(
     k = 0
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'triu_',
       tensorIndexParams: [k]
     }))
 
-    return self
+    return this
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async unsqueeze(
     dim: number
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'unsqueeze',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async unsqueeze_(
     dim: number
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'unsqueeze_',
       tensorIndexParams: [dim]
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Fills this tensor with zeros inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async zero_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'zero_'
     }))
 
-    return self
+    return this
   }
 
+  /**
+  * Returns a string representation of this Tensor.
+  *
+  * @returns  A string representation of this Tensor.
+  */
   async toString() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let shape = await self.shape()
-    let data = await self.to_numpy()
+    let shape = await this.shape()
+    let data = await this.getData()
 
-    return `${self.type}<${shape.join('x')}>(id: ${self.id}) [${data}]`
+    return `${this.type}<${shape.join('x')}>(id: ${this.id}) [${data}]`
   }
 
-  /*
-  * Returns a CPU copy of this storage if it's not already on the CPU
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Returns a CPU copy of this storage if it's not already on the CPU.
+  *
+  * @returns  Output tensor.
   */
-  async cpu() {
-    let self = this
-    self.ready()
+  async cpu(): Promise<this> {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'cpu'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
-  * Returns a GPU copy of this storage if it's not already on the GPU
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Returns a GPU copy of this storage if it's not already on the GPU.
+  *
+  * @returns  Output tensor.
   */
-  async gpu() {
-    let self = this
-    self.ready()
+  async gpu(): Promise<this>  {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'gpu'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  async arithmetic_operation(
+  /**
+  * TODO document this?
+  *
+  * @param x       TODO document this?
+  * @param name    TODO document this?
+  * @param inline  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async arithmeticOperation(
     x: number|Tensor,
     name: string,
     inline = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    let operation_cmd = name
+    let operationCmd = name
     let parameter
 
     if (x instanceof Tensor) {
       await x.ready()
-      operation_cmd += '_elem'
+      operationCmd += '_elem'
       parameter = x.id
     } else {
-      operation_cmd += '_scalar'
+      operationCmd += '_scalar'
       parameter = String(x)
     }
 
     if (inline) {
-      operation_cmd += '_'
+      operationCmd += '_'
 
-      await controller.sendJSON(self.cmd({
-        functionCall: operation_cmd,
+      await controller.sendJSON(this.cmd({
+        functionCall: operationCmd,
         tensorIndexParams: [parameter]
       }))
 
-      return self
+      return this
     }
 
     return assertType(
-      await controller.sendJSON(self.cmd({
-        functionCall: operation_cmd,
+      await controller.sendJSON(this.cmd({
+        functionCall: operationCmd,
         tensorIndexParams: [parameter]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async add(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'add')
+    return this.arithmeticOperation(x, 'add')
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async add_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'add', true)
+    return this.arithmeticOperation(x, 'add', true)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async sub(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'sub')
+    return this.arithmeticOperation(x, 'sub')
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async sub_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'sub', true)
+    return this.arithmeticOperation(x, 'sub', true)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async mul(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'mul')
+    return this.arithmeticOperation(x, 'mul')
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async mul_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'mul', true)
+    return this.arithmeticOperation(x, 'mul', true)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async div(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'div')
+    return this.arithmeticOperation(x, 'div')
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async div_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'div', true)
+    return this.arithmeticOperation(x, 'div', true)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async mod(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'mod')
+    return this.arithmeticOperation(x, 'mod')
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async mod_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'mod', true)
+    return this.arithmeticOperation(x, 'mod', true)
   }
 
-  /*
+  /**
   * Returns the hyperbolic sine of the input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async sinh(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sinh'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the hyperbolic sine of the input inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace.
+  *
+  * @returns  This Tensor.
   */
   async sinh_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'sinh_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the logarithm of the input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async log(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'log'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the logarithm of the input inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace.
+  *
+  * @returns  This Tensor.
   */
   async log_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'log_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the natural logarithm of (1 + input) inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace.
+  *
+  * @returns  This Tensor.
   */
   async log1p_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'log1p_'
     }))
 
-    return self
+    return this
   }
 
-  /*
-  * Returns a new tensor with the natural logarithm of (1 + 'self').
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  /**
+  * Returns a new tensor with the natural logarithm of (1 + 'this').
+  *
+  * @returns  Output tensor.
   */
   async log1p(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'log1p'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes the fractional portion of each element in tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async frac(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'frac'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes the fractional portion of each element in tensor, inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async frac_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'frac_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Computes the reciprocal of the input tensor.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor
   */
   async reciprocal(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'reciprocal'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes reciprocal of input tensor with values inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async reciprocal_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'reciprocal_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns a new tensor with the reciprocal of the square-root of each of
   * the elements of input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor
   */
   async rsqrt(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'rsqrt'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Computes the reciprocal of the square-root of each of the elements of input,
   * inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This Tensor.
   */
   async rsqrt_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'rsqrt_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Computes the element-wise remainder of division.
-  * inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  * TODO: duplicate mod(x: number|Tensor)
+  *
+  * @returns  Output tensor.
   */
   async remainder(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'remainder')
+    return this.arithmeticOperation(x, 'remainder')
   }
 
-  /*
+  /**
   * Computes the element-wise remainder of division, inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  * TODO: duplicate mod_(x: number|Tensor)
+  *
+  * @returns  This Tensor.
   */
   async remainder_(
     x: number|Tensor
   ): Promise<this> {
-    let self = this
 
-    return self.arithmetic_operation(x, 'remainder', true)
+    return this.arithmeticOperation(x, 'remainder', true)
   }
 
-  /*
+  /**
   * Samples the current tensor uniformly assuming each value is a binary probability.
-  * ----------
-  * Returns
-  * -------
-  * IntTensor
-  *     Output tensor
+  *
+  * @param dim  TODO document this.
+  *
+  * @returns  Output tensor.
   */
   async sample(
     dim: number
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sample',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the tangent of the input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async tan(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'tan'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the tangent of the input inplace.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @returns  This tensor.
   */
   async tan_(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'tan_'
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the hyperbolic tangent of the input.
-  * Parameters
-  * ----------
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @returns  Output tensor.
   */
   async tanh(): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'tanh'
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns a tensor with all the dimensions of input of size 1 removed.
-  * Parameters
-  * ----------
-  * dim : int
-  *     When dim is given, a squeeze operation is done only in the given
-  *     dimension.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim  When dim is given, a squeeze operation is done only in the given
+  *             dimension.
+  *
+  * @returns  Output tensor.
   */
   async squeeze(
     dim = -1
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'squeeze',
         tensorIndexParams: [dim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Removes all the dimensions of input tensor of size 1, inplace.
-  * Parameters
-  * ----------
-  * dim : int
-  *     When dim is given, a squeeze operation is done only in the given
-  *     dimension.
-  * Returns
-  * -------
-  * FloatTensor
-  *     Caller with values inplace
+  *
+  * @param dim  When dim is given, a squeeze operation is done only in the given
+  *             dimension.
+  *
+  * @returns  Output tensor.
   */
   async squeeze_(
     dim = -1
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'squeeze_',
       tensorIndexParams: [dim]
     }))
 
-    return self
+    return this
   }
 
-  /*
+  /**
   * Returns the minimum value of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
   async min(
     dim = -1,
     keepdim = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'min',
         tensorIndexParams: [dim, keepdim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the maximum value of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
   async max(
     dim = -1,
     keepdim = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'max',
         tensorIndexParams: [dim, keepdim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the sum of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
   async sum(
     dim = -1,
     keepdim = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sum',
         tensorIndexParams: [dim, keepdim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the product of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
   async prod(
     dim = -1,
     keepdim = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'prod',
         tensorIndexParams: [dim, keepdim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
 
-  /*
+  /**
   * Returns the mean value of all elements in the input tensor.
-  * Parameters
-  * ----------
-  * dim : int
-  *     the dimension to reduce
-  * keepdim : bool
-  *     whether the output tensors have dim retained or not
-  * Returns
-  * -------
-  * FloatTensor
-  *     Output tensor
+  *
+  * @param dim      The dimension to reduce.
+  * @param keepdim  Whether the output tensors have dim retained or not.
+  *
+  * @returns  Output tensor.
   */
   async mean(
     dim = -1,
     keepdim = false
   ): Promise<this> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'mean',
         tensorIndexParams: [dim, keepdim]
-      }), self.type),
-      self.constructor
+      }), this.type),
+      this.constructor
     )
   }
   static IntTensor: IntTensorConstructor
@@ -2586,22 +2368,39 @@ export interface FloatTensorConstructor extends IAsyncConstructor {
 export class IntTensor extends Tensor {
   static $: IAsyncConstructor = IntTensor
 
-  data?: IntDimArray
+  /**
+  * Syft object type.
+  */
   type = 'IntTensor'
 
+  /**
+  * Get a IntTensor given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected IntTensor.
+  */
   static async get(id: string) {
-    // check that FloatTensor exists
+    // check that IntTensor exists
 
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a local instance of a network connected IntTensor.
+  *
+  * @param arr       Numaric data.
+  * @param autograd  TODO document this?
+  *
+  * @returns  A local instance of a network connected IntTensor.
+  */
   static async create(
     arr: any[] | {data: ArrayLike<number>, shape:ArrayLike<number>},
     autograd = false
   ) {
     let data
     if (Array.isArray(arr)) {
-      data = new FloatDimArray(arr)
+      data = new IntDimArray(arr)
     } else {
       data = arr
     }
@@ -2630,15 +2429,34 @@ export class IntTensor extends Tensor {
 export class FloatTensor extends Tensor {
   static $: IAsyncConstructor = FloatTensor
 
-  data?: FloatDimArray
+  /**
+  * Syft object type.
+  */
   type = 'FloatTensor'
 
-  static async get(id: string) {
+  /**
+  * Get a FloatTensor given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected FloatTensor.
+  */
+  static async get(
+    id: string
+  ) {
     // check that FloatTensor exists
 
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a local instance of a network connected FloatTensor.
+  *
+  * @param arr       Numaric data.
+  * @param autograd  TODO document this?
+  *
+  * @returns  A local instance of a network connected FloatTensor.
+  */
   static async create(
     arr: any[] | {data: ArrayLike<number>, shape:ArrayLike<number>},
     autograd = false
@@ -2672,24 +2490,24 @@ export class FloatTensor extends Tensor {
 
   // TODO: figure this out
   // async autograd(setter: boolean) {
-  //   let self = this
-  //   self.ready()
+  //   let this = this
+  //   this.ready()
   //   let out
   //
   //   if (setter == null) {
-  //     if (await self.get('autograd') === '1') {
+  //     if (await this.get('autograd') === '1') {
   //       return true
   //     } else {
   //       return false
   //     }
   //   } else {
   //     if (setter) {
-  //       out = await self.set('autograd', ['1'])
+  //       out = await this.set('autograd', ['1'])
   //     } else {
-  //       out = await self.set('autograd', ['0'])
+  //       out = await this.set('autograd', ['0'])
   //     }
   //     if ((out === '1' && setter) || (out === '0' && !setter)) {
-  //       return self
+  //       return this
   //     } else {
   //       return false
   //     }

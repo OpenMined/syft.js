@@ -23,12 +23,28 @@ async function test() {
     console.log('testing.output', testing.output.id, await testing.output.shape());
     let model = new syft.keras.Sequential();
     g.model = model;
-    await model.add(new syft.keras.Dense('linear', 10, 784));
-    await model.compile('categorical_crossentropy', new syft.keras.SGD(0.01), ['accuracy']);
+    await model.add(new syft.keras.Dense({
+        inputShape: 784,
+        outputShape: 10,
+        activation: 'linear'
+    }));
+    await model.compile({
+        loss: 'categorical_crossentropy',
+        optimizer: new syft.keras.SGD({
+            lr: 0.01
+        }),
+        metrics: ['accuracy']
+    });
     g.perd = await model.predict(testing.input);
     console.log(await g.perd.toString());
     let train = async () => {
-        let error = await model.fit(training.input, training.output, 1, 1, undefined, 1, false);
+        let error = await model.fit({
+            input: training.input,
+            target: training.output,
+            batchSize: 1,
+            epochs: 1,
+            logInterval: 1
+        });
         console.log('trained!', error);
     };
     await train();
@@ -37,4 +53,4 @@ async function test() {
 }
 let done = (res) => console.log(res);
 test().then(done).catch(done);
-//# sourceMappingURL=minst-keras.js.map
+//# sourceMappingURL=mnist-keras.js.map

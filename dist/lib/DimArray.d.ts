@@ -2,7 +2,7 @@ export declare class DimArray {
     shape: Uint32Array;
     data: Int32Array | Float64Array;
     size: number;
-    constructor(data: any[]);
+    constructor($: any, data: any[]);
     __fillData__(data: any[]): void;
 }
 export declare class IntDimArray extends DimArray {

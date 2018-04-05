@@ -2,80 +2,92 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const syft = require("../../../syft");
 class Sequential {
-    constructor() {
+    constructor(layers = []) {
         this.layers = [];
         this.metrics = [];
         this.compiled = false;
+        for (let layer of layers) {
+            this.add(layer);
+        }
     }
     async add(layer) {
-        let self = this;
-        if (self.layers.length > 0) {
-            layer.input_shape = self.layers[self.layers.length - 1].output_shape;
-            if (layer.output_shape == null) {
-                layer.output_shape = layer.input_shape;
+        if (this.compiled) {
+            throw new Error('CANNOT add layers after model has been compiled.');
+        }
+        if (this.layers.length > 0) {
+            layer.inputShape = this.layers[this.layers.length - 1].outputShape;
+            if (layer.outputShape == null) {
+                layer.outputShape = layer.inputShape;
             }
         }
-        self.layers.push(layer);
+        this.layers.push(layer);
+        return this;
     }
-    async compile(loss, optimizer, metrics = []) {
-        let self = this;
-        if (!self.compiled) {
-            self.compiled = true;
-            self.syft_model = await syft.Model.Sequential.create();
-            for (let layer of self.layers) {
-                for (let l of layer.ordered_syft) {
+    async compile({ loss, optimizer, metrics = [] }) {
+        if (!this.compiled) {
+            this.compiled = true;
+            this.syftModel = await syft.Model.Sequential.create();
+            for (let layer of this.layers) {
+                for (let l of layer.orderedSyft) {
                     await layer.create();
-                    self.syft_model.add(l);
+                    this.syftModel.add(l);
                 }
             }
             if (loss === 'categorical_crossentropy') {
-                self.loss = await syft.Model.Categorical_CrossEntropy.create();
+                this.loss = await syft.Model.Categorical_CrossEntropy.create();
             }
-            else if (loss === 'mean_squared_error') {
-                self.loss = await syft.Model.MSELoss.create();
+            else if (loss === 'meanSquared_error') {
+                this.loss = await syft.Model.MSELoss.create();
             }
-            await optimizer.create(await self.syft_model.parameters());
-            self.optimizer = optimizer;
-            self.metrics = metrics;
+            await optimizer.create(await this.syftModel.parameters());
+            this.optimizer = optimizer;
+            this.metrics = metrics;
         }
         else {
             console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things');
         }
-        return self;
+        return this;
     }
     async summary() {
     }
-    async fit(input, target, batch_size, epochs = 1, validation_data = null, log_interval = 1, verbose = false) {
-        let self = this;
-        if (self.syft_model == null ||
-            self.loss == null ||
-            self.optimizer == null ||
-            self.optimizer.syft_optim == null) {
+    async fit({ input, target, batchSize, epochs = 1, validationData, logInterval = 1, verbose = false }) {
+        if (this.syftModel == null ||
+            this.loss == null ||
+            this.optimizer == null ||
+            this.optimizer.syftOptim == null) {
             throw new Error('Not Compiled');
         }
-        return self.syft_model.fit(input, target, self.loss, self.optimizer.syft_optim, batch_size, epochs, log_interval, self.metrics, verbose);
+        return this.syftModel.fit({
+            input,
+            target,
+            criterion: this.loss,
+            optimizer: this.optimizer.syftOptim,
+            batchSize,
+            iterations: epochs,
+            logInterval,
+            metrics: this.metrics,
+            verbose
+        });
     }
-    async evaluate(test_input, test_target, batch_size, metrics = [], verbose = true) {
+    async evaluate({ testInput, testTarget, batchSize, metrics = [], verbose = false }) {
     }
     async predict(x) {
-        let self = this;
-        if (self.syft_model == null ||
-            self.loss == null ||
-            self.optimizer == null) {
+        if (this.syftModel == null ||
+            this.loss == null ||
+            this.optimizer == null) {
             throw new Error('Not Compiled');
         }
-        return (await self.syft_model.forward(x));
+        return (await this.syftModel.forward(x));
     }
-    async get_weights() {
-        let self = this;
-        if (self.syft_model == null ||
-            self.loss == null ||
-            self.optimizer == null) {
+    async getWeights() {
+        if (this.syftModel == null ||
+            this.loss == null ||
+            this.optimizer == null) {
             throw new Error('Not Compiled');
         }
-        return self.syft_model.parameters();
+        return this.syftModel.parameters();
     }
-    async to_json() {
+    async getJSON() {
     }
 }
 exports.Sequential = Sequential;

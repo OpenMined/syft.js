@@ -6,26 +6,42 @@ import {
   IAsyncConstructor
 } from '../lib'
 
-function get_param_ids(
+function getParamIds(
   params: any[] = [] // TODO: what type is this
 ) {
 
-  let param_ids = []
+  let paramIds = []
   for (let p of params) {
-    param_ids.push(p.id)
+    paramIds.push(p.id)
   }
-  return param_ids
+  return paramIds
 }
 
-/*
-* Base class for all Optimizers to inherit from
+/**
+* A base-class for Syft Optimizers to inherit from.
 */
 export class Optimizer extends AsyncInstance {
+  /**
+  * Syft object type.
+  */
   type = 'Optimizer'
-  optimizer_type: string = ''
 
+  /**
+  * Syft Optimizer type.
+  */
+  optimizerType: string = ''
+
+  /**
+  * Creates a local instance of a network connected Optimizer.
+  *
+  * @param optimizerType  The model constructor of which to create.
+  * @param params         Parameters specific to the model constructor.
+  * @param hyperParams    Hyper parameters specific to the model constructor.
+  *
+  * @returns  A local instance of a network connected model.
+  */
   static async createOptomizer(
-    optimizer_type: Function,
+    optimizerType: Function,
     params: any[] = [],
     hyperParams: any[] = []
   ): Promise<string> {
@@ -33,49 +49,59 @@ export class Optimizer extends AsyncInstance {
       await controller.sendJSON({
         objectType: 'Optimizer',
         functionCall: 'create',
-        tensorIndexParams: [optimizer_type.name.toLowerCase(), ...params],
+        tensorIndexParams: [optimizerType.name.toLowerCase(), ...params],
         hyperParams
       }, 'string'),
       'string'
     ) as string
   }
 
-  finish(
-    id: string
-  ) {
-    let self = this
-
-    self.id = id
-  }
-
-  async zero_grad() {
-    let self = this
-    self.ready()
+  /**
+  * TODO document this?
+  */
+  async zeroGrad() {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'zero_grad'
       }), 'string'),
       'string'
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param batchSize  TODO document this?
+  * @param iteration  TODO document this?
+  *
+  * @return TODO document this?
+  */
   async step(
-    batch_size: number,
+    batchSize: number,
     iteration: number
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'step',
-        tensorIndexParams: [batch_size, iteration]
+        tensorIndexParams: [batchSize, iteration]
       }), 'string'),
       'string'
     )
   }
 
+  /**
+  * Creates a command object for this Optimizer.
+  *
+  * @param options.functionCall       The function to call.
+  * @param options.tensorIndexParams  The labels for the training dataset.
+  * @param options[<key>]             Other options.
+  *
+  * @returns  A command object.
+  */
   cmd(
     options: {
       [key: string]: any
@@ -83,11 +109,10 @@ export class Optimizer extends AsyncInstance {
       tensorIndexParams?: any[],
     }
   ): SocketCMD {
-    let self = this
 
     return {
-      objectType: self.type,
-      objectIndex: self.id,
+      objectType: this.type,
+      objectIndex: this.id,
       tensorIndexParams: [],
       hyperParams: [],
       ...options
@@ -103,10 +128,12 @@ export interface SGDConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): SGD
   get(id: string): Promise<SGD>
   create(
-    params: any[],
-    lr?: number,
-    momentum?: number,
-    decay?: number
+    args: {
+      params: any[],
+      lr?: number,
+      momentum?: number,
+      decay?: number
+    }
   ):  Promise<SGD>
 }
 
@@ -114,11 +141,13 @@ export interface RMSPropConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): RMSProp
   get(id: string): Promise<RMSProp>
   create(
-    params: any[],
-    lr?: number,
-    rho?: number,
-    epsilon?: number,
-    decay?: number
+    args: {
+      params: any[],
+      lr?: number,
+      rho?: number,
+      epsilon?: number,
+      decay?: number
+    }
   ): Promise<RMSProp>
 }
 
@@ -126,37 +155,61 @@ export interface AdamConstructor extends IAsyncConstructor {
   new ($caller$: any, id: string): Adam
   get(id: string): Promise<Adam>
   create(
-    params: any[],
-    lr?: number,
-    beta_1?: number,
-    beta_2?: number,
-    epsilon?: number,
-    decay?: number
+    args: {
+      params: any[],
+      lr?: number,
+      beta1?: number,
+      beta2?: number,
+      epsilon?: number,
+      decay?: number
+    }
   ): Promise<Adam>
 }
 
-/*
+/**
 * Stochastic Gradient Descent optimizer.
 * Includes support for momentum and learning rate decay
 */
 export class SGD extends Optimizer {
   static $: IAsyncConstructor = SGD
 
-  static async create (
-    params: any[],
+  /**
+  * Creates a new SGD Optimizer.
+  *
+  * @param args.params    The Model parameters to optimize.
+  * @param args.lr        TODO document this? (default 0.01)
+  * @param args.momentum  TODO document this? (default 0)
+  * @param args.decay     TODO document this? (default 0)
+  *
+  * @returns  A local instance of a network connected SGD Optimizer.
+  */
+  static async create({
+    params,
     lr = 0.01,
     momentum = 0,
     decay = 0
-  ) {
+  }: {
+    params: any[],
+    lr?: number,
+    momentum?: number,
+    decay?: number
+  }) {
     let id = await Optimizer.createOptomizer(
       this,
-      get_param_ids(params),
+      getParamIds(params),
       [String(lr), String(momentum), String(decay)]
     )
     return new this(AsyncInstance, id)
   }
 
-  static async get (
+  /**
+  * Get a SGD Optimizer given its ID
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected SGD Optimizer.
+  */
+  static async get(
     id: string
   ) {
     // TODO: check to make sure the optimizer exsist and it the same type
@@ -164,27 +217,51 @@ export class SGD extends Optimizer {
   }
 }
 
-/*
+/**
 * RMSProp Optimizer
 */
 export class RMSProp extends Optimizer {
   static $: IAsyncConstructor = RMSProp
 
-  static async create (
-    params: any[],
+  /**
+  * Creates a new RMSProp Optimizer.
+  *
+  * @param args.params   The Model parameters to optimize.
+  * @param args.lr       TODO document this? (default 0.01)
+  * @param args.rho      TODO document this? (default 0.9)
+  * @param args.epsilon  TODO document this? (default 1e-6)
+  * @param args.decay    TODO document this? (default 0)
+  *
+  * @returns  A local instance of a network connected RMSProp Optimizer.
+  */
+  static async create({
+    params,
     lr = 0.01,
     rho = 0.9,
     epsilon = 1e-6,
     decay = 0
-  ) {
+  }: {
+    params: any[],
+    lr?: number,
+    rho?: number,
+    epsilon?: number,
+    decay?: number
+  }) {
     let id = await Optimizer.createOptomizer(
       this,
-      get_param_ids(params),
+      getParamIds(params),
       [String(lr), String(rho), String(epsilon), String(decay)]
     )
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Get a RMSProp Optimizer given its ID
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected RMSProp Optimizer.
+  */
   static async get (
     id: string
   ) {
@@ -193,29 +270,55 @@ export class RMSProp extends Optimizer {
   }
 }
 
-/*
+/**
 * Adam Optimizer
 */
 export class Adam extends Optimizer {
   static $: IAsyncConstructor = Adam
 
-  static async create (
-    params: any[],
+  /**
+  * Creates a new RMSProp Optimizer.
+  *
+  * @param args.params   The Model parameters to optimize.
+  * @param args.lr       TODO document this? (default 0.01)
+  * @param args.beta1    TODO document this? (default 0.9)
+  * @param args.beta2    TODO document this? (default 0.999)
+  * @param args.epsilon  TODO document this? (default 1e-6)
+  * @param args.decay    TODO document this? (default 0)
+  *
+  * @returns  A local instance of a network connected RMSProp Optimizer.
+  */
+  static async create({
+    params,
     lr = 0.01,
-    beta_1 = 0.9,
-    beta_2 = 0.999,
+    beta1 = 0.9,
+    beta2 = 0.999,
     epsilon = 1e-6,
     decay = 0
-  ) {
+  }: {
+    params: any[],
+    lr?: number,
+    beta1?: number,
+    beta2?: number,
+    epsilon?: number,
+    decay?: number
+  }) {
     let id = await Optimizer.createOptomizer(
       this,
-      get_param_ids(params),
-      [String(lr), String(beta_1), String(beta_2), String(epsilon), String(decay)]
+      getParamIds(params),
+      [String(lr), String(beta1), String(beta2), String(epsilon), String(decay)]
     )
     return new this(AsyncInstance, id)
   }
 
-  static async get (
+  /**
+  * Get a Adam Optimizer given its ID
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Adam Optimizer.
+  */
+  static async get(
     id: string
   ) {
     // TODO: check to make sure the optimizer exsist and it the same type

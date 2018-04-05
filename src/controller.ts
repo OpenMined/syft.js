@@ -49,7 +49,7 @@ export function cmd(
 const wq = new WorkQueue<string, string>(job => {
   // send the command
   log('sending:', job.data)
-  socket.send(/*job.id + */job.data)
+  socket.send(/**job.id + */job.data)
 }, 1)
 
 socket.on('message', (res) => {
@@ -78,7 +78,7 @@ socket.on('message', (res) => {
 })
 
 // Introspection
-export async function num_models() {
+export async function numModels() {
   return assertType(
     await sendJSON(cmd({
       functionCall: 'num_models'
@@ -123,7 +123,7 @@ export async function concatenate(
   )
 }
 
-export async function num_tensors() {
+export async function numTensors() {
   return assertType(
     await sendJSON(cmd({
       functionCall: 'num_tensors'
@@ -132,7 +132,7 @@ export async function num_tensors() {
   ) as number
 }
 
-export async function new_tensors_allowed(
+export async function newTensorsAllowed(
   allowed?: boolean
 ) {
     if (allowed == null) {
@@ -163,56 +163,56 @@ export async function new_tensors_allowed(
 
 export async function sendJSON(
   message: SocketCMD,
-  return_type?: string
+  returnType?: string
 ) {
   let data = JSON.stringify(message)
 
   // send the command
   let res = await wq.queue(data)
 
-  if (return_type == null) {
+  if (returnType == null) {
     return
-  } else if (return_type === 'FloatTensor') {
+  } else if (returnType === 'FloatTensor') {
       if (res !== '-1' && res !== '') {
         return new FloatTensor(AsyncInstance, res)
       }
       return
-  } else if (return_type === 'IntTensor') {
+  } else if (returnType === 'IntTensor') {
     if (res !== '-1' && res !== '') {
       return new IntTensor(AsyncInstance, res)
     }
     return
-  } else if (return_type === 'FloatTensor_list') {
+  } else if (returnType === 'FloatTensor_list') {
     let tensors: Tensor[] = []
 
     if (res !== '') {
       let ids = res.split(',')
-      for (let str_id of ids) {
-        if (str_id) {
-          tensors.push(new FloatTensor(AsyncInstance, str_id))
+      for (let strId of ids) {
+        if (strId) {
+          tensors.push(new FloatTensor(AsyncInstance, strId))
         }
       }
     }
 
     return tensors
-  } else if (return_type === 'Model_list') {
+  } else if (returnType === 'Model_list') {
     let models: Model[] = []
 
     if (res !== '') {
       let ids = res.split(',')
-      for (let str_id of ids) {
-        if (str_id) {
-          models.push(await Model.getModel(str_id))
+      for (let strId of ids) {
+        if (strId) {
+          models.push(await Model.getModel(strId))
         }
       }
     }
 
     return models
-  } else if (return_type === 'int' || return_type === 'float') {
+  } else if (returnType === 'int' || returnType === 'float') {
     return Number(res)
-  } else if (return_type === 'string') {
+  } else if (returnType === 'string') {
     return String(res)
-  } else if (return_type === 'bool') {
+  } else if (returnType === 'bool') {
     if (res === 'True') {
       return true
     } else if (res === 'False') {

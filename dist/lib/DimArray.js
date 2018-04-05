@@ -1,8 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const DATA = new Int32Array(0);
 class DimArray {
-    constructor(data) {
-        let self = this;
+    constructor($, data) {
+        this.data = DATA;
+        if ($ !== DimArray) {
+            throw new Error('CANNOT construct DimArray directly.');
+        }
         let shape = [];
         let size = 1;
         let d = data;
@@ -12,13 +16,12 @@ class DimArray {
             size *= dim;
             d = d[0];
         }
-        self.size = size;
-        self.shape = new Uint32Array(shape);
+        this.size = size;
+        this.shape = new Uint32Array(shape);
     }
     __fillData__(data) {
-        let self = this;
-        let size = self.size;
-        let shape = self.shape;
+        let size = this.size;
+        let shape = this.shape;
         let shapeLength = shape.length;
         for (let i = 0; i < size; i++) {
             let p = i;
@@ -35,26 +38,24 @@ class DimArray {
             if (typeof v !== 'number') {
                 throw new Error(`Invid Data Type ${typeof v} ${v}`);
             }
-            self.data[i] = v;
+            this.data[i] = v;
         }
     }
 }
 exports.DimArray = DimArray;
 class IntDimArray extends DimArray {
     constructor(data) {
-        super(data);
-        let self = this;
-        self.data = new Int32Array(self.size);
-        self.__fillData__(data);
+        super(DimArray, data);
+        this.data = new Int32Array(this.size);
+        this.__fillData__(data);
     }
 }
 exports.IntDimArray = IntDimArray;
 class FloatDimArray extends DimArray {
     constructor(data) {
-        super(data);
-        let self = this;
-        self.data = new Float64Array(self.size);
-        self.__fillData__(data);
+        super(DimArray, data);
+        this.data = new Float64Array(this.size);
+        this.__fillData__(data);
     }
 }
 exports.FloatDimArray = FloatDimArray;

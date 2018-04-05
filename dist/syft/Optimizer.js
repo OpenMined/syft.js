@@ -2,55 +2,48 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const controller = require("../controller");
 const lib_1 = require("../lib");
-function get_param_ids(params = []) {
-    let param_ids = [];
+function getParamIds(params = []) {
+    let paramIds = [];
     for (let p of params) {
-        param_ids.push(p.id);
+        paramIds.push(p.id);
     }
-    return param_ids;
+    return paramIds;
 }
 class Optimizer extends lib_1.AsyncInstance {
     constructor() {
         super(...arguments);
         this.type = 'Optimizer';
-        this.optimizer_type = '';
+        this.optimizerType = '';
     }
-    static async createOptomizer(optimizer_type, params = [], hyperParams = []) {
+    static async createOptomizer(optimizerType, params = [], hyperParams = []) {
         return lib_1.assertType(await controller.sendJSON({
             objectType: 'Optimizer',
             functionCall: 'create',
-            tensorIndexParams: [optimizer_type.name.toLowerCase(), ...params],
+            tensorIndexParams: [optimizerType.name.toLowerCase(), ...params],
             hyperParams
         }, 'string'), 'string');
     }
-    finish(id) {
-        let self = this;
-        self.id = id;
-    }
-    async zero_grad() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+    async zeroGrad() {
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'zero_grad'
         }), 'string'), 'string');
     }
-    async step(batch_size, iteration) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+    async step(batchSize, iteration) {
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'step',
-            tensorIndexParams: [batch_size, iteration]
+            tensorIndexParams: [batchSize, iteration]
         }), 'string'), 'string');
     }
     cmd(options) {
-        let self = this;
-        return Object.assign({ objectType: self.type, objectIndex: self.id, tensorIndexParams: [], hyperParams: [] }, options);
+        return Object.assign({ objectType: this.type, objectIndex: this.id, tensorIndexParams: [], hyperParams: [] }, options);
     }
 }
 exports.Optimizer = Optimizer;
 class SGD extends Optimizer {
-    static async create(params, lr = 0.01, momentum = 0, decay = 0) {
-        let id = await Optimizer.createOptomizer(this, get_param_ids(params), [String(lr), String(momentum), String(decay)]);
+    static async create({ params, lr = 0.01, momentum = 0, decay = 0 }) {
+        let id = await Optimizer.createOptomizer(this, getParamIds(params), [String(lr), String(momentum), String(decay)]);
         return new this(lib_1.AsyncInstance, id);
     }
     static async get(id) {
@@ -60,8 +53,8 @@ class SGD extends Optimizer {
 SGD.$ = SGD;
 exports.SGD = SGD;
 class RMSProp extends Optimizer {
-    static async create(params, lr = 0.01, rho = 0.9, epsilon = 1e-6, decay = 0) {
-        let id = await Optimizer.createOptomizer(this, get_param_ids(params), [String(lr), String(rho), String(epsilon), String(decay)]);
+    static async create({ params, lr = 0.01, rho = 0.9, epsilon = 1e-6, decay = 0 }) {
+        let id = await Optimizer.createOptomizer(this, getParamIds(params), [String(lr), String(rho), String(epsilon), String(decay)]);
         return new this(lib_1.AsyncInstance, id);
     }
     static async get(id) {
@@ -71,8 +64,8 @@ class RMSProp extends Optimizer {
 RMSProp.$ = RMSProp;
 exports.RMSProp = RMSProp;
 class Adam extends Optimizer {
-    static async create(params, lr = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-6, decay = 0) {
-        let id = await Optimizer.createOptomizer(this, get_param_ids(params), [String(lr), String(beta_1), String(beta_2), String(epsilon), String(decay)]);
+    static async create({ params, lr = 0.01, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-6, decay = 0 }) {
+        let id = await Optimizer.createOptomizer(this, getParamIds(params), [String(lr), String(beta1), String(beta2), String(epsilon), String(decay)]);
         return new this(lib_1.AsyncInstance, id);
     }
     static async get(id) {

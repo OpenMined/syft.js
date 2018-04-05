@@ -40,11 +40,9 @@ export class Grid {
     configurations: any[],
     name?: any
   ) {
-    let self = this
-
     let configurations_json = configurations.map(item => JSON.stringify(item))
 
-    self.jobId = assertType(
+    this.jobId = assertType(
       await controller.sendJSON({
         objectType: 'Grid',
         functionCall: 'learn',
@@ -54,7 +52,7 @@ export class Grid {
       'string'
     )
 
-    self.store_job(self.jobId as string, name)
+    this.store_job(this.jobId as string, name)
   }
 
   // TODO: arg types????
@@ -62,7 +60,6 @@ export class Grid {
     experiments: any[],
     status_widgets: any[]
   ) {
-
     for (let i = 0; i < experiments.length; i++) {
       let experiment = experiments[i]
       let widget = status_widgets[i]
@@ -94,7 +91,7 @@ export class Grid {
   //   let uuid_column = widget.VBox(uuids)
   //   let status_column = widget.VBox(status)
   //
-  //   let check_status_thread = threading.Thread(target=self.check_experiment_status, args=(d, status))
+  //   let check_status_thread = threading.Thread(target=this.check_experiment_status, args=(d, status))
   //   check_status_thread.start()
   //
   //   let box = widget.HBox([names_column, uuid_column, status_column])
@@ -133,7 +130,6 @@ export class Grid {
   async get_results(
     experiment?: any
   ) {
-    let self = this
     let json
     try {
       json = await fs.readJSON('.openmined/grid/experiments.json')
@@ -153,8 +149,8 @@ export class Grid {
     if (usedJob == null && experiment != null){
       throw new Error (`No experiments matching '${experiment}'`)
     }
-    if (usedJob == null && self.jobId != null){
-      usedJob = self.jobId
+    if (usedJob == null && this.jobId != null){
+      usedJob = this.jobId
     }
     if (usedJob == null){
       throw new Error ('There are no saved experiments and you have not submitted a job.')
@@ -182,8 +178,7 @@ export class ExperimentResults {
   constructor(
     models: any[]
   ) {
-    let self = this
-    self.results = models
+    this.results = models
   }
 }
 
@@ -201,21 +196,18 @@ export class GridConfiguration {
     iters: any,
     name?: any
   ) {
-    let self = this
-    self.model = model
-    self.lr = lr
-    self.criterion = criterion
-    self.iters = iters
+    this.model = model
+    this.lr = lr
+    this.criterion = criterion
+    this.iters = iters
   }
 
   toJSON() {
-    let self = this
-
     return {
-      model: self.model.id,
-      lr: self.lr,
-      criterion: self.criterion,
-      iters: self.iters
+      model: this.model.id,
+      lr: this.lr,
+      criterion: this.criterion,
+      iters: this.iters
     }
   }
 }

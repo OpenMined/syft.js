@@ -1,10 +1,18 @@
+const DATA = new Int32Array(0)
+
 export class DimArray {
   shape: Uint32Array
-  data: Int32Array|Float64Array
+  data: Int32Array|Float64Array = DATA
   size: number
 
-  constructor(data: any[]) {
-    let self = this
+  constructor(
+    $: any,
+    data: any[]
+  ) {
+
+    if ($ !== DimArray) {
+      throw new Error('CANNOT construct DimArray directly.')
+    }
 
     let shape = []
     let size = 1
@@ -17,14 +25,13 @@ export class DimArray {
       d = d[0]
     }
 
-    self.size = size
-    self.shape = new Uint32Array(shape)
+    this.size = size
+    this.shape = new Uint32Array(shape)
   }
 
   __fillData__(data: any[]) {
-    let self = this
-    let size = self.size
-    let shape = self.shape
+    let size = this.size
+    let shape = this.shape
     let shapeLength = shape.length
 
     for (let i = 0; i < size; i++) {
@@ -45,7 +52,7 @@ export class DimArray {
         throw new Error(`Invid Data Type ${typeof v} ${v}`)
       }
 
-      self.data[i] = v
+      this.data[i] = v
     }
   }
 }
@@ -54,11 +61,10 @@ export class IntDimArray extends DimArray {
   data: Int32Array
 
   constructor(data: any[]) {
-    super(data)
-    let self = this
+    super(DimArray, data)
 
-    self.data = new Int32Array(self.size)
-    self.__fillData__(data)
+    this.data = new Int32Array(this.size)
+    this.__fillData__(data)
   }
 }
 
@@ -66,10 +72,9 @@ export class FloatDimArray extends DimArray {
   data: Float64Array
 
   constructor(data: any[]) {
-    super(data)
-    let self = this
+    super(DimArray, data)
 
-    self.data = new Float64Array(self.size)
-    self.__fillData__(data)
+    this.data = new Float64Array(this.size)
+    this.__fillData__(data)
   }
 }

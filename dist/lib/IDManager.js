@@ -4,6 +4,7 @@ class IDManager {
     constructor(max = Number.MAX_SAFE_INTEGER) {
         this.__id__ = 0;
         this.__rs__ = [];
+        this.__max__ = Number.MAX_SAFE_INTEGER;
         if (0 < max && max <= Number.MAX_SAFE_INTEGER) {
             this.__max__ = max;
         }
