@@ -7,7 +7,7 @@ export interface IAsyncConstructor {
 
 export class AsyncInstance {
   id: string
-  __error__: Error
+  __error__: Error|null = null
 
   constructor($: any, id: string) {
     AsyncInstance.assertConstructable($)

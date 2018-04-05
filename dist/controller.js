@@ -39,12 +39,12 @@ socket.on('message', (res) => {
         }
     }
 });
-async function num_models() {
+async function numModels() {
     return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'num_models'
     }), 'int'), 'number');
 }
-exports.num_models = num_models;
+exports.numModels = numModels;
 async function load(filename) {
     return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'load_floattensor',
@@ -64,13 +64,13 @@ async function concatenate(tensors, axis = 0) {
     }), 'FloatTensor'), syft_1.FloatTensor);
 }
 exports.concatenate = concatenate;
-async function num_tensors() {
+async function numTensors() {
     return lib_1.assertType(await sendJSON(cmd({
         functionCall: 'num_tensors'
     }), 'int'), 'number');
 }
-exports.num_tensors = num_tensors;
-async function new_tensors_allowed(allowed) {
+exports.numTensors = numTensors;
+async function newTensorsAllowed(allowed) {
     if (allowed == null) {
         return lib_1.assertType(await sendJSON(cmd({
             functionCall: 'new_tensors_allowed'
@@ -89,56 +89,56 @@ async function new_tensors_allowed(allowed) {
         }), 'bool'), 'boolean');
     }
 }
-exports.new_tensors_allowed = new_tensors_allowed;
-async function sendJSON(message, return_type) {
+exports.newTensorsAllowed = newTensorsAllowed;
+async function sendJSON(message, returnType) {
     let data = JSON.stringify(message);
     let res = await wq.queue(data);
-    if (return_type == null) {
+    if (returnType == null) {
         return;
     }
-    else if (return_type === 'FloatTensor') {
+    else if (returnType === 'FloatTensor') {
         if (res !== '-1' && res !== '') {
             return new syft_1.FloatTensor(lib_1.AsyncInstance, res);
         }
         return;
     }
-    else if (return_type === 'IntTensor') {
+    else if (returnType === 'IntTensor') {
         if (res !== '-1' && res !== '') {
             return new syft_1.IntTensor(lib_1.AsyncInstance, res);
         }
         return;
     }
-    else if (return_type === 'FloatTensor_list') {
+    else if (returnType === 'FloatTensor_list') {
         let tensors = [];
         if (res !== '') {
             let ids = res.split(',');
-            for (let str_id of ids) {
-                if (str_id) {
-                    tensors.push(new syft_1.FloatTensor(lib_1.AsyncInstance, str_id));
+            for (let strId of ids) {
+                if (strId) {
+                    tensors.push(new syft_1.FloatTensor(lib_1.AsyncInstance, strId));
                 }
             }
         }
         return tensors;
     }
-    else if (return_type === 'Model_list') {
+    else if (returnType === 'Model_list') {
         let models = [];
         if (res !== '') {
             let ids = res.split(',');
-            for (let str_id of ids) {
-                if (str_id) {
-                    models.push(await syft_1.Model.getModel(str_id));
+            for (let strId of ids) {
+                if (strId) {
+                    models.push(await syft_1.Model.getModel(strId));
                 }
             }
         }
         return models;
     }
-    else if (return_type === 'int' || return_type === 'float') {
+    else if (returnType === 'int' || returnType === 'float') {
         return Number(res);
     }
-    else if (return_type === 'string') {
+    else if (returnType === 'string') {
         return String(res);
     }
-    else if (return_type === 'bool') {
+    else if (returnType === 'bool') {
         if (res === 'True') {
             return true;
         }

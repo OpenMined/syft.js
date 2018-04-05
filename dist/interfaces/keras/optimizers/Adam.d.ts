@@ -1,8 +1,20 @@
 import * as syft from '../../../syft';
 import { Optimizer } from '.';
 export declare class Adam implements Optimizer {
-    syft_optim?: syft.Adam;
-    hyperparameters: number[];
-    constructor(lr?: number, beta_1?: number, beta_2?: number, epsilon?: number, decay?: number);
-    create(syft_params: syft.Tensor[]): Promise<void>;
+    syftOptim?: syft.Adam;
+    hyperparameters: {
+        lr: number;
+        beta1: number;
+        beta2: number;
+        epsilon: number;
+        decay: number;
+    };
+    constructor({lr, beta1, beta2, epsilon, decay}: {
+        lr?: number;
+        beta1?: number;
+        beta2?: number;
+        epsilon?: number;
+        decay?: number;
+    });
+    create(syftParams: syft.Tensor[]): Promise<void>;
 }

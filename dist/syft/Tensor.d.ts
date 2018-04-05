@@ -1,33 +1,25 @@
-import { DimArray, IntDimArray, FloatDimArray, AsyncInstance, IAsyncConstructor } from '../lib';
+import { AsyncInstance, IAsyncConstructor } from '../lib';
 export declare class Tensor extends AsyncInstance {
-    data?: DimArray;
     type: string;
-    static deserialize(str: string): Promise<Tensor>;
-    serialize(optimizeStorage?: boolean): {
-        data: ArrayBuffer;
-        view: DataView;
-        toString: any;
-    };
-    finish(id: string): void;
     delete(): Promise<void>;
     autograd(state: boolean): Promise<void>;
-    get(param_name?: string, response_as_tensor?: boolean): Promise<Tensor | string>;
+    get(paramName?: string, responseAsTensor?: boolean): Promise<Tensor | string>;
     protected cmd(options: {
         [key: string]: any;
         functionCall: string;
         tensorIndexParams?: any[];
     }): SocketCMD;
-    is_contiguous(): Promise<boolean>;
-    to_numpy(): Promise<number[] | " - non-contiguous - ">;
+    isContiguous(): Promise<boolean>;
+    getData(): Promise<number[] | string>;
     __repr__(verbose?: boolean): Promise<string>;
-    batchify(dim: number, batch_size: number): Promise<any>;
-    clamp(min?: number, max?: number): Promise<any>;
+    batchify(dim: number, batchSize: number): Promise<this[]>;
+    clamp(min?: number, max?: number): Promise<this>;
     equal(x: this): Promise<boolean>;
-    lt(x: this): Promise<boolean>;
-    lt_(x: this): Promise<boolean>;
+    lt(x: this): Promise<this>;
+    lt_(x: this): Promise<this>;
     norm(dim?: number, keepdim?: boolean, p?: number): Promise<this>;
     random_(): Promise<this>;
-    split(split_size_or_sections: number, dim?: number): Promise<any>;
+    split(splitSizeOrSections: number, dim?: number): Promise<this[]>;
     abs(): Promise<this>;
     abs_(): Promise<this>;
     acos(): Promise<this>;
@@ -50,16 +42,16 @@ export declare class Tensor extends AsyncInstance {
     cosh(): Promise<this>;
     cosh_(): Promise<this>;
     children(): Promise<never[]>;
-    creation_op(): Promise<string | Tensor>;
+    creationOp(): Promise<string | Tensor>;
     creators(): Promise<string[]>;
     cumsum(dim?: number): Promise<this>;
     dataOnGpu(): Promise<boolean>;
     exp(): Promise<this>;
     exp_(): Promise<this>;
     expand(...args: number[]): Promise<this>;
-    index_add(indices: any, dim: number, x: Tensor): Promise<this>;
-    index_add_(indices: any, dim: number, x: Tensor): Promise<this>;
-    index_select(dim: number, indices: any): Promise<this>;
+    indexAdd(indices: any, dim: number, x: Tensor): Promise<this>;
+    indexAdd_(indices: any, dim: number, x: Tensor): Promise<this>;
+    indexSelect(dim: number, indices: any): Promise<this>;
     keepgrad(): Promise<boolean>;
     pow(x: number | Tensor): Promise<this>;
     pow_(x: number | Tensor): Promise<this>;
@@ -72,8 +64,8 @@ export declare class Tensor extends AsyncInstance {
     neg(): Promise<this>;
     neg_(): Promise<this>;
     relu(): Promise<this>;
-    save(filename: string): Promise<any>;
-    set(param_name?: string, params?: any[]): Promise<void>;
+    save(filename: string): Promise<boolean>;
+    set(paramName?: string, params?: any[]): Promise<void>;
     sigmoid_(): Promise<this>;
     sigmoid(): Promise<this>;
     sign(): Promise<this>;
@@ -81,18 +73,18 @@ export declare class Tensor extends AsyncInstance {
     sin(): Promise<this>;
     sin_(): Promise<this>;
     size(): Promise<string | Tensor>;
-    shape(as_list?: boolean): Promise<number[]>;
+    shape(asList?: boolean): Promise<number[]>;
     softmax(dim?: number): Promise<this>;
     std(dim?: number): Promise<this>;
-    stride(dim?: number): Promise<any>;
+    stride(dim?: number): Promise<number | number[]>;
     sqrt(): Promise<this>;
     sqrt_(): Promise<this>;
     trace(): Promise<this>;
     trunc(): Promise<this>;
     view(...args: any[]): Promise<this>;
     view_(...args: any[]): Promise<this>;
-    view_as(x: Tensor): Promise<this>;
-    view_as_(x: Tensor): Promise<this>;
+    viewAs(x: Tensor): Promise<this>;
+    viewAs_(x: Tensor): Promise<this>;
     T(): Promise<this>;
     triu(k?: number): Promise<this>;
     triu_(k?: number): Promise<this>;
@@ -100,9 +92,9 @@ export declare class Tensor extends AsyncInstance {
     unsqueeze_(dim: number): Promise<this>;
     zero_(): Promise<this>;
     toString(): Promise<string>;
-    cpu(): Promise<any>;
-    gpu(): Promise<any>;
-    arithmetic_operation(x: number | Tensor, name: string, inline?: boolean): Promise<this>;
+    cpu(): Promise<this>;
+    gpu(): Promise<this>;
+    arithmeticOperation(x: number | Tensor, name: string, inline?: boolean): Promise<this>;
     add(x: number | Tensor): Promise<this>;
     add_(x: number | Tensor): Promise<this>;
     sub(x: number | Tensor): Promise<this>;
@@ -153,7 +145,6 @@ export interface FloatTensorConstructor extends IAsyncConstructor {
 }
 export declare class IntTensor extends Tensor {
     static $: IAsyncConstructor;
-    data?: IntDimArray;
     type: string;
     static get(id: string): Promise<IntTensor>;
     static create(arr: any[] | {
@@ -163,7 +154,6 @@ export declare class IntTensor extends Tensor {
 }
 export declare class FloatTensor extends Tensor {
     static $: IAsyncConstructor;
-    data?: FloatDimArray;
     type: string;
     static get(id: string): Promise<FloatTensor>;
     static create(arr: any[] | {

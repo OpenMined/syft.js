@@ -5,7 +5,7 @@ export interface IAsyncConstructor {
 }
 export declare class AsyncInstance {
     id: string;
-    __error__: Error;
+    __error__: Error | null;
     constructor($: any, id: string);
     ready(): void;
     __delete__(): void;

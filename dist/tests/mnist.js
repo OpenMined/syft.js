@@ -19,9 +19,22 @@ async function test() {
     ]);
     g.model = model;
     let criterion = await syft.Model.CrossEntropyLoss.create();
-    let optim = await syft.Optimizer.SGD.create(await model.parameters(), 0.06);
-    let metric = ['accuracy'];
-    let loss = await model.fit(training.input, training.output, criterion, optim, 32, 4, 1, metric, true);
+    let optimizer = await syft.Optimizer.SGD.create({
+        params: await model.parameters(),
+        lr: 0.06
+    });
+    let metrics = ['accuracy'];
+    let loss = await model.fit({
+        input: training.input,
+        target: training.output,
+        criterion,
+        optimizer,
+        batchSize: 32,
+        iterations: 4,
+        logInterval: 1,
+        metrics,
+        verbose: true
+    });
     console.log('trained!', loss);
     g.perd = await model.forward(testing.input);
     criterion.forward(g.perd, testing.output);

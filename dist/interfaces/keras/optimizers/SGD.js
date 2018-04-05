@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const syft = require("../../../syft");
 class SGD {
-    constructor(lr = 0.01, momentum = 0, decay = 0) {
-        this.hyperparameters = [lr, momentum, decay];
+    constructor({ lr = 0.01, momentum = 0, decay = 0 }) {
+        this.hyperparameters = { lr, momentum, decay };
     }
-    async create(syft_params) {
-        let self = this;
-        self.syft_optim = await syft.Optimizer.SGD.create(syft_params, ...self.hyperparameters);
+    async create(syftParams) {
+        this.syftOptim = await syft.Optimizer.SGD.create(Object.assign({ params: syftParams }, this.hyperparameters));
     }
 }
 exports.SGD = SGD;

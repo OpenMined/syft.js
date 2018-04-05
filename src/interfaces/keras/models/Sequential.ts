@@ -3,183 +3,303 @@ import { Layer } from '../layers'
 import { Optimizer } from '../optimizers'
 import { Model } from '.'
 
+/**
+* Sequential Model.
+*/
 export class Sequential implements Model {
-  syft_model?: syft.Sequential
+  /**
+  * The underlying Syft Sequential Model.
+  */
+  syftModel?: syft.Sequential
+
+  /**
+  * The underlying Syft Model used for loss.
+  */
   loss?: syft.Model
+
+  /**
+  * The Optimizer for fitting/training.
+  */
   optimizer?: Optimizer
 
+  /**
+  * An array of sub-Layers in this model.
+  */
   layers: Layer[] = []
+
+  /**
+  * TODO document this?
+  */
   metrics: string[] = []
 
+  /**
+  * Boolean tells whether the Model has been compiled.
+  */
   compiled = false
 
+  /**
+  * Constructs a new Sequential Model.
+  *
+  * @param layers  An array of Layers.
+  *
+  * @returns A new instance of Sequential Model.
+  */
+  constructor(
+    layers: Layer[] = []
+  ) {
+    for (let layer of layers) {
+      this.add(layer)
+    }
+  }
+
+  /**
+  * Adds a Layer to this Sequential Model.
+  *
+  * @param layer  A Layers.
+  *
+  * @returns  This Sequential Model.
+  */
   async add(
     layer: Layer
   ) {
-    let self = this
+    if (this.compiled) {
+      throw new Error('CANNOT add layers after model has been compiled.')
+    }
 
-    if (self.layers.length > 0) {
+    if (this.layers.length > 0) {
       // look to the previous layer to get the input shape for this layer
-      layer.input_shape = self.layers[ self.layers.length - 1 ].output_shape
+      layer.inputShape = this.layers[ this.layers.length - 1 ].outputShape
 
       // if layer doesn't know its output shape - it's probably dynamic
-      if (layer.output_shape == null) {
-        layer.output_shape = layer.input_shape
+      if (layer.outputShape == null) {
+        layer.outputShape = layer.inputShape
       }
     }
 
-    self.layers.push(layer)
+    this.layers.push(layer)
+
+    return this
   }
 
-  async compile(
+  /**
+  * Compiles this Sequential Model.
+  *
+  * @param args.loss       TODO document this?
+  * @param args.optimizer  TODO document this?
+  * @param args.metrics    TODO document this?
+  *
+  * @returns  This Sequential Model.
+  */
+  async compile({
+    loss,
+    optimizer,
+    metrics = []
+  }: {
     loss: string,
     optimizer: Optimizer,
-    metrics: string[] = []
-  ) {
-    let self = this
-
-    if (!self.compiled) {
-      self.compiled = true
-      self.syft_model = await syft.Model.Sequential.create()
+    metrics?: string[]
+  }) {
+    if (!this.compiled) {
+      this.compiled = true
+      this.syftModel = await syft.Model.Sequential.create()
 
       // sometimes keras has single layers that actually correspond
       // to multiple syft layers - so they end up getting stored in
-      // an ordered list called 'ordered_syft'
-      for (let layer of self.layers) {
-        for (let l of layer.ordered_syft) {
+      // an ordered list called 'orderedSyft'
+      for (let layer of this.layers) {
+        for (let l of layer.orderedSyft) {
           await layer.create()
-          self.syft_model.add(l)
+          this.syftModel.add(l)
         }
       }
 
       if (loss === 'categorical_crossentropy') {
-        self.loss = await syft.Model.Categorical_CrossEntropy.create()
-      } else if (loss === 'mean_squared_error') {
-        self.loss = await syft.Model.MSELoss.create()
+        this.loss = await syft.Model.Categorical_CrossEntropy.create()
+      } else if (loss === 'meanSquared_error') {
+        this.loss = await syft.Model.MSELoss.create()
       }
-      await optimizer.create(await self.syft_model.parameters())
+      await optimizer.create(await this.syftModel.parameters())
 
-      self.optimizer = optimizer
-      self.metrics = metrics
+      this.optimizer = optimizer
+      this.metrics = metrics
     } else {
       console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things')
     }
 
-    return self
+    return this
   }
 
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async summary() {
-    // let self = this
-    // TODO: self.syft_model.summary()
+    // TODO: this.syftModel.summary()
   }
 
-  async fit(
-    input: syft.Tensor,
-    target: syft.Tensor,
-    batch_size: number,
+  /**
+  * Fits/Trains this Sequential Model.
+  *
+  * @param args.input           Input dataset for training.
+  * @param args.target          Labels for input dataset.
+  * @param args.batchSize       Number of samples to use per training batch.
+  * @param args.epochs          Number of times to go over the entire training dataset.
+  * @param args.validationData  TODO document this?
+  * @param args.logInterval     How often to log status updates while training.
+  * @param args.verbose         Whether to log status updates while training.
+  *
+  * @returns  The final loss after fitting/training.
+  */
+  async fit({
+    input,
+    target,
+    batchSize,
     epochs = 1,
-    validation_data = null,
-    log_interval = 1,
+    validationData,
+    logInterval = 1,
     verbose = false
-  ) {
-    let self = this
+  }: {
+    input: syft.Tensor
+    target: syft.Tensor
+    batchSize: number
+    epochs?: number
+    validationData?: any
+    logInterval?: number
+    verbose?: boolean
+  }) {
     if (
-      self.syft_model == null ||
-      self.loss == null ||
-      self.optimizer == null ||
-      self.optimizer.syft_optim == null
+      this.syftModel == null ||
+      this.loss == null ||
+      this.optimizer == null ||
+      this.optimizer.syftOptim == null
     ) {
       throw new Error('Not Compiled')
     }
 
-    return self.syft_model.fit(
+    return this.syftModel.fit({
       input,
       target,
-      self.loss,
-      self.optimizer.syft_optim,
-      batch_size,
-      epochs,
-      log_interval,
-      self.metrics,
+      criterion: this.loss,
+      optimizer: this.optimizer.syftOptim,
+      batchSize,
+      iterations: epochs,
+      logInterval,
+      metrics: this.metrics,
       verbose
-    )
+    })
   }
 
-  async evaluate(
-    test_input: syft.Tensor,
-    test_target: syft.Tensor,
-    batch_size: number,
-    metrics: string[] = [],
-    verbose = true
-  ) {
-    // TODO: let self = this
-    // return self.syft_model.evaluate(
-    //   test_input,
-    //   test_target,
-    //   self.loss,
+  /**
+  * TODO document this?
+  *
+  * @param args.testInput   TODO document this?
+  * @param args.testTarget  TODO document this?
+  * @param args.batchSize   TODO document this?
+  * @param args.metrics     TODO document this?
+  * @param args.verbose     TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async evaluate({
+    testInput,
+    testTarget,
+    batchSize,
+    metrics = [],
+    verbose = false
+  }: {
+    testInput: syft.Tensor
+    testTarget: syft.Tensor
+    batchSize: number
+    metrics?: string[]
+    verbose?: boolean
+  }) {
+    // TODO:
+    // return this.syftModel.evaluate(
+    //   testInput,
+    //   testTarget,
+    //   this.loss,
     //   metrics=metrics,
     //   verbose=verbose,
-    //   batch_size=batch_size
+    //   batchSize=batchSize
     // )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param x   TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async predict(
     x: syft.Tensor
   ) {
-    let self = this
     // if (type(x) === list):
     // x = np.array(x).astype('float')
     // if (type(x) === np.array or type(x) === np.ndarray):
-    // x = FloatTensor(x,autograd=true, delete_after_use=false)
+    // x = FloatTensor(x, autograd=true, deleteAfterUse=false)
 
     if (
-      self.syft_model == null ||
-      self.loss == null ||
-      self.optimizer == null
+      this.syftModel == null ||
+      this.loss == null ||
+      this.optimizer == null
     ) {
       throw new Error('Not Compiled')
     }
 
-    return (await self.syft_model.forward(x))
+    return (await this.syftModel.forward(x))
   }
 
-  async get_weights(): Promise<syft.Tensor[]> {
-    let self = this
-
+  /**
+  * TODO document this?
+  *
+  * @param x   TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async getWeights(): Promise<syft.Tensor[]> {
     if (
-      self.syft_model == null ||
-      self.loss == null ||
-      self.optimizer == null
+      this.syftModel == null ||
+      this.loss == null ||
+      this.optimizer == null
     ) {
       throw new Error('Not Compiled')
     }
 
-    return self.syft_model.parameters()
+    return this.syftModel.parameters()
   }
 
-  async to_json() {
-    // TODO: let self = this
-    // let json_str = self.syft_model.to_json()
+  /**
+  * TODO document this?
+  *
+  * @param x   TODO document this?
+  *
+  * @returns  TODO document this?
+  */
+  async getJSON() {
+    // TODO: let this = this
+    // let jsonStr = this.syftModel.getJSON()
     //
-    // let o = JSON.parse(json_str)
+    // let o = JSON.parse(jsonStr)
     //
-    // o['config'][0]['config']['batch_input_shape'] = [null, self.layers[0].input_shape]
+    // o['config'][0]['config']['batchInputShape'] = [null, this.layers[0].inputShape]
     //
-    // let new_config: any [] = []
+    // let newConfig: any [] = []
     // for (let layer of o['config']) {
     //   if (layer['class_name'] === 'Linear') {
     //     layer['class_name'] = 'Sequential'
     //     layer['config']['name'] = 'dense_' + layer['config']['name'].split('_')[-1]
     //   } else if (layer['class_name'] === 'Softmax') {
-    //     new_config[-1]['config']['activation'] = 'softmax'
+    //     newConfig[-1]['config']['activation'] = 'softmax'
     //     continue
     //   } else if (layer['class_name'] === 'ReLU') {
-    //     new_config[-1]['config']['activation'] = 'relu'
+    //     newConfig[-1]['config']['activation'] = 'relu'
     //     continue
     //   }
-    //   new_config.push(layer)
+    //   newConfig.push(layer)
     // }
-    // o['config'] = new_config
+    // o['config'] = newConfig
     //
     // return JSON.stringify(o)
   }

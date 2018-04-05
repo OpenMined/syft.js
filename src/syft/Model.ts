@@ -10,21 +10,58 @@ import { Optimizer } from './Optimizer'
 
 import { Tensor } from './Tensor'
 
-
+/**
+* A base-class for Syft Models to inherit from.
+*/
 export class Model extends AsyncInstance {
+  /**
+  * Syft object type.
+  */
   type = 'model'
+
+  /**
+  * Syft model layer type.
+  */
   layerType = '(unknown)'
+
+  /**
+  * Then number of outputs on this Model.
+  */
   outputShape?: number|string = '(dynamic)'
 
+  /**
+  * An assert method to test if a given layer type
+  * is compatible with a given model.
+  *
+  * @param layerType         A string representing the layer type to test for.
+  * @param modelConstructor  A model constructor to test against.
+  */
   protected static assertLayerType(
-    a: string,
-    b: Function
+    layerType: string,
+    modelConstructor: Function
   ) {
-    if (a.toLowerCase() !== b.name.toLowerCase()) {
-      throw new TypeError(`Connat Convert '${a}' to '${b.name}'`)
+    if (
+      layerType.toLowerCase() !== modelConstructor.name.toLowerCase()
+    ) {
+      throw new TypeError(
+        `Connat Convert '${
+          layerType
+        }' to '${
+          modelConstructor.name
+        }'`
+      )
     }
   }
 
+  /**
+  * Creates a local instance of a network connected model.
+  *
+  * @param $     A sercert variable to prove that the caller is authorized.
+  * @param id    The ID of network connected object in the Unity Project.
+  * @param type  The type of object being connected over the network.
+  *
+  * @returns  A local instance of a network connected model.
+  */
   protected static newModel(
     $: any,
     id: string,
@@ -66,6 +103,13 @@ export class Model extends AsyncInstance {
     }
   }
 
+  /**
+  * Gets the model type of a network connected model.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  The model type with the given `id`.
+  */
   static async getModelType(
     id: string
   ): Promise<string> {
@@ -80,6 +124,13 @@ export class Model extends AsyncInstance {
     ) as string
   }
 
+  /**
+  * Gets a local instance of a network connected model.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected model.
+  */
   static async getModel(
     id: string
   ): Promise<Model> {
@@ -88,6 +139,14 @@ export class Model extends AsyncInstance {
     return Model.newModel(AsyncInstance, id, type)
   }
 
+  /**
+  * Creates a local instance of a network connected model.
+  *
+  * @param layerConstructor  The model constructor of which to create.
+  * @param params            Parameters specific to the model constructor.
+  *
+  * @returns  A local instance of a network connected model.
+  */
   static async createModel(
     layerConstructor: Function,
     ...params: any[] // TODO: what type are thses
@@ -104,115 +163,155 @@ export class Model extends AsyncInstance {
     ) as string
   }
 
-  async feed(...args: any[]) {
-    let self = this
-    self.ready()
+  /**
+  * TODO find out args type and document this function.
+  */
+  async feed(
+    ...args: any[]
+  ) {
+    this.ready()
 
-    return self.forward(...args)
+    return this.forward(...args)
   }
 
+  /**
+  * Get the parameter Tensors of this Model.
+  *
+  * @returns  An array of Tensors containing the parameters of this Model.
+  */
   async parameters(): Promise<Tensor[]> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'params'
       }), 'FloatTensor_list'),
       Array
     )
   }
 
-  async num_parameters() {
-    let self = this
-    self.ready()
+  /**
+  * Get the number of parameters in this Model.
+  *
+  * @returns  The number of parameters in this Model.
+  */
+  async numParameters() {
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'param_count'
       }), 'int'),
       'number'
     )
   }
 
+  /**
+  * Get the layer Models in this Model.
+  *
+  * @returns  An array of Models used as layers in this Model.
+  */
   async models(): Promise<Model[]> {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'models'
       }), 'Model_list'),
       Array
     )
   }
 
+  /**
+  * TODO document this?
+  */
   async set_id(
     new_id: string
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'set_id',
         tensorIndexParams: [new_id]
       }), 'string'),
       'string'
     )
 
-    self.id = new_id
-    return self
+    this.id = new_id
+    return this
   }
 
-  async fit(
-    input: Tensor,
-    target: Tensor,
-    criterion: Model,
-    optim: Optimizer,
-    batch_size: number,
-    iters = 15,
-    log_interval = 200,
-    metrics: string[] = [],
-    verbose = true
-  ) {
-    let self = this
-    self.ready()
+  /**
+  * The fit function is used to train the model.
+  *
+  * @param options.input        The training dataset.
+  * @param options.target       The labels for the training dataset.
+  * @param options.criterion    TODO document this?
+  * @param options.optimizer    TODO document this?
+  * @param options.batchSize    TODO document this?
+  * @param options.iterations   TODO document this? (default 15)
+  * @param options.logInterval  TODO document this? (default 200)
+  * @param options.metrics      TODO document this? (default [])
+  * @param options.verbose      TODO document this? (default false)
+  *
+  * @returns The final loss value.
+  */
+  async fit({
+    input,
+    target,
+    criterion,
+    optimizer,
+    batchSize,
+    iterations = 15,
+    logInterval = 200,
+    metrics = [],
+    verbose = false
+  }: {
+    input: Tensor
+    target: Tensor
+    criterion: Model
+    optimizer: Optimizer
+    batchSize: number
+    iterations?: number
+    logInterval?: number
+    metrics?: string[]
+    verbose?: boolean
+  }) {
+    this.ready()
 
-    console.log('prepare_to_fit')
+    if (verbose) { console.log('prepare_to_fit') }
 
-    let num_batches = assertType(
-      await controller.sendJSON(self.cmd({
+    let numBatches = assertType(
+      await controller.sendJSON(this.cmd({
         functionCall: 'prepare_to_fit',
-        tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
+        tensorIndexParams: [input.id, target.id, criterion.id, optimizer.id, batchSize]
       }), 'int'),
       'number'
     )
-    console.log('fit')
+    if (verbose) { console.log('fit') }
 
     let loss = 100000
-    for (let iter = 0; iter < iters; iter++) {
-      for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
-        let prev_loss = loss
-
+    for (let iter = 0; iter < iterations; iter++) {
+      for (let logI = 0; logI < numBatches; logI += logInterval) {
         let _loss = assertType(
-          await controller.sendJSON(self.cmd({
+          await controller.sendJSON(this.cmd({
             functionCall: 'fit',
-            tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
+            tensorIndexParams: [logI, Math.min(logI + logInterval, numBatches), 1]
           }), 'float'),
           'number'
         ) as number
 
-        if (log_i % 10 === 0) {
-          console.log(`iter ${iter}/${iters} - ${log_i}/${num_batches} -- ${_loss}`)
+        if (verbose && logI % 10 === 0) {
+          console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${_loss}`)
         }
 
         if (_loss) {
           loss = _loss
         } else {
-          console.log(_loss)
+          if (verbose) { console.log(_loss) }
         }
-        if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
+        if (Number.isNaN(loss)) {
           break
         }
       }
@@ -225,99 +324,124 @@ export class Model extends AsyncInstance {
   //
   // async summary(
   //   verbose = true,
-  //   return_instead_of_print = false
+  //   returnInsteadOfPrint = false
   // ): Promise<string|undefined> {
-  //   let self = this
-  //   self.ready()
+  //   let this = this
+  //   this.ready()
   //
-  //   // let layerType = await self.getLayerType() + '_' + self.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
-  //   let layerType = `${await self.getLayerType()}_${self.id} (${self.type})`
+  //   // let layerType = await this.getLayerType() + '_' + this.id + ' (' + str(type()).split('\'')[1].split('.')[-1] + ')'
+  //   let layerType = `${await this.getLayerType()}_${this.id} (${this.type})`
   //   let outputShape = ''
-  //   if (typeof self.outputShape === 'number') {
-  //     outputShape = String(self.outputShape)
+  //   if (typeof this.outputShape === 'number') {
+  //     outputShape = String(this.outputShape)
   //   } else {
-  //     outputShape = String(self.outputShape)
+  //     outputShape = String(this.outputShape)
   //   }
   //
-  //   let n_param = String(await self.num_parameters())
-  //   let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + n_param + '\n'
+  //   let nParam = String(await this.numParameters())
+  //   let output = layerType + ' '.repeat(29 - layerType.length) + outputShape + ' '.repeat(26 - outputShape.length) + nParam + '\n'
   //   if (verbose) {
   //     let single = '_________________________________________________________________\n'
   //     let header = 'Layer (type)                 Output Shape              Param #   \n'
   //     let double = '===\n'
-  //     // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-  //     // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-  //     let non_trainable_params = 'Non-trainable params: 0' + '\n'
-  //     // TODO: output = single + header + double + output + double + total_params + trainable_params + non_trainable_params + single
+  //     // TODO: let totalParams = 'Total params: ' + '{:,}'.format(this.numParameters()) + '\n'
+  //     // TODO: let trainableParams = 'Trainable params: ' + '{:,}'.format(this.numParameters()) + '\n'
+  //     let nonTrainableParams = 'Non-trainable params: 0' + '\n'
+  //     // TODO: output = single + header + double + output + double + totalParams + trainableParams + nonTrainableParams + single
   //   }
   //
-  //   if (return_instead_of_print) {
+  //   if (returnInsteadOfPrint) {
   //     return output
   //   }
   //   console.log(output)
   //   return
   // }
 
+  /**
+  * Get the number of models.
+  *
+  * @returns  The number of models.
+  */
   async length() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    return (await self.models()).length
+    return (await this.models()).length
   }
 
-
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async activation() {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'activation'
-      }), 'FloatTensor', /*delete_after_use=false*/),
+      }), 'FloatTensor', /**deleteAfterUse=false*/),
       Tensor.FloatTensor
     )
   }
 
+  /**
+  * TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async getLayerType() {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'model_type'
       }), 'string'),
       'string'
     )
   }
 
-  cmd(
+  /**
+  * Creates a command object for this Model.
+  *
+  * @param options.functionCall       The function to call.
+  * @param options.tensorIndexParams  The labels for the training dataset.
+  * @param options[key]               Other options.
+  *
+  * @returns  A command object.
+  */
+  protected cmd(
     options: {
       [key: string]: any
       functionCall: string
       tensorIndexParams?: any[],
     }
   ): SocketCMD {
-    let self = this
 
     return {
-      objectType: self.type,
-      objectIndex: self.id || '-1',
+      objectType: this.type,
+      objectIndex: this.id || '-1',
       tensorIndexParams: [],
       ...options
     }
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param input  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async forward(
     ...input: Tensor[]
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'forward',
         tensorIndexParams: input.map(t => t.id)
-      }), 'FloatTensor' /*, false*/),
+      }), 'FloatTensor' /**, false*/),
       Tensor.FloatTensor
     )
   }
@@ -325,22 +449,22 @@ export class Model extends AsyncInstance {
   // async __repr__(
   //   verbose = true
   // ) {
-  //   let self = this
-  //   self.ready()
+  //   let this = this
+  //   this.ready()
   //
   //   if (verbose) {
   //     let output = ''
-  //     output += self.__repr__(false) + '\n'
-  //     for (let p of await self.parameters()) {
+  //     output += this.__repr__(false) + '\n'
+  //     for (let p of await this.parameters()) {
   //       output += '\t W:' + p.__repr__(false)
   //     }
-  //     let activation = await self.activation()
+  //     let activation = await this.activation()
   //     if (activation) {
   //       output += '\t A:' + activation + '\n'
   //     }
   //     return output
   //   } else {
-  //     return `<syft.nn.${self.layerType} at ${self.id}>`
+  //     return `<syft.nn.${this.layerType} at ${this.id}>`
   //   }
   // }
 
@@ -444,13 +568,39 @@ export interface Categorical_CrossEntropyConstructor extends IAsyncConstructor {
   create(...args: any[]): Promise<Categorical_CrossEntropy>
 }
 
+/**
+* Policy Model
+*/
 export class Policy extends Model {
   static $: IAsyncConstructor = Policy
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'policy'
+
+  /**
+  * TODO ocument this?
+  */
   stateType: string = 'discrete'
+
+  /**
+  * TODO ocument this?
+  */
   optimizer?: Optimizer
+
+  /**
+  * TODO ocument this?
+  */
   model?: Model
 
+  /**
+  * Get a Policy Model given its ID
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Policy Model.
+  */
   static async get(
     id: string
   ) {
@@ -461,6 +611,15 @@ export class Policy extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Policy.
+  *
+  * @param model      The Policy's interal Model.
+  * @param optimizer  TODO document this?
+  * @param stateType  TODO document this?
+  *
+  * @returns  A local instance of a network connected Policy.
+  */
   static async create(
     model: Model,
     optimizer: Optimizer,
@@ -475,14 +634,20 @@ export class Policy extends Model {
     return policy
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param input  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async sample(
     ...input: Tensor[]
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'sample',
         tensorIndexParams: input.map(t => t.id)
       }), 'IntTensor'),
@@ -490,51 +655,61 @@ export class Policy extends Model {
     )
   }
 
+  /**
+  * Get the parameter Tensors of this.model.
+  *
+  * @returns  An array of Tensors containing the parameters of this.model.
+  */
   async parameters() {
-    let self = this
-    self.ready()
+    this.ready()
 
-    if (self.model) {
-      return self.model.parameters()
+    if (this.model) {
+      return this.model.parameters()
     }
 
     return []
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param args  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async feed(
     ...args: any[]  // TODO: what type is this
   ) {
-  let self = this
-  self.ready()
+    this.ready()
 
-  if (self.stateType === 'discrete') {
-    return self.sample(...args)
-  } else if (self.stateType === 'continuous') {
-    return self.forward(...args)
+    if (this.stateType === 'discrete') {
+      return this.sample(...args)
+    } else if (this.stateType === 'continuous') {
+      return this.forward(...args)
+    }
+
+    throw new Error(`Unknown State Type: ${this.stateType}`)
   }
 
-  throw new Error(`Unknown State Type: ${self.stateType}`)
-}
-
 // async history() {
-//     let self = this
-//     self.ready()
+//     let this = this
+//     this.ready()
 //
-//   let raw_history = await controller.sendJSON(self.cmd({
+//   let rawHistory = await controller.sendJSON(this.cmd({
 //     functionCall: 'get_history'
 //   }), 'string')
-//   // TODO: let history_idx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),raw_history[2:-1].split('],[')))
+//   // TODO: let historyIdx = list(map(lambda x:list(map(lambda y:int(y),x.split(','))),rawHistory[2:-1].split('],[')))
 //   let losses = []
 //   let rewards = []
 //
-//   for (let {loss, reward} of history_idx) {
+//   for (let {loss, reward} of historyIdx) {
 //     if (loss !== -1) {
-//       losses.push(await controller.get_tensor(loss))
+//       losses.push(await controller.getTensor(loss))
 //     } else {
 //       losses.push(void 0)
 //     }
 //     if (reward !== -1) {
-//       rewards.push(await controller.get_tensor(reward))
+//       rewards.push(await controller.getTensor(reward))
 //     } else {
 //       rewards.push(void 0)
 //     }
@@ -544,10 +719,24 @@ export class Policy extends Model {
 // }
 }
 
+/**
+* Sequential Model
+*/
 export class Sequential extends Model {
   static $: IAsyncConstructor = Sequential
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'sequential'
 
+  /**
+  * Get a Sequential Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Sequential Model.
+  */
   static async get(
     id: string
   ) {
@@ -558,6 +747,13 @@ export class Sequential extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Create a new Sequential Model.
+  *
+  * @param layers  An array of interal models.
+  *
+  * @returns  A local instance of a network connected Sequential Model.
+  */
   static async create(
     layers?: Model[]
   ) {
@@ -574,47 +770,65 @@ export class Sequential extends Model {
     return model
   }
 
+  /**
+  * Add a new interal Model layer.
+  *
+  * @param model  An interal Model.
+  */
   async add(
     model: Model
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
-    await controller.sendJSON(self.cmd({
+    await controller.sendJSON(this.cmd({
       functionCall: 'add',
       tensorIndexParams: [model.id]
-    }), /*delete_after_use=false*/)
+    }), /**deleteAfterUse=false*/)
   }
 
   // async summary() {
-  //   let self = this
-  //   self.ready()
+  //   let this = this
+  //   this.ready()
   //
   //   let single = '_________________________________________________________________\n'
   //   let header = 'Layer (type)                 Output Shape              Param #   \n'
   //   let double = '===\n'
-  //   // TODO: let total_params = 'Total params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-  //   // TODO: let trainable_params = 'Trainable params: ' + '{:,}'.format(self.num_parameters()) + '\n'
-  //   let non_trainable_params = 'Non-trainable params: 0' + '\n'
+  //   // TODO: let totalParams = 'Total params: ' + '{:,}'.format(this.numParameters()) + '\n'
+  //   // TODO: let trainableParams = 'Trainable params: ' + '{:,}'.format(this.numParameters()) + '\n'
+  //   let nonTrainableParams = 'Non-trainable params: 0' + '\n'
   //
   //   let output = single + header + double
   //   Async.each
   //
-  //   let mods = await Async.map(await self.models() as Model[], async (m) => {
+  //   let mods = await Async.map(await this.models() as Model[], async (m) => {
   //     return m.summary(false, true)
   //   })
   //   output += mods.join(single)
   //   output += double
-  //   // TODO: output += total_params + trainable_params + non_trainable_params + single
+  //   // TODO: output += totalParams + trainableParams + nonTrainableParams + single
   //   console.log(output)
   //   return output
   // }
 }
 
+/**
+* Linear Model
+*/
 export class Linear extends Model {
   static $: IAsyncConstructor = Linear
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'linear'
 
+  /**
+  * Get a Linear Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Linear Model.
+  */
   static async get(
     id: string
   ) {
@@ -625,35 +839,44 @@ export class Linear extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Linear Model.
+  *
+  * @param inputDim     The number of inputs.
+  * @param outputDim    The number of outputs.
+  * @param initializer  TODO document this?
+  *
+  * @returns  A local instance of a network connected Linear Model.
+  */
   static async create(
-    input_dim = 0,
-    output_dim = 0,
+    inputDim = 0,
+    outputDim = 0,
     initializer = 'Xavier'
   ) {
-    let id = await Model.createModel(this, String(input_dim), String(output_dim), initializer)
+    let id = await Model.createModel(this, String(inputDim), String(outputDim), initializer)
 
     return new this(AsyncInstance, id)
   }
-
-  async finish(
-    id: string
-  ) {
-    let self = this
-
-    self.id = id
-
-    // let params = await self.parameters()
-
-    // TODO: self.outputShape = Number(params[0].shape()[-1])
-    // TODO: self.input_shape = Number(params[0].shape()[0])
-  }
-
 }
 
+/**
+* ReLU Model
+*/
 export class ReLU extends Model {
   static $: IAsyncConstructor = ReLU
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'relu'
 
+  /**
+  * Get a ReLU Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected ReLU Model.
+  */
   static async get(
     id: string
   ) {
@@ -664,6 +887,11 @@ export class ReLU extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new ReLU Model.
+  *
+  * @returns  A local instance of a network connected ReLU Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
@@ -671,10 +899,24 @@ export class ReLU extends Model {
   }
 }
 
+/**
+* Dropout Model
+*/
 export class Dropout extends Model {
   static $: IAsyncConstructor = Dropout
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'dropout'
 
+  /**
+  * Get a Dropout Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Dropout Model.
+  */
   static async get(
     id: string
   ) {
@@ -685,6 +927,13 @@ export class Dropout extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Dropout Model.
+  *
+  * @param rate  TODO document this?
+  *
+  * @returns  A local instance of a network connected Dropout Model.
+  */
   static async create(
     rate = 0.5
   ) {
@@ -694,10 +943,24 @@ export class Dropout extends Model {
   }
 }
 
+/**
+* Sigmoid Model
+*/
 export class Sigmoid extends Model {
   static $: IAsyncConstructor = Sigmoid
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'sigmoid'
 
+  /**
+  * Get a Sigmoid Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Sigmoid Model.
+  */
   static async get(
     id: string
   ) {
@@ -708,6 +971,11 @@ export class Sigmoid extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Sigmoid Model.
+  *
+  * @returns  A local instance of a network connected Sigmoid Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
@@ -715,10 +983,24 @@ export class Sigmoid extends Model {
   }
 }
 
+/**
+* Softmax Model
+*/
 export class Softmax extends Model {
   static $: IAsyncConstructor = Softmax
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'softmax'
 
+  /**
+  * Get a Softmax Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Softmax Model.
+  */
   static async get(
     id: string
   ) {
@@ -729,6 +1011,13 @@ export class Softmax extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Softmax Model.
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  A local instance of a network connected Softmax Model.
+  */
   static async create(
     dim = 1
   ) {
@@ -738,10 +1027,24 @@ export class Softmax extends Model {
   }
 }
 
+/**
+* LogSoftmax Model
+*/
 export class LogSoftmax extends Model {
   static $: IAsyncConstructor = LogSoftmax
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'logsoftmax'
 
+  /**
+  * Get a LogSoftmax Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected LogSoftmax Model.
+  */
   static async get(
     id: string
   ) {
@@ -752,6 +1055,13 @@ export class LogSoftmax extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new LogSoftmax Model.
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  A local instance of a network connected LogSoftmax Model.
+  */
   static async create(
     dim = 1
   ) {
@@ -761,10 +1071,24 @@ export class LogSoftmax extends Model {
   }
 }
 
+/**
+* Log Model
+*/
 export class Log extends Model {
   static $: IAsyncConstructor = Log
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'log'
 
+  /**
+  * Get a Log Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Log Model.
+  */
   static async get(
     id: string
   ) {
@@ -775,6 +1099,11 @@ export class Log extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Log Model.
+  *
+  * @returns  A local instance of a network connected Log Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
@@ -782,10 +1111,24 @@ export class Log extends Model {
   }
 }
 
+/**
+* Tanh Model
+*/
 export class Tanh extends Model {
   static $: IAsyncConstructor = Tanh
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'tanh'
 
+  /**
+  * Get a Tanh Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Tanh Model.
+  */
   static async get(
     id: string
   ) {
@@ -796,6 +1139,11 @@ export class Tanh extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Tanh Model.
+  *
+  * @returns  A local instance of a network connected Tanh Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
@@ -803,10 +1151,24 @@ export class Tanh extends Model {
   }
 }
 
+/**
+* MSELoss Model
+*/
 export class MSELoss extends Model {
   static $: IAsyncConstructor = MSELoss
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'mseloss'
 
+  /**
+  * Get a MSELoss Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected MSELoss Model.
+  */
   static async get(
     id: string
   ) {
@@ -817,33 +1179,59 @@ export class MSELoss extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new MSELoss Model.
+  *
+  * @returns  A local instance of a network connected MSELoss Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param input   TODO document this?
+  * @param target  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async forward(
     input: Tensor,
     target: Tensor
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'forward',
         tensorIndexParams: [input.id, target.id]
-      }), 'FloatTensor' /*delete_after_use=false*/),
+      }), 'FloatTensor' /**deleteAfterUse=false*/),
       Tensor.FloatTensor
     )
   }
 }
 
+/**
+* NLLLoss Model
+*/
 export class NLLLoss extends Model {
   static $ : IAsyncConstructor = NLLLoss
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'nllloss'
 
+  /**
+  * Get a NLLLoss Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected NLLLoss Model.
+  */
   static async get(
     id: string
   ) {
@@ -854,37 +1242,62 @@ export class NLLLoss extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new NLLLoss Model.
+  *
+  * @returns  A local instance of a network connected NLLLoss Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
 
-
+  /**
+  * TODO document this?
+  *
+  * @param input   TODO document this?
+  * @param target  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async forward(
     input: Tensor,
     target: Tensor
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      controller.sendJSON(self.cmd({
+      controller.sendJSON(this.cmd({
         functionCall: 'forward',
         tensorIndexParams: [input.id, target.id]
-      }), 'FloatTensor' /*delete_after_use=false*/),
+      }), 'FloatTensor' /**deleteAfterUse=false*/),
       Tensor.FloatTensor
     )
   }
 }
 
+/**
+* CrossEntropyLoss Model
+*/
 export class CrossEntropyLoss extends Model {
   static $ : IAsyncConstructor = CrossEntropyLoss
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'crossentropyloss'
 
   // TODO: backward() to be implemented: grad = target - prediction
   // TODO: backward(): until IntegerTensor is available assume a one-hot vector is passed in.
 
+  /**
+  * Get a CrossEntropyLoss Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected CrossEntropyLoss Model.
+  */
   static async get(
     id: string
   ) {
@@ -895,6 +1308,13 @@ export class CrossEntropyLoss extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new CrossEntropyLoss Model.
+  *
+  * @param dim  TODO document this?
+  *
+  * @returns  A local instance of a network connected CrossEntropyLoss Model.
+  */
   static async create(
     dim = 1
   ) {
@@ -903,27 +1323,48 @@ export class CrossEntropyLoss extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param input   TODO document this?
+  * @param target  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async forward(
     input: Tensor,
     target: Tensor
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'forward',
         tensorIndexParams: [input.id, target.id]
-      }), 'FloatTensor' /*delete_after_use=false*/),
+      }), 'FloatTensor' /**deleteAfterUse=false*/),
       Tensor.FloatTensor
     )
   }
 }
 
+/**
+* Categorical_CrossEntropy Model
+*/
 export class Categorical_CrossEntropy extends Model {
   static $ : IAsyncConstructor = Categorical_CrossEntropy
+
+  /**
+  * Syft Model layer type.
+  */
   layerType = 'categorical_crossentropy'
 
+  /**
+  * Get a Categorical_CrossEntropy Model given its ID.
+  *
+  * @param id  The ID of network connected object in the Unity Project.
+  *
+  * @returns  A local instance of a network connected Categorical_CrossEntropy Model.
+  */
   static async get(
     id: string
   ) {
@@ -934,29 +1375,40 @@ export class Categorical_CrossEntropy extends Model {
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * Creates a new Categorical_CrossEntropy Model.
+  *
+  * @returns  A local instance of a network connected Categorical_CrossEntropy Model.
+  */
   static async create() {
     let id = await Model.createModel(this)
 
     return new this(AsyncInstance, id)
   }
 
+  /**
+  * TODO document this?
+  *
+  * @param input   TODO document this?
+  * @param target  TODO document this?
+  *
+  * @returns  TODO document this?
+  */
   async forward(
     input: Tensor,
     target: Tensor
   ) {
-    let self = this
-    self.ready()
+    this.ready()
 
     return assertType(
-      await controller.sendJSON(self.cmd({
+      await controller.sendJSON(this.cmd({
         functionCall: 'forward',
         tensorIndexParams: [input.id, target.id]
-      }), 'FloatTensor' /*delete_after_use=false*/),
+      }), 'FloatTensor' /**deleteAfterUse=false*/),
       Tensor.FloatTensor
     )
   }
 }
-
 
 Model.Policy = Policy
 Model.Sequential = Sequential

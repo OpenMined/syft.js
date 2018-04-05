@@ -10,9 +10,9 @@ class Model extends lib_1.AsyncInstance {
         this.layerType = '(unknown)';
         this.outputShape = '(dynamic)';
     }
-    static assertLayerType(a, b) {
-        if (a.toLowerCase() !== b.name.toLowerCase()) {
-            throw new TypeError(`Connat Convert '${a}' to '${b.name}'`);
+    static assertLayerType(layerType, modelConstructor) {
+        if (layerType.toLowerCase() !== modelConstructor.name.toLowerCase()) {
+            throw new TypeError(`Connat Convert '${layerType}' to '${modelConstructor.name}'`);
         }
     }
     static newModel($, id, type) {
@@ -71,68 +71,67 @@ class Model extends lib_1.AsyncInstance {
         }, 'string'), 'string');
     }
     async feed(...args) {
-        let self = this;
-        self.ready();
-        return self.forward(...args);
+        this.ready();
+        return this.forward(...args);
     }
     async parameters() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'params'
         }), 'FloatTensor_list'), Array);
     }
-    async num_parameters() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+    async numParameters() {
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'param_count'
         }), 'int'), 'number');
     }
     async models() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'models'
         }), 'Model_list'), Array);
     }
     async set_id(new_id) {
-        let self = this;
-        self.ready();
-        lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'set_id',
             tensorIndexParams: [new_id]
         }), 'string'), 'string');
-        self.id = new_id;
-        return self;
+        this.id = new_id;
+        return this;
     }
-    async fit(input, target, criterion, optim, batch_size, iters = 15, log_interval = 200, metrics = [], verbose = true) {
-        let self = this;
-        self.ready();
-        console.log('prepare_to_fit');
-        let num_batches = lib_1.assertType(await controller.sendJSON(self.cmd({
+    async fit({ input, target, criterion, optimizer, batchSize, iterations = 15, logInterval = 200, metrics = [], verbose = false }) {
+        this.ready();
+        if (verbose) {
+            console.log('prepare_to_fit');
+        }
+        let numBatches = lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'prepare_to_fit',
-            tensorIndexParams: [input.id, target.id, criterion.id, optim.id, batch_size]
+            tensorIndexParams: [input.id, target.id, criterion.id, optimizer.id, batchSize]
         }), 'int'), 'number');
-        console.log('fit');
+        if (verbose) {
+            console.log('fit');
+        }
         let loss = 100000;
-        for (let iter = 0; iter < iters; iter++) {
-            for (let log_i = 0; log_i < num_batches; log_i += log_interval) {
-                let prev_loss = loss;
-                let _loss = lib_1.assertType(await controller.sendJSON(self.cmd({
+        for (let iter = 0; iter < iterations; iter++) {
+            for (let logI = 0; logI < numBatches; logI += logInterval) {
+                let _loss = lib_1.assertType(await controller.sendJSON(this.cmd({
                     functionCall: 'fit',
-                    tensorIndexParams: [log_i, Math.min(log_i + log_interval, num_batches), 1]
+                    tensorIndexParams: [logI, Math.min(logI + logInterval, numBatches), 1]
                 }), 'float'), 'number');
-                if (log_i % 10 === 0) {
-                    console.log(`iter ${iter}/${iters} - ${log_i}/${num_batches} -- ${_loss}`);
+                if (verbose && logI % 10 === 0) {
+                    console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${_loss}`);
                 }
                 if (_loss) {
                     loss = _loss;
                 }
                 else {
-                    console.log(_loss);
+                    if (verbose) {
+                        console.log(_loss);
+                    }
                 }
-                if (Number.isNaN(loss) || Number.isNaN(prev_loss)) {
+                if (Number.isNaN(loss)) {
                     break;
                 }
             }
@@ -143,32 +142,27 @@ class Model extends lib_1.AsyncInstance {
         return loss;
     }
     async length() {
-        let self = this;
-        self.ready();
-        return (await self.models()).length;
+        this.ready();
+        return (await this.models()).length;
     }
     async activation() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'activation'
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
     }
     async getLayerType() {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'model_type'
         }), 'string'), 'string');
     }
     cmd(options) {
-        let self = this;
-        return Object.assign({ objectType: self.type, objectIndex: self.id || '-1', tensorIndexParams: [] }, options);
+        return Object.assign({ objectType: this.type, objectIndex: this.id || '-1', tensorIndexParams: [] }, options);
     }
     async forward(...input) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'forward',
             tensorIndexParams: input.map(t => t.id)
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
@@ -193,31 +187,28 @@ class Policy extends Model {
         return policy;
     }
     async sample(...input) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'sample',
             tensorIndexParams: input.map(t => t.id)
         }), 'IntTensor'), Tensor_1.Tensor.IntTensor);
     }
     async parameters() {
-        let self = this;
-        self.ready();
-        if (self.model) {
-            return self.model.parameters();
+        this.ready();
+        if (this.model) {
+            return this.model.parameters();
         }
         return [];
     }
     async feed(...args) {
-        let self = this;
-        self.ready();
-        if (self.stateType === 'discrete') {
-            return self.sample(...args);
+        this.ready();
+        if (this.stateType === 'discrete') {
+            return this.sample(...args);
         }
-        else if (self.stateType === 'continuous') {
-            return self.forward(...args);
+        else if (this.stateType === 'continuous') {
+            return this.forward(...args);
         }
-        throw new Error(`Unknown State Type: ${self.stateType}`);
+        throw new Error(`Unknown State Type: ${this.stateType}`);
     }
 }
 Policy.$ = Policy;
@@ -243,9 +234,8 @@ class Sequential extends Model {
         return model;
     }
     async add(model) {
-        let self = this;
-        self.ready();
-        await controller.sendJSON(self.cmd({
+        this.ready();
+        await controller.sendJSON(this.cmd({
             functionCall: 'add',
             tensorIndexParams: [model.id]
         }));
@@ -263,13 +253,9 @@ class Linear extends Model {
         Model.assertLayerType(type, this);
         return new this(lib_1.AsyncInstance, id);
     }
-    static async create(input_dim = 0, output_dim = 0, initializer = 'Xavier') {
-        let id = await Model.createModel(this, String(input_dim), String(output_dim), initializer);
+    static async create(inputDim = 0, outputDim = 0, initializer = 'Xavier') {
+        let id = await Model.createModel(this, String(inputDim), String(outputDim), initializer);
         return new this(lib_1.AsyncInstance, id);
-    }
-    async finish(id) {
-        let self = this;
-        self.id = id;
     }
 }
 Linear.$ = Linear;
@@ -408,9 +394,8 @@ class MSELoss extends Model {
         return new this(lib_1.AsyncInstance, id);
     }
     async forward(input, target) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'forward',
             tensorIndexParams: [input.id, target.id]
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
@@ -433,9 +418,8 @@ class NLLLoss extends Model {
         return new this(lib_1.AsyncInstance, id);
     }
     async forward(input, target) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(controller.sendJSON(this.cmd({
             functionCall: 'forward',
             tensorIndexParams: [input.id, target.id]
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
@@ -458,9 +442,8 @@ class CrossEntropyLoss extends Model {
         return new this(lib_1.AsyncInstance, id);
     }
     async forward(input, target) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'forward',
             tensorIndexParams: [input.id, target.id]
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
@@ -483,9 +466,8 @@ class Categorical_CrossEntropy extends Model {
         return new this(lib_1.AsyncInstance, id);
     }
     async forward(input, target) {
-        let self = this;
-        self.ready();
-        return lib_1.assertType(await controller.sendJSON(self.cmd({
+        this.ready();
+        return lib_1.assertType(await controller.sendJSON(this.cmd({
             functionCall: 'forward',
             tensorIndexParams: [input.id, target.id]
         }), 'FloatTensor'), Tensor_1.Tensor.FloatTensor);
