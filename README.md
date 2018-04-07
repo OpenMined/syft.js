@@ -1,10 +1,10 @@
 # syft.js
 
 ## Resources
-  - [Setup Repo](./docs/setup.md)
-  - [Interactive Console](./docs/interactive-console.md)
-  - [Contribute](./docs/contribute.md)
-  - [TypeScript Style Guidelines](./docs/style-guidelines.md)
+  - [Setup Repo](./readmes/setup.md)
+  - [Interactive Console](./readmes/interactive-console.md)
+  - [Contribute](./readmes/contribute.md)
+  - [TypeScript Style Guidelines](./readmes/style-guidelines.md)
 
 ## install with npm from github
 ```
