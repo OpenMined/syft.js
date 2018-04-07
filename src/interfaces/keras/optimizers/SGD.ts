@@ -42,11 +42,11 @@ export class SGD implements Optimizer {
   }
 
   /**
-  * Create and links a Syft SGD Optimizer.
+  * Compile and links a Syft SGD Optimizer.
   *
   * @param syftParams  The Syft Model parameters.
   */
-  async create(
+  async compile(
     syftParams: syft.Tensor[]
   ) {
     this.syftOptim = await syft.Optimizer.SGD.create({

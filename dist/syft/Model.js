@@ -116,20 +116,12 @@ class Model extends lib_1.AsyncInstance {
         let loss = 100000;
         for (let iter = 0; iter < iterations; iter++) {
             for (let logI = 0; logI < numBatches; logI += logInterval) {
-                let _loss = lib_1.assertType(await controller.sendJSON(this.cmd({
+                loss = lib_1.assertType(await controller.sendJSON(this.cmd({
                     functionCall: 'fit',
                     tensorIndexParams: [logI, Math.min(logI + logInterval, numBatches), 1]
                 }), 'float'), 'number');
                 if (verbose && logI % 10 === 0) {
-                    console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${_loss}`);
-                }
-                if (_loss) {
-                    loss = _loss;
-                }
-                else {
-                    if (verbose) {
-                        console.log(_loss);
-                    }
+                    console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${loss}`);
                 }
                 if (Number.isNaN(loss)) {
                     break;
@@ -253,7 +245,7 @@ class Linear extends Model {
         Model.assertLayerType(type, this);
         return new this(lib_1.AsyncInstance, id);
     }
-    static async create(inputDim = 0, outputDim = 0, initializer = 'Xavier') {
+    static async create({ inputDim = 0, outputDim = 0, initializer = 'Xavier' }) {
         let id = await Model.createModel(this, String(inputDim), String(outputDim), initializer);
         return new this(lib_1.AsyncInstance, id);
     }

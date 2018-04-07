@@ -143,7 +143,11 @@ export declare class Linear extends Model {
     static $: IAsyncConstructor;
     layerType: string;
     static get(id: string): Promise<Linear>;
-    static create(inputDim?: number, outputDim?: number, initializer?: string): Promise<Linear>;
+    static create({inputDim, outputDim, initializer}: {
+        inputDim?: number;
+        outputDim: number;
+        initializer?: string;
+    }): Promise<Linear>;
 }
 export declare class ReLU extends Model {
     static $: IAsyncConstructor;

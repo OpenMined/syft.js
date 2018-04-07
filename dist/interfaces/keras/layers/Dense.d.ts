@@ -4,7 +4,7 @@ export declare class Dense implements Layer {
     orderedSyft: syft.Model[];
     syftLayer?: syft.Model;
     inputShape?: number;
-    outputShape?: number;
+    outputShape: number;
     activationStr?: string;
     syftActivation?: syft.Model;
     constructor({activation, inputShape, outputShape}: {
@@ -12,5 +12,5 @@ export declare class Dense implements Layer {
         inputShape?: number;
         outputShape: number;
     });
-    create(): Promise<this>;
+    compile(): Promise<this>;
 }

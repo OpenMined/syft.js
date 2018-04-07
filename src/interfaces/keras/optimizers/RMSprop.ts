@@ -46,11 +46,11 @@ export class RMSprop implements Optimizer {
   }
 
   /**
-  * Create and links a Syft RMSprop Optimizer.
+  * Compile and links a Syft RMSprop Optimizer.
   *
   * @param syftParams  The Syft Model parameters.
   */
-  async create(
+  async compile(
     syftParams: syft.Tensor[]
   ) {
     this.syftOptim = await syft.Optimizer.RMSProp.create({

@@ -9,5 +9,5 @@ export interface Layer {
   outputShape?: number
   orderedSyft: syft.Model[]
 
-  create(): Promise<this>
+  compile(): Promise<this>
 }

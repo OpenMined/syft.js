@@ -16,5 +16,5 @@ export declare class Adam implements Optimizer {
         epsilon?: number;
         decay?: number;
     });
-    create(syftParams: syft.Tensor[]): Promise<void>;
+    compile(syftParams: syft.Tensor[]): Promise<void>;
 }

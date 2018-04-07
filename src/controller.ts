@@ -14,7 +14,13 @@ import {
   AsyncInstance
 } from './lib'
 
-export const verbose = !!process.argv[2]
+let verbose = !!process.argv[2]
+
+export function setVerbose(
+  val: boolean
+) {
+  verbose = val
+}
 
 const identity = uuid.v4()
 const socket = zmq.socket('dealer')

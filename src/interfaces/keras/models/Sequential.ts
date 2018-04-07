@@ -38,21 +38,6 @@ export class Sequential implements Model {
   compiled = false
 
   /**
-  * Constructs a new Sequential Model.
-  *
-  * @param layers  An array of Layers.
-  *
-  * @returns A new instance of Sequential Model.
-  */
-  constructor(
-    layers: Layer[] = []
-  ) {
-    for (let layer of layers) {
-      this.add(layer)
-    }
-  }
-
-  /**
   * Adds a Layer to this Sequential Model.
   *
   * @param layer  A Layers.
@@ -99,32 +84,34 @@ export class Sequential implements Model {
     optimizer: Optimizer,
     metrics?: string[]
   }) {
-    if (!this.compiled) {
-      this.compiled = true
-      this.syftModel = await syft.Model.Sequential.create()
-
-      // sometimes keras has single layers that actually correspond
-      // to multiple syft layers - so they end up getting stored in
-      // an ordered list called 'orderedSyft'
-      for (let layer of this.layers) {
-        for (let l of layer.orderedSyft) {
-          await layer.create()
-          this.syftModel.add(l)
-        }
-      }
-
-      if (loss === 'categorical_crossentropy') {
-        this.loss = await syft.Model.Categorical_CrossEntropy.create()
-      } else if (loss === 'meanSquared_error') {
-        this.loss = await syft.Model.MSELoss.create()
-      }
-      await optimizer.create(await this.syftModel.parameters())
-
-      this.optimizer = optimizer
-      this.metrics = metrics
-    } else {
-      console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things')
+    if (this.compiled) {
+      throw new Error('Model already compiled.')
     }
+    this.compiled = true
+    let layers: syft.Model[] = []
+
+    for (let layer of this.layers) {
+      await layer.compile()
+
+      for (let l of layer.orderedSyft) {
+        layers.push(l)
+      }
+    }
+
+    this.syftModel = await syft.Model.Sequential.create(layers)
+
+    if (loss.toLowerCase() === 'categorical_crossentropy') {
+      this.loss = await syft.Model.Categorical_CrossEntropy.create()
+    } else if (loss.toLowerCase() === 'meansquared_error') {
+      this.loss = await syft.Model.MSELoss.create()
+    } else if (loss.toLowerCase() === 'crossentropyloss') {
+      this.loss = await syft.Model.CrossEntropyLoss.create()
+    }
+
+    await optimizer.compile(await this.syftModel.parameters())
+
+    this.optimizer = optimizer
+    this.metrics = metrics
 
     return this
   }

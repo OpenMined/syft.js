@@ -292,9 +292,10 @@ export class Model extends AsyncInstance {
     if (verbose) { console.log('fit') }
 
     let loss = 100000
+
     for (let iter = 0; iter < iterations; iter++) {
       for (let logI = 0; logI < numBatches; logI += logInterval) {
-        let _loss = assertType(
+        loss = assertType(
           await controller.sendJSON(this.cmd({
             functionCall: 'fit',
             tensorIndexParams: [logI, Math.min(logI + logInterval, numBatches), 1]
@@ -303,14 +304,9 @@ export class Model extends AsyncInstance {
         ) as number
 
         if (verbose && logI % 10 === 0) {
-          console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${_loss}`)
+          console.log(`iter ${iter}/${iterations} - ${logI}/${numBatches} -- ${loss}`)
         }
 
-        if (_loss) {
-          loss = _loss
-        } else {
-          if (verbose) { console.log(_loss) }
-        }
         if (Number.isNaN(loss)) {
           break
         }
@@ -848,11 +844,15 @@ export class Linear extends Model {
   *
   * @returns  A local instance of a network connected Linear Model.
   */
-  static async create(
+  static async create({
     inputDim = 0,
     outputDim = 0,
     initializer = 'Xavier'
-  ) {
+  }: {
+    inputDim?: number
+    outputDim: number
+    initializer?: string
+  }) {
     let id = await Model.createModel(this, String(inputDim), String(outputDim), initializer)
 
     return new this(AsyncInstance, id)

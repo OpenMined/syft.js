@@ -6,10 +6,14 @@ class Dense {
         this.orderedSyft = [];
         this.activationStr = activation;
         this.inputShape = inputShape;
-        this.outputShape = this.outputShape;
+        this.outputShape = outputShape;
     }
-    async create() {
-        this.syftLayer = await syft.Model.Linear.create(this.inputShape, this.outputShape);
+    async compile() {
+        console.log(this);
+        this.syftLayer = await syft.Model.Linear.create({
+            inputDim: this.inputShape,
+            outputDim: this.outputShape
+        });
         this.orderedSyft.push(this.syftLayer);
         if (this.activationStr != null && this.activationStr !== 'linear') {
             if (this.activationStr === 'relu') {
@@ -24,9 +28,9 @@ class Dense {
             else if (this.activationStr === 'tanh') {
                 this.syftActivation = await syft.Model.Tanh.create();
             }
-        }
-        if (this.syftActivation) {
-            this.orderedSyft.push(this.syftActivation);
+            if (this.syftActivation) {
+                this.orderedSyft.push(this.syftActivation);
+            }
         }
         return this;
     }

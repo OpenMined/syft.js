@@ -1,27 +1,31 @@
+const mnist = require('mnist')(false)
+
 import * as syft from '..'
 
-let mnist = require('mnist')(false)
+let testSamples = 1000
+let trainingSamples = 6000
 
-let g = global as any
-let dataset = mnist(60000, 10000)
+let dataset = mnist(trainingSamples, testSamples)
 
-g.syft = syft
-
-async function test() {
+async function train() {
   let training = {
     input: await syft.Tensor.FloatTensor.create(dataset.training.input),
     output: await syft.Tensor.FloatTensor.create(dataset.training.output)
   }
+
   let testing = {
     input: await syft.Tensor.FloatTensor.create(dataset.test.input),
     output: await syft.Tensor.FloatTensor.create(dataset.test.output)
   }
 
-  let model = await syft.Model.Sequential.create([
-    await syft.Model.Linear.create(784, 10)
-  ])
+  // syft.setVerbose(true)
 
-  g.model = model
+  let model = await syft.Model.Sequential.create([
+    await syft.Model.Linear.create({
+      inputDim: 784,
+      outputDim: 10
+    })
+  ])
 
   let criterion = await syft.Model.CrossEntropyLoss.create()
   let optimizer = await syft.Optimizer.SGD.create({
@@ -29,6 +33,7 @@ async function test() {
     lr: 0.06
   })
   let metrics = ['accuracy']
+  let softmax = await syft.Model.Softmax.create()
 
   let loss = await model.fit({
     input: training.input,
@@ -36,19 +41,28 @@ async function test() {
     criterion,
     optimizer,
     batchSize: 32,
-    iterations: 4,
+    iterations: 2,
     logInterval: 1,
     metrics,
     verbose: true
   })
 
-  console.log('trained!', loss)
+  console.log('Trained with a final loss:', loss)
 
-  g.perd = await model.forward(testing.input)
-  criterion.forward(g.perd, testing.output)
+  let perd = await softmax.forward(
+    await model.forward(testing.input)
+  )
 
-  console.log(await g.perd.shape())
+  // select a random test example to draw
+  let select = Math.floor(testSamples * Math.random())
+
+  dataset.draw(
+    (await testing.input.getData()).slice(select * 784, (select + 1) * 784),
+    (await perd.getData()).slice(select * 10, (select + 1) * 10),
+    (await testing.output.getData()).slice(select * 10, (select + 1) * 10)
+  )
 }
 
-let done = (res: any) => console.log(res)
-test().then(done).catch(done)
+train()
+  .then(() => process.exit())
+  .catch((err) => console.log(err))

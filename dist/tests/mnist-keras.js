@@ -1,56 +1,47 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-let mnist = require('mnist')(false);
+const mnist = require('mnist')(false);
 const syft = require("..");
-let g = global;
-g.syft = syft;
-let dataset = mnist(5, 5);
-console.log(dataset);
-async function test() {
+let testSamples = 1000;
+let trainingSamples = 6000;
+let dataset = mnist(trainingSamples, testSamples);
+async function train() {
     let training = {
         input: await syft.Tensor.FloatTensor.create(dataset.training.input),
-        output: await syft.Tensor.FloatTensor.create(dataset.training.output),
+        output: await syft.Tensor.FloatTensor.create(dataset.training.output)
     };
     let testing = {
         input: await syft.Tensor.FloatTensor.create(dataset.test.input),
-        output: await syft.Tensor.FloatTensor.create(dataset.test.output),
+        output: await syft.Tensor.FloatTensor.create(dataset.test.output)
     };
-    g.training = training;
-    g.testing = testing;
-    console.log('training.input', training.input.id, await training.input.shape());
-    console.log('training.output', training.output.id, await training.output.shape());
-    console.log('testing.input', testing.input.id, await testing.input.shape());
-    console.log('testing.output', testing.output.id, await testing.output.shape());
     let model = new syft.keras.Sequential();
-    g.model = model;
     await model.add(new syft.keras.Dense({
         inputShape: 784,
         outputShape: 10,
         activation: 'linear'
     }));
     await model.compile({
-        loss: 'categorical_crossentropy',
+        loss: 'crossentropyloss',
         optimizer: new syft.keras.SGD({
-            lr: 0.01
+            lr: 0.06
         }),
         metrics: ['accuracy']
     });
-    g.perd = await model.predict(testing.input);
-    console.log(await g.perd.toString());
-    let train = async () => {
-        let error = await model.fit({
-            input: training.input,
-            target: training.output,
-            batchSize: 1,
-            epochs: 1,
-            logInterval: 1
-        });
-        console.log('trained!', error);
-    };
-    await train();
-    g.train = train;
-    console.log(await global.perd.toString());
+    let softmax = await syft.Model.Softmax.create();
+    let loss = await model.fit({
+        input: training.input,
+        target: training.output,
+        batchSize: 32,
+        epochs: 2,
+        logInterval: 1,
+        verbose: true
+    });
+    console.log('Trained with a final loss:', loss);
+    let perd = await softmax.forward(await model.predict(testing.input));
+    let select = Math.floor(testSamples * Math.random());
+    dataset.draw((await testing.input.getData()).slice(select * 784, (select + 1) * 784), (await perd.getData()).slice(select * 10, (select + 1) * 10), (await testing.output.getData()).slice(select * 10, (select + 1) * 10));
 }
-let done = (res) => console.log(res);
-test().then(done).catch(done);
+train()
+    .then(() => process.exit())
+    .catch((err) => console.log(err));
 //# sourceMappingURL=mnist-keras.js.map
