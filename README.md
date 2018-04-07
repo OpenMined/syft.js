@@ -1,10 +1,11 @@
 # syft.js
 
 ## Resources
-  - [Setup Repo](./docs/setup.md)
-  - [Interactive Console](./docs/interactive-console.md)
-  - [Contribute](./docs/contribute.md)
-  - [TypeScript Style Guidelines](./docs/style-guidelines.md)
+
+  - [Setup Repo](./readmes/setup.md)
+  - [Interactive Console](./readmes/interactive-console.md)
+  - [Contribute](./readmes/contribute.md)
+  - [TypeScript Style Guidelines](./readmes/style-guidelines.md)
   - [MNIST Tutorial](https://github.com/OpenMined/tutorials/tree/master/beginner/Syft.js/getting-started-mnist-model)
 
 ## install with npm from github
