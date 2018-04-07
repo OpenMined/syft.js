@@ -5,6 +5,7 @@
   - [Interactive Console](./docs/interactive-console.md)
   - [Contribute](./docs/contribute.md)
   - [TypeScript Style Guidelines](./docs/style-guidelines.md)
+  - [MNIST Tutorial](https://github.com/OpenMined/tutorials/tree/master/beginner/Syft.js/getting-started-mnist-model)
 
 ## install with npm from github
 ```

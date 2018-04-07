@@ -5,7 +5,7 @@ class SGD {
     constructor({ lr = 0.01, momentum = 0, decay = 0 }) {
         this.hyperparameters = { lr, momentum, decay };
     }
-    async create(syftParams) {
+    async compile(syftParams) {
         this.syftOptim = await syft.Optimizer.SGD.create(Object.assign({ params: syftParams }, this.hyperparameters));
     }
 }

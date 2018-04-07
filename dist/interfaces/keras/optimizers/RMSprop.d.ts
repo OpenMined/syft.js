@@ -14,5 +14,5 @@ export declare class RMSprop implements Optimizer {
         epsilon?: number;
         decay?: number;
     });
-    create(syftParams: syft.Tensor[]): Promise<void>;
+    compile(syftParams: syft.Tensor[]): Promise<void>;
 }

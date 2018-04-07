@@ -1,5 +1,5 @@
 import { Tensor, FloatTensor, Model } from './syft';
-export declare const verbose: boolean;
+export declare function setVerbose(val: boolean): void;
 export declare function log(...args: any[]): void;
 export declare function cmd(options: {
     [key: string]: any;

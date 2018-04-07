@@ -86,7 +86,6 @@ export class Tensor extends AsyncInstance {
       tensorIndexParams?: any[],
     }
   ): SocketCMD {
-
     return {
       objectType: this.type,
       objectIndex: this.id,

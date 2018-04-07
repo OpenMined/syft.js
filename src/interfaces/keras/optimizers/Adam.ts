@@ -50,11 +50,11 @@ export class Adam implements Optimizer {
   }
 
   /**
-  * Create and links a Syft Adam Optimizer.
+  * Compile and links a Syft Adam Optimizer.
   *
   * @param syftParams  The Syft Model parameters.
   */
-  async create(
+  async compile(
     syftParams: syft.Tensor[]
   ) {
     this.syftOptim = await syft.Optimizer.Adam.create({

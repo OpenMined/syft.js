@@ -9,7 +9,6 @@ export declare class Sequential implements Model {
     layers: Layer[];
     metrics: string[];
     compiled: boolean;
-    constructor(layers?: Layer[]);
     add(layer: Layer): Promise<this>;
     compile({loss, optimizer, metrics}: {
         loss: string;

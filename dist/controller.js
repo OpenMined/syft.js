@@ -4,13 +4,17 @@ const uuid = require("uuid");
 const zmq = require("zmq");
 const syft_1 = require("./syft");
 const lib_1 = require("./lib");
-exports.verbose = !!process.argv[2];
+let verbose = !!process.argv[2];
+function setVerbose(val) {
+    verbose = val;
+}
+exports.setVerbose = setVerbose;
 const identity = uuid.v4();
 const socket = zmq.socket('dealer');
 socket.identity = identity;
 socket.connect('tcp://localhost:5555');
 function log(...args) {
-    if (exports.verbose) {
+    if (verbose) {
         console.log(...args);
     }
 }

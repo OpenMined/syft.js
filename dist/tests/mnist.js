@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const mnist = require('mnist')(false);
 const syft = require("..");
-let mnist = require('mnist')(false);
-let g = global;
-let dataset = mnist(60000, 10000);
-g.syft = syft;
-async function test() {
+let testSamples = 1000;
+let trainingSamples = 6000;
+let dataset = mnist(trainingSamples, testSamples);
+async function train() {
     let training = {
         input: await syft.Tensor.FloatTensor.create(dataset.training.input),
         output: await syft.Tensor.FloatTensor.create(dataset.training.output)
@@ -15,31 +15,35 @@ async function test() {
         output: await syft.Tensor.FloatTensor.create(dataset.test.output)
     };
     let model = await syft.Model.Sequential.create([
-        await syft.Model.Linear.create(784, 10)
+        await syft.Model.Linear.create({
+            inputDim: 784,
+            outputDim: 10
+        })
     ]);
-    g.model = model;
     let criterion = await syft.Model.CrossEntropyLoss.create();
     let optimizer = await syft.Optimizer.SGD.create({
         params: await model.parameters(),
         lr: 0.06
     });
     let metrics = ['accuracy'];
+    let softmax = await syft.Model.Softmax.create();
     let loss = await model.fit({
         input: training.input,
         target: training.output,
         criterion,
         optimizer,
         batchSize: 32,
-        iterations: 4,
+        iterations: 2,
         logInterval: 1,
         metrics,
         verbose: true
     });
-    console.log('trained!', loss);
-    g.perd = await model.forward(testing.input);
-    criterion.forward(g.perd, testing.output);
-    console.log(await g.perd.shape());
+    console.log('Trained with a final loss:', loss);
+    let perd = await softmax.forward(await model.forward(testing.input));
+    let select = Math.floor(testSamples * Math.random());
+    dataset.draw((await testing.input.getData()).slice(select * 784, (select + 1) * 784), (await perd.getData()).slice(select * 10, (select + 1) * 10), (await testing.output.getData()).slice(select * 10, (select + 1) * 10));
 }
-let done = (res) => console.log(res);
-test().then(done).catch(done);
+train()
+    .then(() => process.exit())
+    .catch((err) => console.log(err));
 //# sourceMappingURL=mnist.js.map

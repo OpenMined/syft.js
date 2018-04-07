@@ -2,13 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const syft = require("../../../syft");
 class Sequential {
-    constructor(layers = []) {
+    constructor() {
         this.layers = [];
         this.metrics = [];
         this.compiled = false;
-        for (let layer of layers) {
-            this.add(layer);
-        }
     }
     async add(layer) {
         if (this.compiled) {
@@ -24,28 +21,30 @@ class Sequential {
         return this;
     }
     async compile({ loss, optimizer, metrics = [] }) {
-        if (!this.compiled) {
-            this.compiled = true;
-            this.syftModel = await syft.Model.Sequential.create();
-            for (let layer of this.layers) {
-                for (let l of layer.orderedSyft) {
-                    await layer.create();
-                    this.syftModel.add(l);
-                }
-            }
-            if (loss === 'categorical_crossentropy') {
-                this.loss = await syft.Model.Categorical_CrossEntropy.create();
-            }
-            else if (loss === 'meanSquared_error') {
-                this.loss = await syft.Model.MSELoss.create();
-            }
-            await optimizer.create(await this.syftModel.parameters());
-            this.optimizer = optimizer;
-            this.metrics = metrics;
+        if (this.compiled) {
+            throw new Error('Model already compiled.');
         }
-        else {
-            console.warn('Warning: Model already compiled... please rebuild from scratch if you need to change things');
+        this.compiled = true;
+        let layers = [];
+        for (let layer of this.layers) {
+            await layer.compile();
+            for (let l of layer.orderedSyft) {
+                layers.push(l);
+            }
         }
+        this.syftModel = await syft.Model.Sequential.create(layers);
+        if (loss.toLowerCase() === 'categorical_crossentropy') {
+            this.loss = await syft.Model.Categorical_CrossEntropy.create();
+        }
+        else if (loss.toLowerCase() === 'meansquared_error') {
+            this.loss = await syft.Model.MSELoss.create();
+        }
+        else if (loss.toLowerCase() === 'crossentropyloss') {
+            this.loss = await syft.Model.CrossEntropyLoss.create();
+        }
+        await optimizer.compile(await this.syftModel.parameters());
+        this.optimizer = optimizer;
+        this.metrics = metrics;
         return this;
     }
     async summary() {
