@@ -1,0 +1,42 @@
+{
+  "name": "syft.js",
+  "version": "0.0.1",
+  "description": "A Javascript port of the PySyft library",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "babel src --watch -d lib --source-maps",
+    "build": "babel src -d lib --source-maps",
+    "precommit": "pretty-quick --staged",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenMined/syft.js.git"
+  },
+  "keywords": [
+    "syft",
+    "pysyft",
+    "openmined",
+    "open",
+    "mined",
+    "deep",
+    "learning",
+    "private",
+    "javascript",
+    "machine",
+    "learning"
+  ],
+  "author": "OpenMined",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/OpenMined/syft.js/issues"
+  },
+  "homepage": "https://github.com/OpenMined/syft.js#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "husky": "^0.14.3",
+    "prettier": "1.13.7",
+    "pretty-quick": "^1.6.0"
+  }
+}
