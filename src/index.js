@@ -1,3 +1,5 @@
+import { addition } from './helper';
+
 export default class FloatTensor {
   constructor(obj) {
     this.torch_type = obj.torch_type;
@@ -16,6 +18,6 @@ export default class FloatTensor {
   }
 
   show() {
-    alert(this.id);
+    console.log(addition(this.id));
   }
 }
