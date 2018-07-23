@@ -6,7 +6,7 @@ export default {
     file: 'lib/index.js',
     name: 'Syft',
     format: 'iife',
-    sourceMap: 'inline'
+    sourceMap: true
   },
   plugins: [
     babel({
