@@ -17,6 +17,38 @@ export default class FloatTensor {
     this._torch_type = torch_type;
   }
 
+  get data() {
+    return this._data;
+  }
+
+  set data(data) {
+    this._data = data;
+  }
+
+  get id() {
+    return this._id;
+  }
+
+  set id(id) {
+    this._id = id;
+  }
+
+  get owners() {
+    return this._owners;
+  }
+
+  set owners(owners) {
+    this._owners = owners;
+  }
+
+  get is_pointer() {
+    return this._is_pointer;
+  }
+
+  set is_pointer(is_pointer) {
+    this._is_pointer = is_pointer;
+  }
+
   show() {
     console.log(addition(this.id));
   }
