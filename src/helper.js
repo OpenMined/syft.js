@@ -1,5 +1,1 @@
-const runOpenMined = currentTime => {
-  console.log(`It is currently... ${currentTime}`);
-};
-
-export default runOpenMined;
+export const addition = (num, amount = 20) => num + amount;

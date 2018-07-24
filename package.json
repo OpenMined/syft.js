@@ -4,8 +4,8 @@
   "description": "A Javascript port of the PySyft library",
   "main": "lib/index.js",
   "scripts": {
-    "start": "babel src --watch -d lib --source-maps",
-    "build": "babel src -d lib --source-maps",
+    "start": "rollup -cw",
+    "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
     "test": "jest"
   },
@@ -34,11 +34,14 @@
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
+    "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.7.0",
     "husky": "^0.14.3",
     "jest": "^23.4.1",
     "prettier": "1.13.7",
-    "pretty-quick": "^1.6.0"
+    "pretty-quick": "^1.6.0",
+    "rollup": "^0.63.4",
+    "rollup-plugin-babel": "^3.0.7"
   },
   "dependencies": {
     "gpu.js": "^1.5.3"
