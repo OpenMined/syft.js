@@ -7,10 +7,12 @@ const json = `{
 }`;
 
 const tensorObject = JSON.parse(json);
-const floatTensor = new Syft(tensorObject);
+const floatTensor = new Syft.default(tensorObject);
 
 floatTensor.torch_type = 'test';
 
 console.log(floatTensor.torch_type);
 
 floatTensor.show();
+
+Syft.connect('ws://localhost:1112/');
