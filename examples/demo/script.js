@@ -7,7 +7,7 @@ const json = `{
 }`;
 
 const tensorObject = JSON.parse(json);
-const floatTensor = new Syft(tensorObject);
+const floatTensor = new Syft.default(tensorObject);
 
 floatTensor.torch_type = 'test';
 
