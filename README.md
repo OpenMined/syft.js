@@ -1,4 +1,5 @@
 # syft.js
+[![Build Status](https://travis-ci.org/ahylton19/syft.js.svg?branch=master)](https://travis-ci.org/ahylton19/syft.js)
 
 Private Deep Learning in JavaScript
 
