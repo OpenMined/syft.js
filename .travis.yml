@@ -1,7 +1,4 @@
-language: bash
-
-sudo: required
-
-script:
-~ echo 'hello world'
-
+language: node_js
+node_js:
+  - "iojs"
+  - "7"
