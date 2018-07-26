@@ -1,4 +1,5 @@
 import { addition } from './helper';
+import { getConnection } from './connection';
 
 export default class FloatTensor {
   constructor(obj) {
@@ -53,3 +54,7 @@ export default class FloatTensor {
     console.log(addition(this.id));
   }
 }
+
+export const connect = url => {
+  getConnection(url, console.log);
+};
