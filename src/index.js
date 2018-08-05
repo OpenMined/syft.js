@@ -1,60 +1,62 @@
-import { addition } from './helper';
-import { getConnection } from './connection';
+import * as tf from '@tensorflow/tfjs';
 
-export default class FloatTensor {
-  constructor(obj) {
-    this.torch_type = obj.torch_type;
-    this.data = obj.data;
-    this.id = obj.id;
-    this.owners = obj.owners;
-    this.is_pointer = obj.is_pointer;
+import { createConnection } from './connection';
+
+export default class Syft {
+  constructor(url) {
+    // Where all tensors are stored locally
+    this.tensors = [];
+
+    // A saved instance of the socket connection
+    this.socket = createConnection(url);
   }
 
-  get torch_type() {
-    return this._torch_type;
+  // Gets a list of all stored tensors
+  getTensors() {
+    return this.tensors;
   }
 
-  set torch_type(torch_type) {
-    this._torch_type = torch_type;
+  // Gets a tensor by a given id (accepts a string or object)
+  getTensorById(value) {
+    const id = typeof value === 'string' ? value : value.id;
+
+    return this.tensors.find(x => x.id === id) || {};
   }
 
-  get data() {
-    return this._data;
+  // Adds a tensor to the list of stored tensors
+  addTensor(id, tensor) {
+    let createdTensor = {
+      id,
+      tensor: tf.tensor(tensor)
+    };
+
+    this.tensors.push(createdTensor);
+
+    return createdTensor;
   }
 
-  set data(data) {
-    this._data = data;
+  // NOTE: This is meant to be replaced... purely for demo purposes
+  sampleOperation(type, a, b) {
+    let foundA = this.getTensorById(a).tensor,
+      foundB = this.getTensorById(b).tensor;
+
+    if (foundA && foundB) {
+      if (type === 'add') {
+        return foundA.add(foundB);
+      }
+    }
+
+    return null;
   }
 
-  get id() {
-    return this._id;
-  }
+  // Starts syft.js
+  start() {
+    console.log('STARTING SYFT');
 
-  set id(id) {
-    this._id = id;
-  }
-
-  get owners() {
-    return this._owners;
-  }
-
-  set owners(owners) {
-    this._owners = owners;
-  }
-
-  get is_pointer() {
-    return this._is_pointer;
-  }
-
-  set is_pointer(is_pointer) {
-    this._is_pointer = is_pointer;
-  }
-
-  show() {
-    console.log(addition(this.id));
+    // Listen for incoming messages and dispatch them appropriately
+    this.socket.onmessage = event => {
+      // TODO: Either save a tensor to the list or execute a command
+      console.log('NEW EVENT', event);
+    };
   }
 }
-
-export const connect = url => {
-  getConnection(url, console.log);
-};
