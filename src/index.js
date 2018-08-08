@@ -1,5 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
-
 export default class Syft {
   constructor(url, verbose = false) {
     // Where all tensors are stored locally
