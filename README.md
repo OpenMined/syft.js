@@ -1,9 +1,8 @@
 # syft.js
+
 [![Build Status](https://travis-ci.org/ahylton19/syft.js.svg?branch=master)](https://travis-ci.org/ahylton19/syft.js)
 
-Private Deep Learning in JavaScript
-
-The goal of this project is to port PySyft to Javascript. This allows someone to perform identical operations of the Syft library in either Python or Javascript.
+The goal of this project is to allow PySyft to communicate to a Javascript client that allows for training and prediction.
 
 ## Folder Structure
 
