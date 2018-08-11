@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A Javascript port of the PySyft library",
   "main": "lib/index.js",
+  "module": "lib/index.esm.js",
   "scripts": {
     "start": "rollup -cw",
     "build": "rollup -c",
