@@ -3,12 +3,14 @@
   "version": "0.0.1",
   "description": "A Javascript port of the PySyft library",
   "main": "lib/index.js",
+  "module": "lib/index.esm.js",
   "scripts": {
     "start": "rollup -cw",
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
     "test": "jest"
   },
+  "presets": ["env"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenMined/syft.js.git"
