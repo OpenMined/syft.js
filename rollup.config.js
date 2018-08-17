@@ -10,7 +10,7 @@ export default {
   },
   {
     file: 'lib/index.esm.js',
-    name: 'syft',
+    name: 'Syft',
     format: 'esm',
     sourceMap: true
   } 
