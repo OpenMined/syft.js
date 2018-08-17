@@ -10,7 +10,6 @@
     "precommit": "npm run build && pretty-quick --staged",
     "test": "jest"
   },
-  "presets": ["env"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenMined/syft.js.git"
