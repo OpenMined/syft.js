@@ -5,7 +5,7 @@ export default {
   output: [{
     file: 'lib/index.js',
     name: 'Syft',
-    format: 'iife',
+    format: 'umd',
     sourceMap: true
   },
   {
