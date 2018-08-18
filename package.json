@@ -8,7 +8,8 @@
     "start": "rollup -cw",
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
-    "test": "jest"
+    "test": "jest",
+    "release": "release-it"
   },
   "repository": {
     "type": "git",
@@ -41,6 +42,7 @@
     "jest": "^23.4.2",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
+    "release-it": "^7.5.0",
     "rollup": "^0.63.5",
     "rollup-plugin-babel": "^3.0.7",
     "rollup-plugin-terser": "^1.0.1"
