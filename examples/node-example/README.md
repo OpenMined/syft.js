@@ -1,0 +1,1 @@
+For an example of getting syft.js running in your node application, visit this repository: https://github.com/OpenMined/syft-node-example
