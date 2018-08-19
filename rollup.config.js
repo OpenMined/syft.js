@@ -22,5 +22,6 @@ export default {
       exclude: 'node_modules/**'
     }),
     terser()
-  ]
+  ],
+  external: ['@tensorflow/tfjs']
 };
