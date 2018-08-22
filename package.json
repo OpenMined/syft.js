@@ -34,7 +34,7 @@
     "url": "https://github.com/OpenMined/syft.js/issues"
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
-  "dependencies": {
+  "peerDependencies": {
     "@tensorflow/tfjs": "^0.12.5"
   },
   "devDependencies": {
