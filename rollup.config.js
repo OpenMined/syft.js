@@ -1,5 +1,6 @@
 import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
+import resolve from 'rollup-plugin-node-resolve';
 
 export default {
   input: 'src/index.js',
@@ -21,7 +22,13 @@ export default {
     babel({
       exclude: 'node_modules/**'
     }),
+    resolve({
+      customResolveOptions: {
+        moduleDirectory: 'node_modules'
+      }
+    }),
     terser()
   ],
+  // indicate which modules should be treated as external
   external: ['@tensorflow/tfjs']
 };
