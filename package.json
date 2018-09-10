@@ -36,6 +36,7 @@
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "dependencies": {
     "@tensorflow/tfjs": "^0.12.5",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "np": "^3.0.4"
   },
   "peerDependencies": {

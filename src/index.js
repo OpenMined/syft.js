@@ -101,7 +101,14 @@ export default class Syft {
       // Does the first tensor have this function?
       if (typeof firstTensor.tensor[func] === 'function') {
         // We're all good - run the command
-        return firstTensor.tensor[func](secondTensor.tensor);
+        const result = firstTensor.tensor[func](secondTensor.tensor);
+
+        this.sendMessage({
+          result,
+          tensors: [firstTensor, secondTensor]
+        });
+
+        return result;
       }
 
       throw new Error('Function not found in TensorFlow');
@@ -110,12 +117,31 @@ export default class Syft {
     throw new Error('Cannot find tensors');
   }
 
+  // Sends a socket message back to the server
+  sendMessage(data) {
+    // If we're capable of sending a message
+    if (this.socket.readyState === 1) {
+      // Construct the message
+      const message = {
+        type: 'result',
+        ...data
+      };
+
+      this.log(`Sending message to "${this.socket.url}"`, message);
+
+      // Send it via JSON
+      this.socket.send(JSON.stringify(message));
+    }
+  }
+
   // Starts syft.js
   start() {
     this.log('Starting up...');
 
     // Listen for incoming messages and dispatch them appropriately
     this.socket.onmessage = event => {
+      event = JSON.parse(event);
+
       this.log(`Received a message of type "${event.type}"`, event);
 
       if (event.type === 'tensor') {
