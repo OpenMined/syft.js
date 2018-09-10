@@ -9,7 +9,7 @@
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
     "test": "jest",
-    "release": "release-it"
+    "release": "np"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,8 @@
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "dependencies": {
-    "@tensorflow/tfjs": "^0.12.5"
+    "@tensorflow/tfjs": "^0.12.5",
+    "np": "^3.0.4"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^0.12.5"
@@ -48,10 +49,9 @@
     "jest": "^23.4.2",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
-    "release-it": "^7.5.0",
     "rollup": "^0.63.5",
     "rollup-plugin-babel": "^3.0.7",
-    "rollup-plugin-terser": "^1.0.1",
-    "rollup-plugin-node-resolve": "^3.3.0"
+    "rollup-plugin-node-resolve": "^3.3.0",
+    "rollup-plugin-terser": "^1.0.1"
   }
 }

@@ -32,7 +32,7 @@ export default class Syft {
     return this.tensors;
   }
 
-  // Gets a tensor by a given id (accepts a string or object)
+  // Gets a tensor by a given id
   getTensorById(id) {
     return this.tensors.find(x => x.id === id) || null;
   }
@@ -76,7 +76,7 @@ export default class Syft {
     const index = this.getTensorIndex(id);
 
     // Remove it if we found it
-    if (index) {
+    if (index !== null) {
       this.tensors.splice(index, 1);
     } else {
       throw new Error('We cannot find a tensor with that id');

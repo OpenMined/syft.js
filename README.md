@@ -1,7 +1,5 @@
 # syft.js
 
-[![Build Status](https://travis-ci.org/ahylton19/syft.js.svg?branch=master)](https://travis-ci.org/ahylton19/syft.js)
-
 The goal of this project is to allow PySyft to communicate to a Javascript client that allows for training and prediction.
 
 ## Folder Structure
