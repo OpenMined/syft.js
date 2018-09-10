@@ -8,7 +8,7 @@
     "start": "rollup -cw",
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
-    "test": "jest",
+    "test": "npm run build && jest",
     "release": "np"
   },
   "repository": {
@@ -34,24 +34,34 @@
     "url": "https://github.com/OpenMined/syft.js/issues"
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
+  "jest": {
+    "testURL": "http://localhost/",
+    "verbose": true,
+    "testEnvironment": "node",
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ]
+  },
   "dependencies": {
-    "@tensorflow/tfjs": "^0.12.5",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "np": "^3.0.4"
+    "@tensorflow/tfjs": "^0.12.5"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^0.12.5"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
     "husky": "^0.14.3",
     "jest": "^23.4.2",
+    "np": "^3.0.4",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
+    "regenerator-runtime": "^0.12.1",
     "rollup": "^0.63.5",
-    "rollup-plugin-babel": "^3.0.7",
+    "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-terser": "^1.0.1"
   }
