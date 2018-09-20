@@ -1,16 +1,21 @@
 import * as tf from '@tensorflow/tfjs';
 
 export default class Syft {
-  constructor(url, verbose = false) {
+  /* ----- CONSTRUCTOR ----- */
+  constructor(opts = {}) {
+    const { url, verbose } = opts;
+
     // Where all tensors are stored locally
     this.tensors = [];
 
     // A saved instance of the socket connection
-    this.socket = new WebSocket(url);
+    this.socket = this.createSocketConnection(url);
 
     // Set verbose logging
     this.verbose = verbose;
   }
+
+  /* ----- HELPERS ----- */
 
   // A simple logging function
   log(message, data) {
@@ -51,6 +56,13 @@ export default class Syft {
     return returnedIndex;
   }
 
+  // Gets the values of a tensor spread in a 1D array
+  getValues(tensor) {
+    return tensor.dataSync();
+  }
+
+  /* ----- FUNCTIONALITY ----- */
+
   // Adds a tensor to the list of stored tensors
   addTensor(id, tensor) {
     this.log(`Adding tensor "${id}", with value:`, tensor);
@@ -64,8 +76,8 @@ export default class Syft {
     // Push it onto the stack
     this.tensors.push(createdTensor);
 
-    // Return the created tensor to the user so they know it was added
-    return createdTensor;
+    // Return the list of tensors in a Promise so the user knows it was added
+    return Promise.resolve(this.tensors);
   }
 
   // Removes a tensor from the list of stored tensors
@@ -78,12 +90,12 @@ export default class Syft {
     // Remove it if we found it
     if (index !== null) {
       this.tensors.splice(index, 1);
-    } else {
-      throw new Error('We cannot find a tensor with that id');
+
+      // Return the list of tensors in a Promise so the user knows it was removed
+      return Promise.resolve(this.tensors);
     }
 
-    // Return the list of stored tensors so the user knows it was removed
-    return this.tensors;
+    return Promise.reject({ error: 'We cannot find a tensor with that id' });
   }
 
   // Runs any TensorFlow operation over two given tensors
@@ -108,13 +120,26 @@ export default class Syft {
           tensors: [firstTensor, secondTensor]
         });
 
-        return result;
+        return Promise.resolve(result);
       }
 
-      throw new Error('Function not found in TensorFlow');
+      return Promise.reject({ error: 'Function not found in TensorFlow' });
     }
 
-    throw new Error('Cannot find tensors');
+    return Promise.reject({ error: 'Cannot find tensors' });
+  }
+
+  /* ----- SOCKET COMMUNICATION ----- */
+
+  // Creates a socket connection if a URL is available
+  createSocketConnection(url) {
+    if (url) {
+      this.log(`Creating socket connection at "${url}"`);
+
+      return new WebSocket(url);
+    }
+
+    return null;
   }
 
   // Sends a socket message back to the server
@@ -131,12 +156,20 @@ export default class Syft {
 
       // Send it via JSON
       this.socket.send(JSON.stringify(message));
+
+      return Promise.resolve(message);
     }
+
+    return Promise.reject({ error: 'Cannot connect to server' });
   }
 
   // Starts syft.js
-  start() {
+  start(url) {
     this.log('Starting up...');
+
+    if (url) {
+      this.socket = this.createSocketConnection(url);
+    }
 
     // Listen for incoming messages and dispatch them appropriately
     this.socket.onmessage = event => {
