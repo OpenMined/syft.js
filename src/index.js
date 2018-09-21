@@ -1,4 +1,12 @@
+import EventObserver from './events';
+
 import * as tf from '@tensorflow/tfjs';
+
+const MESSAGE_RECEIVED = 'message-received';
+const MESSAGE_SENT = 'message-sent';
+const RAN_OPERATION = 'operation';
+const TENSOR_ADDED = 'tensor-added';
+const TENSOR_REMOVED = 'tensor-removed';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -13,6 +21,9 @@ export default class Syft {
 
     // Set verbose logging
     this.verbose = verbose;
+
+    // Set events to be listened to
+    this.observer = new EventObserver();
   }
 
   /* ----- HELPERS ----- */
@@ -76,6 +87,13 @@ export default class Syft {
     // Push it onto the stack
     this.tensors.push(createdTensor);
 
+    // TODO: Patrick, commit this to master!!!
+    this.observer.broadcast(TENSOR_ADDED, {
+      id,
+      tensor: createdTensor.tensor,
+      tensors: this.tensors
+    });
+
     // Return the list of tensors in a Promise so the user knows it was added
     return Promise.resolve(this.tensors);
   }
@@ -90,6 +108,8 @@ export default class Syft {
     // Remove it if we found it
     if (index !== null) {
       this.tensors.splice(index, 1);
+
+      this.observer.broadcast(TENSOR_REMOVED, { id, tensors: this.tensors });
 
       // Return the list of tensors in a Promise so the user knows it was removed
       return Promise.resolve(this.tensors);
@@ -120,6 +140,8 @@ export default class Syft {
           tensors: [firstTensor, secondTensor]
         });
 
+        this.observer.broadcast(RAN_OPERATION, { func, result });
+
         return Promise.resolve(result);
       }
 
@@ -127,6 +149,28 @@ export default class Syft {
     }
 
     return Promise.reject({ error: 'Cannot find tensors' });
+  }
+
+  /* ----- EVENT HANDLERS ----- */
+
+  onMessageReceived(func) {
+    this.observer.subscribe(MESSAGE_RECEIVED, func);
+  }
+
+  onMessageSent(func) {
+    this.observer.subscribe(MESSAGE_SENT, func);
+  }
+
+  onRunOperation(func) {
+    this.observer.subscribe(RAN_OPERATION, func);
+  }
+
+  onTensorAdded(func) {
+    this.observer.subscribe(TENSOR_ADDED, func);
+  }
+
+  onTensorRemoved(func) {
+    this.observer.subscribe(TENSOR_REMOVED, func);
   }
 
   /* ----- SOCKET COMMUNICATION ----- */
@@ -157,6 +201,8 @@ export default class Syft {
       // Send it via JSON
       this.socket.send(JSON.stringify(message));
 
+      this.observer.broadcast(MESSAGE_SENT, { message });
+
       return Promise.resolve(message);
     }
 
@@ -184,6 +230,8 @@ export default class Syft {
         // We have a request to perform an operation, run it...
         this.runOperation(event.func, event.tensors);
       }
+
+      this.observer.broadcast(MESSAGE_RECEIVED, { event });
     };
   }
 
