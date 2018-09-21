@@ -164,7 +164,6 @@ export default class Syft {
   // Creates a socket connection if a URL is available
   createSocketConnection(url) {
     if (url) {
-      console.log(this);
       this.logger.log(`Creating socket connection at "${url}"`);
 
       return new WebSocket(url);
