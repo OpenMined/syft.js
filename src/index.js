@@ -1,4 +1,5 @@
 import EventObserver from './events';
+import Logger from './logger';
 
 import * as tf from '@tensorflow/tfjs';
 
@@ -16,32 +17,17 @@ export default class Syft {
     // Where all tensors are stored locally
     this.tensors = [];
 
-    // A saved instance of the socket connection
-    this.socket = this.createSocketConnection(url);
-
-    // Set verbose logging
-    this.verbose = verbose;
-
     // Set events to be listened to
     this.observer = new EventObserver();
+
+    // Set logger
+    this.logger = new Logger(verbose);
+
+    // A saved instance of the socket connection
+    this.socket = this.createSocketConnection(url);
   }
 
   /* ----- HELPERS ----- */
-
-  // A simple logging function
-  log(message, data) {
-    // Only log if verbose is turned on
-    if (this.verbose) {
-      const output = `${Date.now()}: Syft.js - ${message}`;
-
-      // Have the passed additional data?
-      if (data) {
-        console.log(output, data);
-      } else {
-        console.log(output);
-      }
-    }
-  }
 
   // Gets a list of all stored tensors
   getTensors() {
@@ -76,7 +62,7 @@ export default class Syft {
 
   // Adds a tensor to the list of stored tensors
   addTensor(id, tensor) {
-    this.log(`Adding tensor "${id}", with value:`, tensor);
+    this.logger.log(`Adding tensor "${id}", with value:`, tensor);
 
     // Create a tensor in TensorFlow
     let createdTensor = {
@@ -100,7 +86,7 @@ export default class Syft {
 
   // Removes a tensor from the list of stored tensors
   removeTensor(id) {
-    this.log(`Removing tensor "${id}"`);
+    this.logger.log(`Removing tensor "${id}"`);
 
     // Find the index of the tensor
     const index = this.getTensorIndex(id);
@@ -120,7 +106,7 @@ export default class Syft {
 
   // Runs any TensorFlow operation over two given tensors
   runOperation(func, tensors) {
-    this.log(
+    this.logger.log(
       `Running operation "${func}" on "${tensors[0]}" and "${tensors[1]}"`
     );
 
@@ -178,7 +164,8 @@ export default class Syft {
   // Creates a socket connection if a URL is available
   createSocketConnection(url) {
     if (url) {
-      this.log(`Creating socket connection at "${url}"`);
+      console.log(this);
+      this.logger.log(`Creating socket connection at "${url}"`);
 
       return new WebSocket(url);
     }
@@ -196,7 +183,7 @@ export default class Syft {
         ...data
       };
 
-      this.log(`Sending message to "${this.socket.url}"`, message);
+      this.logger.log(`Sending message to "${this.socket.url}"`, message);
 
       // Send it via JSON
       this.socket.send(JSON.stringify(message));
@@ -211,7 +198,7 @@ export default class Syft {
 
   // Starts syft.js
   start(url) {
-    this.log('Starting up...');
+    this.logger.log('Starting up...');
 
     if (url) {
       this.socket = this.createSocketConnection(url);
@@ -221,7 +208,7 @@ export default class Syft {
     this.socket.onmessage = event => {
       event = JSON.parse(event);
 
-      this.log(`Received a message of type "${event.type}"`, event);
+      this.logger.log(`Received a message of type "${event.type}"`, event);
 
       if (event.type === 'tensor') {
         // We have a new tensor, store it...
@@ -237,7 +224,7 @@ export default class Syft {
 
   // Stops syft.js
   stop() {
-    this.log('Shutting down...');
+    this.logger.log('Shutting down...');
 
     // Kill the socket connection
     this.socket.close();
