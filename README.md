@@ -1,10 +1,6 @@
-# Getting Started
+# Table of contents
 
-The goal of this project is to allow PySyft to communicate to a Javascript client that allows for training and prediction.
-
-## Folder Structure
-
-* `src` - the source directory where code is built
-* `lib` - the compiled source code
-* `examples` - a series of examples
-
+- [Getting Started](docs/getting-started.md)
+- [Installation](docs/installation.md)
+- [Contributing](docs/contributing.md)
+- [Testing](docs/testing.md)
