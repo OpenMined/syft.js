@@ -189,7 +189,7 @@ export default class Syft {
   // Sends a socket message back to the server
   sendMessage(type, data) {
     // If we're capable of sending a message
-    if (this.socket.readyState === 1) {
+    if (this.socket && this.socket.readyState === 1) {
       // Construct the message
       const message = { type, data };
 
