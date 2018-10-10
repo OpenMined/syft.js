@@ -3,11 +3,14 @@ import Logger from './logger';
 
 import * as tf from '@tensorflow/tfjs';
 
+const SOCKET_STATUS = 'socket-status';
+const GET_TENSORS = 'get-tensors';
+const GET_TENSOR = 'get-tensor';
 const MESSAGE_RECEIVED = 'message-received';
 const MESSAGE_SENT = 'message-sent';
-const RAN_OPERATION = 'operation';
-const TENSOR_ADDED = 'tensor-added';
-const TENSOR_REMOVED = 'tensor-removed';
+const RUN_OPERATION = 'run-operation';
+const TENSOR_ADDED = 'add-tensor';
+const TENSOR_REMOVED = 'remove-tensor';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -31,12 +34,20 @@ export default class Syft {
 
   // Gets a list of all stored tensors
   getTensors() {
-    return this.tensors;
+    const tensors = this.tensors;
+
+    this.sendMessage(GET_TENSORS, tensors);
+
+    return tensors;
   }
 
   // Gets a tensor by a given id
   getTensorById(id) {
-    return this.tensors.find(x => x.id === id) || null;
+    const tensor = this.tensors.find(x => x.id === id) || null;
+
+    this.sendMessage(GET_TENSOR, tensor);
+
+    return tensor;
   }
 
   // Gets the index of the tensor (found by id) in the stored tensor list
@@ -73,7 +84,8 @@ export default class Syft {
     // Push it onto the stack
     this.tensors.push(createdTensor);
 
-    // TODO: Patrick, commit this to master!!!
+    this.sendMessage(TENSOR_ADDED, createdTensor);
+
     this.observer.broadcast(TENSOR_ADDED, {
       id,
       tensor: createdTensor.tensor,
@@ -94,6 +106,8 @@ export default class Syft {
     // Remove it if we found it
     if (index !== null) {
       this.tensors.splice(index, 1);
+
+      this.sendMessage(TENSOR_REMOVED, id);
 
       this.observer.broadcast(TENSOR_REMOVED, { id, tensors: this.tensors });
 
@@ -121,12 +135,12 @@ export default class Syft {
         // We're all good - run the command
         const result = firstTensor.tensor[func](secondTensor.tensor);
 
-        this.sendMessage({
+        this.sendMessage(RUN_OPERATION, {
           result,
           tensors: [firstTensor, secondTensor]
         });
 
-        this.observer.broadcast(RAN_OPERATION, { func, result });
+        this.observer.broadcast(RUN_OPERATION, { func, result });
 
         return Promise.resolve(result);
       }
@@ -148,7 +162,7 @@ export default class Syft {
   }
 
   onRunOperation(func) {
-    this.observer.subscribe(RAN_OPERATION, func);
+    this.observer.subscribe(RUN_OPERATION, func);
   }
 
   onTensorAdded(func) {
@@ -173,14 +187,11 @@ export default class Syft {
   }
 
   // Sends a socket message back to the server
-  sendMessage(data) {
+  sendMessage(type, data) {
     // If we're capable of sending a message
     if (this.socket.readyState === 1) {
       // Construct the message
-      const message = {
-        type: 'result',
-        ...data
-      };
+      const message = { type, data };
 
       this.logger.log(`Sending message to "${this.socket.url}"`, message);
 
@@ -197,11 +208,17 @@ export default class Syft {
 
   // Starts syft.js
   start(url) {
+    // Tell PySyft that we're booting up
+    this.sendMessage(SOCKET_STATUS, { status: 'starting' });
+
     this.logger.log('Starting up...');
 
     if (url) {
       this.socket = this.createSocketConnection(url);
     }
+
+    // Tell PySyft that we're ready to receive instructions
+    this.sendMessage(SOCKET_STATUS, { status: 'ready' });
 
     // Listen for incoming messages and dispatch them appropriately
     this.socket.onmessage = event => {
@@ -209,10 +226,19 @@ export default class Syft {
 
       this.logger.log(`Received a message of type "${event.type}"`, event);
 
-      if (event.type === 'tensor') {
+      if (event.type === TENSOR_ADDED) {
         // We have a new tensor, store it...
         this.addTensor(event.id, event.values);
-      } else if (event.type === 'operation') {
+      } else if (event.type === TENSOR_REMOVED) {
+        // We need to remove a tensor...
+        this.removeTensor(event.id);
+      } else if (event.type === GET_TENSOR) {
+        // We need to get a tensor...
+        this.getTensorById(event.id);
+      } else if (event.type === GET_TENSORS) {
+        // We need to get all tensors...
+        this.getTensors();
+      } else if (event.type === RUN_OPERATION) {
         // We have a request to perform an operation, run it...
         this.runOperation(event.func, event.tensors);
       }
@@ -224,6 +250,9 @@ export default class Syft {
   // Stops syft.js
   stop() {
     this.logger.log('Shutting down...');
+
+    // Tell PySyft that we're stopping
+    this.sendMessage(SOCKET_STATUS, { status: 'stopped' });
 
     // Kill the socket connection
     this.socket.close();
