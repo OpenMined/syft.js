@@ -3,16 +3,15 @@ global.WebSocket = WebSocket;
 
 const Syft = require('../lib/index');
 
-// TODO: Do something with this someday...
 const fakeURL = 'ws://localhost:8080';
 const mockServer = new Server(fakeURL);
 
 const mySyft = new Syft();
 
-mySyft.start('ws://localhost:8080');
+mySyft.start(fakeURL);
 
-test('Syft.js is startable', () => {
-  expect(typeof mySyft.start).toBe('function');
+test('Syft.js is connected to a socket server', () => {
+  expect(mySyft.socket.readyState).toEqual(0);
 });
 
 test('Syft.js adds one tensor', async () => {
