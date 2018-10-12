@@ -64,11 +64,6 @@ export default class Syft {
     return returnedIndex;
   }
 
-  // Gets the values of a tensor spread in a 1D array
-  getValues(tensor) {
-    return tensor.dataSync();
-  }
-
   /* ----- FUNCTIONALITY ----- */
 
   // Adds a tensor to the list of stored tensors
@@ -186,6 +181,32 @@ export default class Syft {
     return null;
   }
 
+  // Receives a socket message from the server
+  receiveMessage(event) {
+    event = JSON.parse(event);
+
+    this.logger.log(`Received a message of type "${event.type}"`, event);
+
+    if (event.type === TENSOR_ADDED) {
+      // We have a new tensor, store it...
+      this.addTensor(event.id, event.values);
+    } else if (event.type === TENSOR_REMOVED) {
+      // We need to remove a tensor...
+      this.removeTensor(event.id);
+    } else if (event.type === GET_TENSOR) {
+      // We need to get a tensor...
+      this.getTensorById(event.id);
+    } else if (event.type === GET_TENSORS) {
+      // We need to get all tensors...
+      this.getTensors();
+    } else if (event.type === RUN_OPERATION) {
+      // We have a request to perform an operation, run it...
+      this.runOperation(event.func, event.tensors);
+    }
+
+    this.observer.broadcast(MESSAGE_RECEIVED, { event });
+  }
+
   // Sends a socket message back to the server
   sendMessage(type, data) {
     // If we're capable of sending a message
@@ -221,30 +242,7 @@ export default class Syft {
     this.sendMessage(SOCKET_STATUS, { status: 'ready' });
 
     // Listen for incoming messages and dispatch them appropriately
-    this.socket.onmessage = event => {
-      event = JSON.parse(event);
-
-      this.logger.log(`Received a message of type "${event.type}"`, event);
-
-      if (event.type === TENSOR_ADDED) {
-        // We have a new tensor, store it...
-        this.addTensor(event.id, event.values);
-      } else if (event.type === TENSOR_REMOVED) {
-        // We need to remove a tensor...
-        this.removeTensor(event.id);
-      } else if (event.type === GET_TENSOR) {
-        // We need to get a tensor...
-        this.getTensorById(event.id);
-      } else if (event.type === GET_TENSORS) {
-        // We need to get all tensors...
-        this.getTensors();
-      } else if (event.type === RUN_OPERATION) {
-        // We have a request to perform an operation, run it...
-        this.runOperation(event.func, event.tensors);
-      }
-
-      this.observer.broadcast(MESSAGE_RECEIVED, { event });
-    };
+    this.socket.onmessage = this.receiveMessage;
   }
 
   // Stops syft.js
