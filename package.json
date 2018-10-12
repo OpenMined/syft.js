@@ -1,6 +1,6 @@
 {
   "name": "syft.js",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A Javascript port of the PySyft library",
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
