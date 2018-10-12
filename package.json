@@ -9,7 +9,7 @@
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
     "pretest": "npm run build",
-    "test": "jest",
+    "test": "jest && codecov",
     "test-watch": "jest --watch --coverage",
     "release": "np"
   },
@@ -43,7 +43,9 @@
     "moduleDirectories": [
       "node_modules",
       "src"
-    ]
+    ],
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true
   },
   "dependencies": {
     "@tensorflow/tfjs": "^0.12.5"
