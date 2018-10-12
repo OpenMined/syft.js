@@ -9,7 +9,7 @@
     "build": "rollup -c",
     "precommit": "npm run build && pretty-quick --staged",
     "pretest": "npm run build",
-    "test": "jest && codecov",
+    "test": "jest --coverage",
     "test-watch": "jest --watch --coverage",
     "release": "np"
   },
