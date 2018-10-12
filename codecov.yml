@@ -1,11 +1,12 @@
 codecov:
+  token: 3e014260-e555-40dd-a67e-4b9db609899e
   notify:
     require_ci_to_pass: yes
 
 coverage:
   precision: 2
   round: down
-  range: "70...100"
+  range: '70...100'
 
   status:
     project: yes
@@ -21,6 +22,6 @@ parsers:
       macro: no
 
 comment:
-  layout: "header, diff"
+  layout: 'header, diff'
   behavior: default
   require_changes: no
