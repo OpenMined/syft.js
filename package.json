@@ -10,7 +10,7 @@
     "precommit": "npm run build && pretty-quick --staged",
     "pretest": "npm run build",
     "test": "jest",
-    "test-watch": "jest --watch --coverage",
+    "test-watch": "jest --watch",
     "release": "np"
   },
   "repository": {
@@ -37,14 +37,8 @@
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
   "jest": {
-    "testURL": "http://localhost/",
     "verbose": true,
     "testEnvironment": "node",
-    "moduleDirectories": [
-      "node_modules",
-      "src"
-    ],
-    "coverageDirectory": "./coverage/",
     "collectCoverage": true
   },
   "dependencies": {

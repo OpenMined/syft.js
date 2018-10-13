@@ -1,5 +1,5 @@
-const { Server } = require('mock-socket');
-const Syft = require('../lib/index');
+import { Server } from 'mock-socket';
+import Syft from './index';
 
 const fakeURL = 'ws://localhost:8080/';
 
