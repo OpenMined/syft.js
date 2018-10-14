@@ -183,6 +183,3 @@ syft.getTensorById('my-tensor');
 // Get the index of a tensor in the list
 syft.getTensorIndex('my-tensor');
 ```
-
-
-
