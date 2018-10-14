@@ -204,7 +204,7 @@ export default class Syft {
       this.runOperation(event.func, event.tensors);
     }
 
-    this.observer.broadcast(MESSAGE_RECEIVED, { event });
+    this.observer.broadcast(MESSAGE_RECEIVED, event);
   }
 
   // Sends a socket message back to the server
@@ -219,7 +219,7 @@ export default class Syft {
       // Send it via JSON
       this.socket.send(JSON.stringify(message));
 
-      this.observer.broadcast(MESSAGE_SENT, { message });
+      this.observer.broadcast(MESSAGE_SENT, message);
 
       return Promise.resolve(message);
     }
