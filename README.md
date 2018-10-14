@@ -41,7 +41,7 @@ If you're not using a package manager, you can also include Syft.js within a `<s
 
 ### Contributing
 
-We're accepting PR's for testing at the moment to improve our overall code coverage.  In terms of core functionality, we're considering the current version of Syft.js feature complete until a further roadmap is designated.
+We're accepting PR's for testing at the moment to improve our overall code coverage. In terms of core functionality, we're considering the current version of Syft.js feature complete until a further roadmap is designated.
 
 ## Guide
 
@@ -82,11 +82,11 @@ var syft = new Syft({
 });
 ```
 
-If you're running Syft alongside PySyft, which you probably are, then this is likely all you'll need to do to get Syft.js working.  In this case, it will perform any instructions PySyft asks it to perform.
+If you're running Syft alongside PySyft, which you probably are, then this is likely all you'll need to do to get Syft.js working. In this case, it will perform any instructions PySyft asks it to perform.
 
 #### Calling Syft.js directly
 
-Everything in Syft.js is based on ID's that you specify.  To add a tensor to the list, you can simply run:
+Everything in Syft.js is based on ID's that you specify. To add a tensor to the list, you can simply run:
 
 ```javascript
 syft.addTensor('my-tensor', [[1, 2], [3, 4]]);
@@ -127,7 +127,7 @@ syft.runOperation('add', ['first-tensor', 'second-tensor']).then(result => {
 
 #### Event Listeners
 
-If `Promise` doesn't do it for you, or you're working with a state management library like Redux, MobX, or Vuex, then you can optionally hook into event listeners.  You have access to the following events:
+If `Promise` doesn't do it for you, or you're working with a state management library like Redux, MobX, or Vuex, then you can optionally hook into event listeners. You have access to the following events:
 
 ```javascript
 // A tensor being added to the list
@@ -183,3 +183,4 @@ syft.getTensorById('my-tensor');
 // Get the index of a tensor in the list
 syft.getTensorIndex('my-tensor');
 ```
+
