@@ -223,8 +223,6 @@ export default class Syft {
 
       return Promise.resolve(message);
     }
-
-    return Promise.reject({ error: 'Cannot connect to server' });
   }
 
   // Starts syft.js

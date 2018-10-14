@@ -12,7 +12,7 @@ async function runApp() {
     mySyft.start();
 
     mySyft.onTensorAdded(data => {
-      console.log('TENSOR ADDED', data, mySyft.getValues(data.tensor));
+      console.log('TENSOR ADDED', data, data.tensor.dataSync());
     });
 
     mySyft.onTensorRemoved(data => {
@@ -20,7 +20,7 @@ async function runApp() {
     });
 
     mySyft.onRunOperation(data => {
-      console.log('OPERATION RAN', data, mySyft.getValues(data.result));
+      console.log('OPERATION RAN', data, data.result.dataSync());
     });
 
     let results;
