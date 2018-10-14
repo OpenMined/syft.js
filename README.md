@@ -10,6 +10,8 @@ Of course, [PySyft](https://github.com/openmined/pysyft) has the ability to run 
 
 PySyft acts as the parent node, instructing child nodes \(Syft.js instances running in a website on users' browsers\) of what tensors to add to a list, remove from a list, and operate against.
 
+[Link to full documentation here](https://docs.openmined.org/syft-js)
+
 ### Installation
 
 If you're using a package manage like NPM:
@@ -20,7 +22,7 @@ npm install --save syft.js
 
 Or if Yarn is your cup of tea:
 
-```bash
+```text
 yarn add syft.js
 ```
 
@@ -28,14 +30,14 @@ When using a package manager, TensorFlow.js will be automatically installed.
 
 If you're not using a package manager, you can also include Syft.js within a `<script>` tag:
 
-```markup
+```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/0.12.5/tf.min.js"></script>
 <script src="https://unpkg.com/syft.js@latest/lib/index.js"></script>
 ```
 
-For integration into your client-side application, [please check out our guide](guide.md).
+For integration into your client-side application, [please check out our guide](https://docs.openmined.org/syft-js/guide).
 
-For further API documentation, [please check that out here](api-documentation.md).
+For further API documentation, [please check that out here](https://docs.openmined.org/syft-js/api-documentation).
 
 ### Local Development
 
@@ -46,4 +48,3 @@ For further API documentation, [please check that out here](api-documentation.md
 ### Contributing
 
 We're accepting PR's for testing at the moment to improve our overall code coverage. In terms of core functionality, we're considering the current version of Syft.js feature complete until a further roadmap is designated.
-
