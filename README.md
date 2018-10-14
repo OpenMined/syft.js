@@ -4,7 +4,11 @@
 
 ## Introduction to Syft.js
 
-Of course, [PySyft](https://github.com/openmined/pysyft) has the ability to run in its own environment. But if you would like to train FL models in the browser, you must resort to using some ML framework like [TensorFlow.js](https://js.tensorflow.org/). Syft.js is a wrapper on top of TensorFlow.js, allowing for a socket connection with any running PySyft instance.  PySyft acts as the parent node, instructing child nodes \(Syft.js instances running in a website on users' browsers\) of what tensors to add to a list, remove from a list, and operate against.
+Of course, [PySyft](https://github.com/openmined/pysyft) has the ability to run in its own environment. But if you would like to train FL models in the browser, you must resort to using some ML framework like [TensorFlow.js](https://js.tensorflow.org/).
+
+**Syft.js is a microlibrary built on top of TensorFlow.js, allowing for a socket connection with any running PySyft instance.**
+
+PySyft acts as the parent node, instructing child nodes \(Syft.js instances running in a website on users' browsers\) of what tensors to add to a list, remove from a list, and operate against.
 
 ### Installation
 
@@ -78,6 +82,8 @@ var syft = new Syft({
 });
 ```
 
+If you're running Syft alongside PySyft, which you probably are, then this is likely all you'll need to do to get Syft.js working.  In this case, it will perform any instructions PySyft asks it to perform.
+
 #### Calling Syft.js directly
 
 Everything in Syft.js is based on ID's that you specify.  To add a tensor to the list, you can simply run:
@@ -86,3 +92,94 @@ Everything in Syft.js is based on ID's that you specify.  To add a tensor to the
 syft.addTensor('my-tensor', [[1, 2], [3, 4]]);
 ```
 
+To remove a tensor :
+
+```javascript
+syft.removeTensor('my-tensor');
+```
+
+And to run an operation:
+
+```javascript
+// First param is any valid Tensorflow.js operation
+syft.runOperation('add', ['first-tensor', 'second-tensor']);
+syft.runOperation('mul', ['first-tensor', 'second-tensor']);
+```
+
+All three methods also return a `Promise` should you desire this functionality:
+
+```javascript
+// addTensor()
+syft.addTensor('my-tensor', [[1, 2], [3, 4]]).then(tensors => {
+    console.log('A list of all stored tensors', tensors);
+});
+
+// removeTensor()
+syft.removeTensor('my-tensor').then(tensors => {
+    console.log('A list of all stored tensors', tensors);
+});
+
+// runOperation()
+syft.runOperation('add', ['first-tensor', 'second-tensor']).then(result => {
+    console.log('A TensorFlow.js tensor', result);
+});
+```
+
+#### Event Listeners
+
+If `Promise` doesn't do it for you, or you're working with a state management library like Redux, MobX, or Vuex, then you can optionally hook into event listeners.  You have access to the following events:
+
+```javascript
+// A tensor being added to the list
+syft.onTensorAdded((id, tensor, tensors) => {
+    console.log('The ID of the tensor', id);
+    console.log('The TensorFlow.js tensor', tensor);
+    console.log('A list of all stored tensors', tensors);
+});
+```
+
+```javascript
+// A tensor being removed from the list
+syft.onTensorRemoved((id, tensors) => {
+    console.log('The ID of the tensor', id);
+    console.log('A list of all stored tensors', tensors);
+});
+```
+
+```javascript
+// An operation being run
+syft.onRunOperation((func, result) => {
+    console.log('The TensorFlow.js operation', func);
+    console.log('A TensorFlow.js tensor', result);
+});
+```
+
+```javascript
+// When a PySyft message is received
+syft.onMessageReceived((event) => {
+    console.log('The JSON passed to us from PySyft', event);
+});
+```
+
+```javascript
+// When a message is sent back to PySyft
+syft.onMessageSent(({ type, data }) => {
+    console.log('The type of message being passed', type);
+    console.log('The data being passed alongside', data);
+});
+```
+
+#### Helper Functions
+
+It's not likely you'll have to use these functions directly, but nevertheless, you have access to them should you desire:
+
+```javascript
+// Get a list of all tensors being stored
+syft.getTensors();
+
+// Get a single tensor by ID
+syft.getTensorById('my-tensor');
+
+// Get the index of a tensor in the list
+syft.getTensorIndex('my-tensor');
+```
