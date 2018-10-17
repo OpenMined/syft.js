@@ -114,7 +114,7 @@ export default class Syft {
   }
 
   // Runs any TensorFlow operation over two given tensors
-  runOperation(func, tensors) {
+  runOperation(func, tensors, result_id = null) {
     this.logger.log(
       `Running operation "${func}" on "${tensors[0]}" and "${tensors[1]}"`
     );
@@ -132,10 +132,11 @@ export default class Syft {
 
         this.sendMessage(RUN_OPERATION, {
           result,
+          result_id,
           tensors: [firstTensor, secondTensor]
         });
 
-        this.observer.broadcast(RUN_OPERATION, { func, result });
+        this.observer.broadcast(RUN_OPERATION, { func, result, result_id });
 
         return Promise.resolve(result);
       }
@@ -201,7 +202,7 @@ export default class Syft {
       this.getTensors();
     } else if (event.type === RUN_OPERATION) {
       // We have a request to perform an operation, run it...
-      this.runOperation(event.func, event.tensors);
+      this.runOperation(event.func, event.tensors, event.result_id);
     }
 
     this.observer.broadcast(MESSAGE_RECEIVED, event);
