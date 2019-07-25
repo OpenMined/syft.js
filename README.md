@@ -1,7 +1,7 @@
 # Syft.js
 
 ![Travis (.org)](https://img.shields.io/travis/OpenMined/syft.js.svg)
-![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)]
+![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)
 ![npm](https://img.shields.io/npm/v/syft.js.svg)
 ![GitHub](https://img.shields.io/github/license/OpenMined/syft.js.svg)
 
