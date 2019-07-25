@@ -1,3 +1,4 @@
+import regeneratorRuntime from 'regenerator-runtime';
 import { Server } from 'mock-socket';
 import Syft from './index';
 
