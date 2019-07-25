@@ -1,7 +1,7 @@
 async function runApp() {
   try {
     // Let's go ahead and create a Syft instance (with logging turned on)
-    const mySyft = new Syft({
+    const mySyft = new syft({
       url: 'ws://localhost:1112/',
       verbose: true
     });

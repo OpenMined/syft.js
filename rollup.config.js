@@ -8,7 +8,6 @@ import pkg from './package.json';
 
 const sharedOutput = {
   name: 'syft',
-  exports: 'named',
   sourcemap: true,
   globals: {
     '@tensorflow/tfjs': 'tf'

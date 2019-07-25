@@ -2,8 +2,8 @@
 
 ![Travis (.org)](https://img.shields.io/travis/OpenMined/syft.js.svg)
 ![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)]
-![npm](https://img.shields.io/npm/v/syft.js.svg?color=green)
-![GitHub](https://img.shields.io/github/license/OpenMined/syft.js.svg?color=green)
+![npm](https://img.shields.io/npm/v/syft.js.svg)
+![GitHub](https://img.shields.io/github/license/OpenMined/syft.js.svg)
 
 ## Introduction to Syft.js
 
@@ -34,8 +34,8 @@ When using a package manager, TensorFlow.js will be automatically installed.
 If you're not using a package manager, you can also include Syft.js within a `<script>` tag:
 
 ```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/0.12.5/tf.min.js"></script>
-<script src="https://unpkg.com/syft.js@latest/lib/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
+<script src="https://unpkg.com/syft.js@latest"></script>
 ```
 
 For integration into your client-side application, [please check out our guide](https://docs.openmined.org/syft-js/guide).
