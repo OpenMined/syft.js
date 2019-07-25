@@ -1,6 +1,9 @@
 # Syft.js
 
-[![Build Status](https://travis-ci.org/OpenMined/syft.js.svg?branch=master)](https://travis-ci.org/OpenMined/syft.js) [![codecov](https://codecov.io/gh/OpenMined/syft.js/branch/master/graph/badge.svg)](https://codecov.io/gh/OpenMined/syft.js)
+![Travis (.org)](https://img.shields.io/travis/OpenMined/syft.js.svg)
+![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)]
+![npm](https://img.shields.io/npm/v/syft.js.svg?color=green)
+![GitHub](https://img.shields.io/github/license/OpenMined/syft.js.svg?color=green)
 
 ## Introduction to Syft.js
 
@@ -17,13 +20,13 @@ PySyft acts as the parent node, instructing child nodes \(Syft.js instances runn
 If you're using a package manage like NPM:
 
 ```text
-npm install --save syft.js
+npm install --save syft.js @tensorflow/tfjs
 ```
 
 Or if Yarn is your cup of tea:
 
 ```text
-yarn add syft.js
+yarn add syft.js @tensorflow/tfjs
 ```
 
 When using a package manager, TensorFlow.js will be automatically installed.
@@ -41,9 +44,12 @@ For further API documentation, [please check that out here](https://docs.openmin
 
 ### Local Development
 
-1. Clone or fork
-2. Run `npm install` or `yarn install`
-3. Run `npm start` or `yarn start`
+1. Fork and clone
+2. Run `npm install`
+3. Run `npm start`
+4. Do your work.
+5. Push to your clone
+6. Submit a PR to openmined/syft.js
 
 ### Contributing
 

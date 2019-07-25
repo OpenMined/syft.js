@@ -1,18 +1,13 @@
 {
   "name": "syft.js",
   "version": "1.4.4",
-  "description": "A Javascript port of the PySyft library",
-  "main": "lib/index.js",
-  "module": "lib/index.esm.js",
-  "scripts": {
-    "start": "rollup -cw",
-    "build": "rollup -c",
-    "precommit": "npm run build && pretty-quick --staged",
-    "pretest": "npm run build",
-    "test": "jest",
-    "test-watch": "jest --watch",
-    "release": "np"
-  },
+  "description": "A Javascript Syft worker in the browser",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenMined/syft.js.git"
@@ -36,10 +31,27 @@
     "url": "https://github.com/OpenMined/syft.js/issues"
   },
   "homepage": "https://github.com/OpenMined/syft.js#readme",
+  "scripts": {
+    "start": "rollup -cw",
+    "build": "rollup -c",
+    "prepare": "yarn build",
+    "pretest": "npm run build",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "version": "auto-changelog -p && git add CHANGELOG.md",
+    "release": "np"
+  },
+  "browserslist": "> 0.25%, not dead",
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
   "jest": {
-    "verbose": true,
     "testEnvironment": "node",
-    "collectCoverage": true
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   },
   "dependencies": {
     "@tensorflow/tfjs": "^0.12.5"
@@ -48,22 +60,22 @@
     "@tensorflow/tfjs": "^0.12.5"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-jest": "^23.4.2",
-    "husky": "^0.14.3",
-    "jest": "^23.4.2",
-    "mock-socket": "^8.0.2",
-    "np": "^3.0.4",
-    "prettier": "^1.14.0",
-    "pretty-quick": "^1.6.0",
-    "regenerator-runtime": "^0.12.1",
-    "rollup": "^0.63.5",
-    "rollup-plugin-babel": "^4.0.3",
-    "rollup-plugin-node-resolve": "^3.3.0",
-    "rollup-plugin-terser": "^1.0.1"
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "auto-changelog": "^1.14.1",
+    "babel-jest": "^24.8.0",
+    "husky": "^3.0.1",
+    "jest": "^24.8.0",
+    "mock-socket": "^8.1.0",
+    "np": "^5.0.3",
+    "prettier": "^1.18.2",
+    "pretty-quick": "^1.11.1",
+    "regenerator-runtime": "^0.13.3",
+    "rollup": "^1.17.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-filesize": "^6.1.1",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-peer-deps-external": "^2.2.0"
   }
 }
