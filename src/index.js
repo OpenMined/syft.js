@@ -33,7 +33,37 @@ export default class Syft {
   /* ----- TEMPORARY ----- */
 
   simplify(data) {
-    return data;
+    const pythonToJS = data => {
+      const replacers = [
+        [/\(/g, '['], // Convert all Python tuples into a Javascript Array
+        [/\)/g, ']'],
+        [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
+        [/'/g, '"'], // Convert all single quotes to double quotes
+        [/None/g, null], // Convert all Nones to nulls
+        [/False/g, false], // Convert all False to false
+        [/True/g, true], // Convert all True to true
+        [/,]/g, ']'] // Trim all Arrays with an extra comma
+      ];
+
+      for (let i = 0; i < replacers.length; i++) {
+        data = data.replace(replacers[i][0], replacers[i][1]);
+      }
+
+      return JSON.parse(data);
+    };
+
+    const recursiveParse = (data, outputArray) => {
+      for (let i = 0; i < data.length; i++) {
+        if (Array.isArray(data[i])) {
+          recursiveParse(data[i], outputArray);
+        } else {
+          // TODO: Do parsing here...
+          console.log('PARSE', data[i]);
+        }
+      }
+    };
+
+    return recursiveParse(pythonToJS(data), []);
   }
 
   detail(data) {
