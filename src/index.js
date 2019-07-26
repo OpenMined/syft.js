@@ -2,6 +2,8 @@ import EventObserver from './events';
 import Logger from './logger';
 
 import * as tf from '@tensorflow/tfjs';
+import { compress, decompress } from 'lz4js';
+// import { encode, decode } from '@msgpack/msgpack';
 
 const SOCKET_STATUS = 'socket-status';
 const GET_TENSORS = 'get-tensors';
@@ -28,6 +30,28 @@ export default class Syft {
 
     // A saved instance of the socket connection
     this.socket = this.createSocketConnection(url);
+  }
+
+  /* ----- TEMPORARY ----- */
+
+  decode(data) {
+    const detail = data => {
+      console.log('DETAIL', data);
+      return data;
+    };
+
+    // return detail(decode(decompress(data)));
+    return detail(decompress(data));
+  }
+
+  encode(data) {
+    const simplify = data => {
+      console.log('SIMPLIFY', data);
+      return data;
+    };
+
+    // return compress(encode(simplify(data)));
+    return compress(simplify(data));
   }
 
   /* ----- HELPERS ----- */
