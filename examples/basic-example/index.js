@@ -1,23 +1,80 @@
 import syft from 'syft.js';
 
-try {
-  const mySyft = new syft({ verbose: true });
+const fromPySyft = `
+(17,
+ ((1,
+   [(1,
+     [6,
+      (1,
+       [1,
+        (1,
+         [6,
+          (1,
+           [(1,
+             [6,
+              (1,
+               [(1, [5, (1, [b'__add__'])]),
+                (1,
+                 [18,
+                  (1,
+                   [51136751996,
+                    16892319038,
+                    1085768263,
+                    None,
+                    (1, [2]),
+                    False])]),
+                (1,
+                 [6,
+                  (1,
+                   [(1,
+                     [18,
+                      (1,
+                       [51136751996,
+                        16892319038,
+                        1085768263,
+                        None,
+                        (1, [2]),
+                        False])])])]),
+                (1, [0, (1, [])])])]),
+            (1, [1, (1, [55728392141])])])])])]),
+    (1,
+     [6,
+      (1,
+       [1,
+        (1,
+         [6,
+          (1,
+           [(1,
+             [6,
+              (1,
+               [(1, [5, (1, [b'torch.abs'])]),
+                None,
+                (1,
+                 [6,
+                  (1,
+                   [(1,
+                     [18,
+                      (1,
+                       [3052021671,
+                        55728392141,
+                        1085768263,
+                        None,
+                        None,
+                        True])])])]),
+                (1, [0, (1, [])])])]),
+            (1, [1, (1, [52625048196])])])])])]),
+    (1, [6, (1, [9, 55728392141])])]),
+  1085768263,
+  (1, [16892319038]),
+  (1, [52625048196]),
+  (5, (b'plan_double_abs',)),
+  None,
+  None,
+  True))
+`;
 
-  const bs = {
-    nil: null,
-    integer: 1,
-    float: Math.PI,
-    string: 'Hello, world!',
-    binary: Uint8Array.from([1, 2, 3]),
-    array: [10, 20, 30],
-    map: { foo: 'bar' },
-    timestampExt: new Date()
-  };
+const mySyft = new syft({ verbose: true });
 
-  const encoded = mySyft.encode(bs);
-  const decoded = mySyft.decode(encoded);
+const simplified = mySyft.simplify(fromPySyft);
 
-  console.log(bs, decoded, encoded);
-} catch (error) {
-  console.error(error);
-}
+console.log(simplified);

@@ -2,8 +2,6 @@ import EventObserver from './events';
 import Logger from './logger';
 
 import * as tf from '@tensorflow/tfjs';
-import { compress, decompress } from 'lz4js';
-// import { encode, decode } from '@msgpack/msgpack';
 
 const SOCKET_STATUS = 'socket-status';
 const GET_TENSORS = 'get-tensors';
@@ -34,24 +32,12 @@ export default class Syft {
 
   /* ----- TEMPORARY ----- */
 
-  decode(data) {
-    const detail = data => {
-      console.log('DETAIL', data);
-      return data;
-    };
-
-    // return detail(decode(decompress(data)));
-    return detail(decompress(data));
+  simplify(data) {
+    return data;
   }
 
-  encode(data) {
-    const simplify = data => {
-      console.log('SIMPLIFY', data);
-      return data;
-    };
-
-    // return compress(encode(simplify(data)));
-    return compress(simplify(data));
+  detail(data) {
+    return data;
   }
 
   /* ----- HELPERS ----- */

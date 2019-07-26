@@ -53,9 +53,7 @@
     ]
   },
   "dependencies": {
-    "@msgpack/msgpack": "^1.6.0",
-    "@tensorflow/tfjs": "^1.2.5",
-    "lz4js": "^0.2.0"
+    "@tensorflow/tfjs": "^1.2.5"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^1.2.5"
