@@ -77,4 +77,4 @@ const mySyft = new syft({ verbose: true });
 
 const simplified = mySyft.simplify(fromPySyft);
 
-console.log(simplified);
+console.log('FINAL', simplified);

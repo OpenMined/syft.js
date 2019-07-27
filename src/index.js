@@ -1,5 +1,7 @@
 import EventObserver from './events';
 import Logger from './logger';
+import { REPLACERS, SIMPLIFIERS } from './python';
+import { NO_SIMPLIFIER } from './errors';
 
 import * as tf from '@tensorflow/tfjs';
 
@@ -34,33 +36,45 @@ export default class Syft {
 
   simplify(data) {
     const pythonToJS = data => {
-      const replacers = [
-        [/\(/g, '['], // Convert all Python tuples into a Javascript Array
-        [/\)/g, ']'],
-        [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
-        [/'/g, '"'], // Convert all single quotes to double quotes
-        [/None/g, null], // Convert all Nones to nulls
-        [/False/g, false], // Convert all False to false
-        [/True/g, true], // Convert all True to true
-        [/,]/g, ']'] // Trim all Arrays with an extra comma
-      ];
-
-      for (let i = 0; i < replacers.length; i++) {
-        data = data.replace(replacers[i][0], replacers[i][1]);
+      for (let i = 0; i < REPLACERS.length; i++) {
+        data = data.replace(REPLACERS[i][0], REPLACERS[i][1]);
       }
 
       return JSON.parse(data);
     };
 
+    const simplifiable = d =>
+      Array.isArray(d) &&
+      typeof d[0] === 'number' &&
+      Array.isArray(d[1]) &&
+      d.length === 2;
+
     const recursiveParse = (data, outputArray) => {
+      if (simplifiable(data)) {
+        const simplifier = SIMPLIFIERS[data[0]];
+
+        if (simplifier !== null) {
+          const { name, func } = simplifier;
+
+          console.log('SIMPLIFIABLE', data[0], name, func(data[1]));
+
+          if (name === 'plan') {
+            outputArray.push(func(data[1]));
+          }
+        } else {
+          throw new Error(NO_SIMPLIFIER(data));
+        }
+      } else {
+        console.log('NOT SIMPLIFIABLE', data);
+      }
+
       for (let i = 0; i < data.length; i++) {
         if (Array.isArray(data[i])) {
-          recursiveParse(data[i], outputArray);
-        } else {
-          // TODO: Do parsing here...
-          console.log('PARSE', data[i]);
+          return recursiveParse(data[i], outputArray);
         }
       }
+
+      return outputArray;
     };
 
     return recursiveParse(pythonToJS(data), []);
