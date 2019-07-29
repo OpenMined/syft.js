@@ -1,5 +1,11 @@
 import EventObserver from './events';
 import Logger from './logger';
+
+// Import our types
+import Range from './types/range';
+import Slice from './types/slice';
+import Tuple from 'immutable-tuple';
+
 import { NO_SIMPLIFIER } from './errors';
 
 import * as tf from '@tensorflow/tfjs';
@@ -53,85 +59,63 @@ export default class Syft {
       return JSON.parse(data);
     };
 
+    /*
+      TODO:
+      - Consider converting slice and map to be functions with a prototype
+      - Improve range and slice
+      - Finish torch and pointer tensor
+      - Finish plan
+    */
     const SIMPLIFIERS = [
-      {
-        type: 'dict',
-        func: d => {
-          const myMap = new Map();
-
-          for (let i = 0; i < d.length; i++) {
-            myMap.set(recursiveParse(d[i][0]), recursiveParse(d[i][1]));
-          }
-
-          return myMap;
-        }
-      }, // 0
-      {
-        type: 'list',
-        func: d => {
-          const myArray = [];
-
-          for (let i = 0; i < d.length; i++) {
-            myArray.push(recursiveParse(d[i]));
-          }
-
-          return myArray;
-        }
-      }, // 1
-      { type: 'range', func: d => d }, // 2
-      {
-        type: 'set',
-        func: d => {
-          const mySet = new Set();
-
-          for (let i = 0; i < d.length; i++) {
-            mySet.add(recursiveParse(d[i]));
-          }
-
-          return mySet;
-        }
-      }, // 3
-      { type: 'slice', func: d => d }, // 4
-      { type: 'str', func: d => d[0] }, // 5
-      { type: 'tuple', func: d => d }, // 6
+      d => new Map(d.map(i => i.map(j => recursiveParse(j)))), // 0 = dict
+      d => d.map(i => recursiveParse(i)), // 1 = list
+      d => new Range(...d), // 2 = range
+      d => new Set(d.map(i => recursiveParse(i))), // 3 = set
+      d => new Slice(...d), // 4 = slice
+      d => d[0], // 5 = str
+      d => Tuple(...d.map(i => recursiveParse(i))), // 6 = tuple
       null, // 7
       null, // 8
       null, // 9
       null, // 10
       null, // 11
-      { type: 'torch-tensor', func: d => d }, // 12
+      d => {
+        // This needs to map to a TensorFlow tensors
+        // Needs to have its own type
+        // Add other metadata
+        // Need to recursively parse all entries of 'd'
+        // Create a new class called TorchTensor
+        // Inside of TorchTensor have a ._data (private method) which stores the information in the tensor as a TensorFlow tensor
+        // IMPORTANT: This whole class should be written as a way to translate Torch tensors and commands to TensorFlow, otherwise if we receive a TensorFlow tensor, just pass it right through... no need to translate!
+
+        // Consider potentially renaming TorchTensor to TensorFlowTensor since we don't have access to Torch in Javascript
+
+        return d;
+      }, // 12 = torch-tensor
       null, // 13
       null, // 14
       null, // 15
       null, // 16
-      { type: 'plan', func: d => ({ plan: d }) }, // 17
-      { type: 'pointer-tensor', func: d => d } // 18
+      d => {
+        // Create a class to represent plans
+        // DO THIS ONE LAST
+
+        return d;
+      }, // 17 = plan
+      d => {
+        // Create a class to represent pointer tensors
+        // Add all the attributes that are serialized, just as for range and slice
+
+        return d;
+      } // 18 = pointer-tensor
     ];
 
     const recursiveParse = data => {
-      // if (simplifiable(data)) {
-      //   const simplifier = SIMPLIFIERS[data[0]];
-
-      //   if (simplifier !== null) {
-      //     const { type, func } = simplifier;
-
-      //     console.log('SIMPLIFIABLE', data[0], type, func(data[1]));
-
-      //     if (type === 'plan') {
-      //       outputArray.push(func(data[1]));
-      //     }
-      //   } else {
-      //     throw new Error(NO_SIMPLIFIER(data));
-      //   }
-      // } else {
-      //   console.log('NOT SIMPLIFIABLE', data);
-      // }
-
       if (Array.isArray(data)) {
         const simplifier = SIMPLIFIERS[data[0]];
 
         if (simplifier !== null) {
-          return simplifier.func(data[1]);
+          return simplifier(data[1]);
         }
 
         throw new Error(NO_SIMPLIFIER(data));

@@ -74,7 +74,7 @@ import syft from 'syft.js';
 // `;
 
 const fromPySyft = `
-(0, [(0, 2), (1, 3)])
+(6, ((5, (b'apple',)), (5, (b'banana',)), (5, (b'cherry',))))
 `;
 
 const mySyft = new syft({ verbose: true });
