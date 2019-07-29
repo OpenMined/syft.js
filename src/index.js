@@ -1,6 +1,5 @@
 import EventObserver from './events';
 import Logger from './logger';
-import { REPLACERS, SIMPLIFIERS } from './python';
 import { NO_SIMPLIFIER } from './errors';
 
 import * as tf from '@tensorflow/tfjs';
@@ -35,6 +34,17 @@ export default class Syft {
   /* ----- TEMPORARY ----- */
 
   simplify(data) {
+    const REPLACERS = [
+      [/\(/g, '['], // Convert all Python tuples into a Javascript Array
+      [/\)/g, ']'],
+      [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
+      [/'/g, '"'], // Convert all single quotes to double quotes
+      [/None/g, null], // Convert all Nones to nulls
+      [/False/g, false], // Convert all False to false
+      [/True/g, true], // Convert all True to true
+      [/,]/g, ']'] // Trim all Arrays with an extra comma
+    ];
+
     const pythonToJS = data => {
       for (let i = 0; i < REPLACERS.length; i++) {
         data = data.replace(REPLACERS[i][0], REPLACERS[i][1]);
@@ -43,38 +53,91 @@ export default class Syft {
       return JSON.parse(data);
     };
 
-    const simplifiable = d =>
-      Array.isArray(d) &&
-      typeof d[0] === 'number' &&
-      Array.isArray(d[1]) &&
-      d.length === 2;
+    const SIMPLIFIERS = [
+      {
+        type: 'dict',
+        func: d => {
+          const myMap = new Map();
 
-    const recursiveParse = (data, outputArray) => {
-      if (simplifiable(data)) {
+          for (let i = 0; i < d.length; i++) {
+            myMap.set(recursiveParse(d[i][0]), recursiveParse(d[i][1]));
+          }
+
+          return myMap;
+        }
+      }, // 0
+      {
+        type: 'list',
+        func: d => {
+          const myArray = [];
+
+          for (let i = 0; i < d.length; i++) {
+            myArray.push(recursiveParse(d[i]));
+          }
+
+          return myArray;
+        }
+      }, // 1
+      { type: 'range', func: d => d }, // 2
+      {
+        type: 'set',
+        func: d => {
+          const mySet = new Set();
+
+          for (let i = 0; i < d.length; i++) {
+            mySet.add(recursiveParse(d[i]));
+          }
+
+          return mySet;
+        }
+      }, // 3
+      { type: 'slice', func: d => d }, // 4
+      { type: 'str', func: d => d[0] }, // 5
+      { type: 'tuple', func: d => d }, // 6
+      null, // 7
+      null, // 8
+      null, // 9
+      null, // 10
+      null, // 11
+      { type: 'torch-tensor', func: d => d }, // 12
+      null, // 13
+      null, // 14
+      null, // 15
+      null, // 16
+      { type: 'plan', func: d => ({ plan: d }) }, // 17
+      { type: 'pointer-tensor', func: d => d } // 18
+    ];
+
+    const recursiveParse = data => {
+      // if (simplifiable(data)) {
+      //   const simplifier = SIMPLIFIERS[data[0]];
+
+      //   if (simplifier !== null) {
+      //     const { type, func } = simplifier;
+
+      //     console.log('SIMPLIFIABLE', data[0], type, func(data[1]));
+
+      //     if (type === 'plan') {
+      //       outputArray.push(func(data[1]));
+      //     }
+      //   } else {
+      //     throw new Error(NO_SIMPLIFIER(data));
+      //   }
+      // } else {
+      //   console.log('NOT SIMPLIFIABLE', data);
+      // }
+
+      if (Array.isArray(data)) {
         const simplifier = SIMPLIFIERS[data[0]];
 
         if (simplifier !== null) {
-          const { name, func } = simplifier;
-
-          console.log('SIMPLIFIABLE', data[0], name, func(data[1]));
-
-          if (name === 'plan') {
-            outputArray.push(func(data[1]));
-          }
-        } else {
-          throw new Error(NO_SIMPLIFIER(data));
+          return simplifier.func(data[1]);
         }
-      } else {
-        console.log('NOT SIMPLIFIABLE', data);
+
+        throw new Error(NO_SIMPLIFIER(data));
       }
 
-      for (let i = 0; i < data.length; i++) {
-        if (Array.isArray(data[i])) {
-          return recursiveParse(data[i], outputArray);
-        }
-      }
-
-      return outputArray;
+      return data;
     };
 
     return recursiveParse(pythonToJS(data), []);
