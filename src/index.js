@@ -2,9 +2,12 @@ import EventObserver from './events';
 import Logger from './logger';
 
 // Import our types
-import Range from './types/range';
-import Slice from './types/slice';
+import Range from './custom-types/range';
+import Slice from './custom-types/slice';
 import Tuple from 'immutable-tuple';
+import TorchTensor from './custom-types/torch-tensor';
+import Plan from './custom-types/plan';
+import PointerTensor from './custom-types/pointer-tensor';
 
 import { NO_SIMPLIFIER } from './errors';
 
@@ -40,6 +43,10 @@ export default class Syft {
   /* ----- TEMPORARY ----- */
 
   simplify(data) {
+    return data;
+  }
+
+  detail(data) {
     const REPLACERS = [
       [/\(/g, '['], // Convert all Python tuples into a Javascript Array
       [/\)/g, ']'],
@@ -59,62 +66,39 @@ export default class Syft {
       return JSON.parse(data);
     };
 
-    /*
-      TODO:
-      - Consider converting slice and map to be functions with a prototype
-      - Improve range and slice
-      - Finish torch and pointer tensor
-      - Finish plan
-    */
     const SIMPLIFIERS = [
-      d => new Map(d.map(i => i.map(j => recursiveParse(j)))), // 0 = dict
-      d => d.map(i => recursiveParse(i)), // 1 = list
+      d => new Map(d.map(i => i.map(j => parse(j)))), // 0 = dict
+      d => d.map(i => parse(i)), // 1 = list
       d => new Range(...d), // 2 = range
-      d => new Set(d.map(i => recursiveParse(i))), // 3 = set
+      d => new Set(d.map(i => parse(i))), // 3 = set
       d => new Slice(...d), // 4 = slice
       d => d[0], // 5 = str
-      d => Tuple(...d.map(i => recursiveParse(i))), // 6 = tuple
+      d => Tuple(...d.map(i => parse(i))), // 6 = tuple
       null, // 7
       null, // 8
       null, // 9
       null, // 10
       null, // 11
-      d => {
-        // This needs to map to a TensorFlow tensors
-        // Needs to have its own type
-        // Add other metadata
-        // Need to recursively parse all entries of 'd'
-        // Create a new class called TorchTensor
-        // Inside of TorchTensor have a ._data (private method) which stores the information in the tensor as a TensorFlow tensor
-        // IMPORTANT: This whole class should be written as a way to translate Torch tensors and commands to TensorFlow, otherwise if we receive a TensorFlow tensor, just pass it right through... no need to translate!
-
-        // Consider potentially renaming TorchTensor to TensorFlowTensor since we don't have access to Torch in Javascript
-
-        return d;
-      }, // 12 = torch-tensor
+      d => new TorchTensor(...d.map(i => parse(i))), // 12 = torch-tensor
       null, // 13
       null, // 14
       null, // 15
       null, // 16
-      d => {
-        // Create a class to represent plans
-        // DO THIS ONE LAST
-
-        return d;
-      }, // 17 = plan
-      d => {
-        // Create a class to represent pointer tensors
-        // Add all the attributes that are serialized, just as for range and slice
-
-        return d;
-      } // 18 = pointer-tensor
+      d => new Plan(d[0].map(j => parse(j)), ...d.slice(1).map(i => parse(i))), // 17 = plan
+      d => new PointerTensor(...d.map(i => parse(i))) // 18 = pointer-tensor
     ];
 
-    const recursiveParse = data => {
-      if (Array.isArray(data)) {
+    const simplifiable = d =>
+      Array.isArray(d) &&
+      d.length === 2 &&
+      typeof d[0] === 'number' &&
+      Array.isArray(d[1]);
+
+    const parse = data => {
+      if (simplifiable(data)) {
         const simplifier = SIMPLIFIERS[data[0]];
 
-        if (simplifier !== null) {
+        if (simplifier) {
           return simplifier(data[1]);
         }
 
@@ -124,11 +108,7 @@ export default class Syft {
       return data;
     };
 
-    return recursiveParse(pythonToJS(data), []);
-  }
-
-  detail(data) {
-    return data;
+    return parse(pythonToJS(data), []);
   }
 
   /* ----- HELPERS ----- */
