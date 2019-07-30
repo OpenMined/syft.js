@@ -9,7 +9,7 @@ import TorchTensor from './custom-types/torch-tensor';
 import Plan from './custom-types/plan';
 import PointerTensor from './custom-types/pointer-tensor';
 
-import { NO_SIMPLIFIER } from './errors';
+import { NO_SIMPLIFIER, NO_DETAILER } from './errors';
 
 import * as tf from '@tensorflow/tfjs';
 
@@ -43,7 +43,74 @@ export default class Syft {
   /* ----- TEMPORARY ----- */
 
   simplify(data) {
-    return data;
+    const REPLACERS = [
+      [/null/g, 'None'], // Convert all nulls to Nones
+      [/false/g, 'False'], // Convert all false to False
+      [/true/g, 'True'] // Convert all true to True
+      // [/,]/g, ']'] // Trim all Arrays with an extra comma
+    ];
+
+    const jsToPython = data => {
+      for (let i = 0; i < REPLACERS.length; i++) {
+        data = data.replace(REPLACERS[i][0], REPLACERS[i][1]);
+      }
+
+      return data;
+    };
+
+    const SIMPLIFIERS = [
+      d =>
+        `(0, [${Array.from(d)
+          .map(([key, value]) => `(${parse(key)}, ${parse(value)})`)
+          .join()}])`, // 0 = dict
+      d => `(1, [${d.map(i => parse(i)).join()}])`, // 1 = list
+      d => `(2, (${d.start}, ${d.end}, ${d.step}))`, // 2 = range
+      d => `(3, [${[...d].map(i => parse(i)).join()}])`, // 3 = set
+      d => `(4, (${d.start}, ${d.end}, ${d.step}))`, // 4 = slice
+      d => `(5, (b'${d}',))`, // 5 = str
+      d => `(6, [${d.map(i => parse(i)).join()}])`, // 6 = tuple
+      null, // 7
+      null, // 8
+      null, // 9
+      null, // 10
+      null, // 11
+      d => d, // 12 = torch-tensor
+      null, // 13
+      null, // 14
+      null, // 15
+      null, // 16
+      d => d, // 17 = plan
+      d => d // 18 = pointer-tensor
+    ];
+
+    const parse = data => {
+      let simplifierId = null;
+
+      if (data instanceof Map) simplifierId = 0;
+      else if (data instanceof Array) simplifierId = 1;
+      else if (data instanceof Range) simplifierId = 2;
+      else if (data instanceof Set) simplifierId = 3;
+      else if (data instanceof Slice) simplifierId = 4;
+      else if (typeof data === 'string') simplifierId = 5;
+      else if (data instanceof Tuple) simplifierId = 6;
+      else if (data instanceof TorchTensor) simplifierId = 12;
+      else if (data instanceof Plan) simplifierId = 17;
+      else if (data instanceof PointerTensor) simplifierId = 18;
+
+      if (simplifierId !== null) {
+        const simplifier = SIMPLIFIERS[simplifierId];
+
+        if (simplifier) {
+          return simplifier(data);
+        }
+
+        throw new Error(NO_SIMPLIFIER(simplifierId, data));
+      }
+
+      return data;
+    };
+
+    return jsToPython(parse(data));
   }
 
   detail(data) {
@@ -66,7 +133,7 @@ export default class Syft {
       return JSON.parse(data);
     };
 
-    const SIMPLIFIERS = [
+    const DETAILERS = [
       d => new Map(d.map(i => i.map(j => parse(j)))), // 0 = dict
       d => d.map(i => parse(i)), // 1 = list
       d => new Range(...d), // 2 = range
@@ -88,27 +155,27 @@ export default class Syft {
       d => new PointerTensor(...d.map(i => parse(i))) // 18 = pointer-tensor
     ];
 
-    const simplifiable = d =>
+    const detailable = d =>
       Array.isArray(d) &&
       d.length === 2 &&
       typeof d[0] === 'number' &&
       Array.isArray(d[1]);
 
     const parse = data => {
-      if (simplifiable(data)) {
-        const simplifier = SIMPLIFIERS[data[0]];
+      if (detailable(data)) {
+        const detailer = DETAILERS[data[0]];
 
-        if (simplifier) {
-          return simplifier(data[1]);
+        if (detailer) {
+          return detailer(data[1]);
         }
 
-        throw new Error(NO_SIMPLIFIER(data));
+        throw new Error(NO_DETAILER(data));
       }
 
       return data;
     };
 
-    return parse(pythonToJS(data), []);
+    return parse(pythonToJS(data));
   }
 
   /* ----- HELPERS ----- */
