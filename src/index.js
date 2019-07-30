@@ -9,9 +9,11 @@ import TorchTensor from './custom-types/torch-tensor';
 import Plan from './custom-types/plan';
 import PointerTensor from './custom-types/pointer-tensor';
 
-import { NO_SIMPLIFIER, NO_DETAILER } from './errors';
+import { getArgs } from './_helpers';
+import { NO_SIMPLIFIER, NO_DETAILER } from './_errors';
 
 import * as tf from '@tensorflow/tfjs';
+import { get } from 'http';
 
 const SOCKET_STATUS = 'socket-status';
 const GET_TENSORS = 'get-tensors';
@@ -47,12 +49,11 @@ export default class Syft {
       [/null/g, 'None'], // Convert all nulls to Nones
       [/false/g, 'False'], // Convert all false to False
       [/true/g, 'True'] // Convert all true to True
-      // [/,]/g, ']'] // Trim all Arrays with an extra comma
     ];
 
     const jsToPython = data => {
       for (let i = 0; i < REPLACERS.length; i++) {
-        data = data.replace(REPLACERS[i][0], REPLACERS[i][1]);
+        data = data.replace(...REPLACERS[i]);
       }
 
       return data;
@@ -67,6 +68,10 @@ export default class Syft {
       d => `(2, (${d.start}, ${d.end}, ${d.step}))`, // 2 = range
       d => `(3, [${[...d].map(i => parse(i)).join()}])`, // 3 = set
       d => `(4, (${d.start}, ${d.end}, ${d.step}))`, // 4 = slice
+
+      // TODO: Currently we're inserting "b" and "," because of how MsgPack does things in PySyft
+      // Hopefully at some point we can remove these silly, entraneous details
+      // TODO: We will also need to fix this in the REPLACERS for the detail function
       d => `(5, (b'${d}',))`, // 5 = str
       d => `(6, [${d.map(i => parse(i)).join()}])`, // 6 = tuple
       null, // 7
@@ -74,13 +79,22 @@ export default class Syft {
       null, // 9
       null, // 10
       null, // 11
-      d => d, // 12 = torch-tensor
+      d =>
+        `(12, (${getArgs(TorchTensor)
+          .map(i => (d[i] === null ? 'null' : parse(d[i])))
+          .join()}))`, // 12 = torch-tensor
       null, // 13
       null, // 14
       null, // 15
       null, // 16
-      d => d, // 17 = plan
-      d => d // 18 = pointer-tensor
+      d =>
+        `(17, (${getArgs(Plan)
+          .map(i => (d[i] === null ? 'null' : parse(d[i])))
+          .join()}))`, // 17 = plan
+      d =>
+        `(18, (${getArgs(PointerTensor)
+          .map(i => (d[i] === null ? 'null' : parse(d[i])))
+          .join()}))` // 18 = pointer-tensor
     ];
 
     const parse = data => {
@@ -127,7 +141,7 @@ export default class Syft {
 
     const pythonToJS = data => {
       for (let i = 0; i < REPLACERS.length; i++) {
-        data = data.replace(REPLACERS[i][0], REPLACERS[i][1]);
+        data = data.replace(...REPLACERS[i]);
       }
 
       return JSON.parse(data);
