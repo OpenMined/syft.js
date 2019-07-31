@@ -1,16 +1,17 @@
 import regeneratorRuntime from 'regenerator-runtime';
 import { Server } from 'mock-socket';
-import Syft from './index';
+import Syft from '../src/index';
+import { TENSOR_REMOVED } from '../src/_constants';
 
 const fakeURL = 'ws://localhost:8080/';
 
 let syft = null;
 let mockServer = null;
 
-describe('Syft.js', () => {
+describe('Syft', () => {
   beforeAll(done => {
     mockServer = new Server(fakeURL);
-    syft = new Syft();
+    syft = new Syft({ verbose: true });
 
     done();
   });
@@ -117,6 +118,16 @@ describe('Syft.js', () => {
   });
 
   /* ----- EVENT HANDLERS ----- */
+
+  test('can subscribe and unsubscribe from an event', async () => {
+    syft.onTensorRemoved(({ id, tensors }) => ({ id, tensors }));
+
+    expect(syft.observer.observers.length).toBe(1);
+
+    syft.observer.unsubscribe(TENSOR_REMOVED);
+
+    expect(syft.observer.observers.length).toBe(0);
+  });
 
   // onMessageReceived()
   // TODO

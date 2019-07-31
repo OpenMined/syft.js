@@ -49,7 +49,9 @@
   "jest": {
     "testEnvironment": "node",
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "<rootDir>/src/_errors.js",
+      "<rootDir>/test/dummy"
     ]
   },
   "dependencies": {

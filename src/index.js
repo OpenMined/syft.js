@@ -2,16 +2,18 @@ import EventObserver from './events';
 import Logger from './logger';
 import { simplify, detail } from './serde';
 
-import * as tf from '@tensorflow/tfjs';
+import {
+  SOCKET_STATUS,
+  GET_TENSORS,
+  GET_TENSOR,
+  MESSAGE_RECEIVED,
+  MESSAGE_SENT,
+  RUN_OPERATION,
+  TENSOR_ADDED,
+  TENSOR_REMOVED
+} from './_constants';
 
-const SOCKET_STATUS = 'socket-status';
-const GET_TENSORS = 'get-tensors';
-const GET_TENSOR = 'get-tensor';
-const MESSAGE_RECEIVED = 'message-received';
-const MESSAGE_SENT = 'message-sent';
-const RUN_OPERATION = 'run-operation';
-const TENSOR_ADDED = 'add-tensor';
-const TENSOR_REMOVED = 'remove-tensor';
+import * as tf from '@tensorflow/tfjs';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
