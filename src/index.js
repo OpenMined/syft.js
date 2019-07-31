@@ -1,19 +1,8 @@
 import EventObserver from './events';
 import Logger from './logger';
-
-// Import our types
-import Range from './custom-types/range';
-import Slice from './custom-types/slice';
-import Tuple from 'immutable-tuple';
-import TorchTensor from './custom-types/torch-tensor';
-import Plan from './custom-types/plan';
-import PointerTensor from './custom-types/pointer-tensor';
-
-import { getArgs } from './_helpers';
-import { NO_SIMPLIFIER, NO_DETAILER } from './_errors';
+import { simplify, detail } from './serde';
 
 import * as tf from '@tensorflow/tfjs';
-import { get } from 'http';
 
 const SOCKET_STATUS = 'socket-status';
 const GET_TENSORS = 'get-tensors';
@@ -42,154 +31,14 @@ export default class Syft {
     this.socket = this.createSocketConnection(url);
   }
 
-  /* ----- TEMPORARY ----- */
+  /* ----- SERDE ----- */
 
   simplify(data) {
-    const REPLACERS = [
-      [/null/g, 'None'], // Convert all nulls to Nones
-      [/false/g, 'False'], // Convert all false to False
-      [/true/g, 'True'] // Convert all true to True
-    ];
-
-    const jsToPython = data => {
-      for (let i = 0; i < REPLACERS.length; i++) {
-        data = data.replace(...REPLACERS[i]);
-      }
-
-      return data;
-    };
-
-    const SIMPLIFIERS = [
-      d =>
-        `(0, [${Array.from(d)
-          .map(([key, value]) => `(${parse(key)}, ${parse(value)})`)
-          .join()}])`, // 0 = dict
-      d => `(1, [${d.map(i => parse(i)).join()}])`, // 1 = list
-      d => `(2, (${d.start}, ${d.end}, ${d.step}))`, // 2 = range
-      d => `(3, [${[...d].map(i => parse(i)).join()}])`, // 3 = set
-      d => `(4, (${d.start}, ${d.end}, ${d.step}))`, // 4 = slice
-
-      // TODO: Currently we're inserting "b" and "," because of how MsgPack does things in PySyft
-      // Hopefully at some point we can remove these silly, entraneous details
-      // TODO: We will also need to fix this in the REPLACERS for the detail function
-      d => `(5, (b'${d}',))`, // 5 = str
-      d => `(6, [${d.map(i => parse(i)).join()}])`, // 6 = tuple
-      null, // 7
-      null, // 8
-      null, // 9
-      null, // 10
-      null, // 11
-      d =>
-        `(12, (${getArgs(TorchTensor)
-          .map(i => (d[i] === null ? 'null' : parse(d[i])))
-          .join()}))`, // 12 = torch-tensor
-      null, // 13
-      null, // 14
-      null, // 15
-      null, // 16
-      d =>
-        `(17, (${getArgs(Plan)
-          .map(i => (d[i] === null ? 'null' : parse(d[i])))
-          .join()}))`, // 17 = plan
-      d =>
-        `(18, (${getArgs(PointerTensor)
-          .map(i => (d[i] === null ? 'null' : parse(d[i])))
-          .join()}))` // 18 = pointer-tensor
-    ];
-
-    const parse = data => {
-      let simplifierId = null;
-
-      if (data instanceof Map) simplifierId = 0;
-      else if (data instanceof Array) simplifierId = 1;
-      else if (data instanceof Range) simplifierId = 2;
-      else if (data instanceof Set) simplifierId = 3;
-      else if (data instanceof Slice) simplifierId = 4;
-      else if (typeof data === 'string') simplifierId = 5;
-      else if (data instanceof Tuple) simplifierId = 6;
-      else if (data instanceof TorchTensor) simplifierId = 12;
-      else if (data instanceof Plan) simplifierId = 17;
-      else if (data instanceof PointerTensor) simplifierId = 18;
-
-      if (simplifierId !== null) {
-        const simplifier = SIMPLIFIERS[simplifierId];
-
-        if (simplifier) {
-          return simplifier(data);
-        }
-
-        throw new Error(NO_SIMPLIFIER(simplifierId, data));
-      }
-
-      return data;
-    };
-
-    return jsToPython(parse(data));
+    return simplify(data);
   }
 
   detail(data) {
-    const REPLACERS = [
-      [/\(/g, '['], // Convert all Python tuples into a Javascript Array
-      [/\)/g, ']'],
-      [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
-      [/'/g, '"'], // Convert all single quotes to double quotes
-      [/None/g, null], // Convert all Nones to nulls
-      [/False/g, false], // Convert all False to false
-      [/True/g, true], // Convert all True to true
-      [/,]/g, ']'] // Trim all Arrays with an extra comma
-    ];
-
-    const pythonToJS = data => {
-      for (let i = 0; i < REPLACERS.length; i++) {
-        data = data.replace(...REPLACERS[i]);
-      }
-
-      return JSON.parse(data);
-    };
-
-    const DETAILERS = [
-      d => new Map(d.map(i => i.map(j => parse(j)))), // 0 = dict
-      d => d.map(i => parse(i)), // 1 = list
-      d => new Range(...d), // 2 = range
-      d => new Set(d.map(i => parse(i))), // 3 = set
-      d => new Slice(...d), // 4 = slice
-      d => d[0], // 5 = str
-      d => Tuple(...d.map(i => parse(i))), // 6 = tuple
-      null, // 7
-      null, // 8
-      null, // 9
-      null, // 10
-      null, // 11
-      d => new TorchTensor(...d.map(i => parse(i))), // 12 = torch-tensor
-      null, // 13
-      null, // 14
-      null, // 15
-      null, // 16
-      d => new Plan(d[0].map(j => parse(j)), ...d.slice(1).map(i => parse(i))), // 17 = plan
-      d => new PointerTensor(...d.map(i => parse(i))) // 18 = pointer-tensor
-    ];
-
-    const detailable = d =>
-      Array.isArray(d) &&
-      d.length === 2 &&
-      typeof d[0] === 'number' &&
-      Array.isArray(d[1]);
-
-    const parse = data => {
-      if (detailable(data)) {
-        const detailer = DETAILERS[data[0]];
-
-        if (detailer) {
-          return detailer(data[1]);
-        }
-
-        throw new Error(NO_DETAILER(data));
-      }
-
-      return data;
-    };
-
-    return parse(pythonToJS(data));
+    return detail(data);
   }
 
   /* ----- HELPERS ----- */
