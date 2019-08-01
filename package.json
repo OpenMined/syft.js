@@ -49,11 +49,14 @@
   "jest": {
     "testEnvironment": "node",
     "coveragePathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "<rootDir>/src/_errors.js",
+      "<rootDir>/test/dummy"
     ]
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.2.5"
+    "@tensorflow/tfjs": "^1.2.5",
+    "immutable-tuple": "^0.4.10"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^1.2.5"
