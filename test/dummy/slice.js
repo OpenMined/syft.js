@@ -6,3 +6,5 @@ export const step = 1;
 
 export const slice = new Slice(start, end, step);
 export const nullStepSlice = new Slice(start, end);
+
+export const simplifiedSlice = `(4, (${start}, ${end}, ${step}))`;

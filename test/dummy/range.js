@@ -5,3 +5,5 @@ export const end = 10;
 export const step = 1;
 
 export const range = new Range(start, end, step);
+
+export const simplifiedRange = `(2, (${start}, ${end}, ${step}))`;

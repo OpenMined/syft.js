@@ -16,21 +16,21 @@ import PointerTensor from './custom-types/pointer-tensor';
 import { getArgs } from './_helpers';
 
 // Import our errors
-import { NO_SIMPLIFIER, NO_DETAILER } from './_errors';
+import { NO_DETAILER } from './_errors';
 
 // These are the replace functions we will run to convert Javascript to Python
-const SIMPLIFY_REPLACERS = [
+export const SIMPLIFY_REPLACERS = [
   [/null/g, 'None'], // Convert all nulls to Nones
   [/false/g, 'False'], // Convert all false to False
   [/true/g, 'True'] // Convert all true to True
 ];
 
 // These are the replace functions we will run to convert Python to Javascript
-const DETAIL_REPLACERS = [
+export const DETAIL_REPLACERS = [
   [/\(/g, '['], // Convert all Python tuples into a Javascript Array
   [/\)/g, ']'],
   [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
-  [/'/g, '"'], // Convert all single quotes to double quotes
+  [/'/g, '"'], // Convert all single quotes to double quotes so JSON can parse correctly
   [/None/g, null], // Convert all Nones to nulls
   [/False/g, false], // Convert all False to false
   [/True/g, true], // Convert all True to true
@@ -38,7 +38,7 @@ const DETAIL_REPLACERS = [
 ];
 
 // A simple function to run the above replacers
-const runReplacers = (data, replacers) => {
+export const runReplacers = (data, replacers) => {
   for (let i = 0; i < replacers.length; i++) {
     data = data.replace(...replacers[i]);
   }
@@ -99,13 +99,7 @@ export const simplify = data => {
     else if (d instanceof PointerTensor) simplifierId = 'pointerTensor';
 
     if (simplifierId !== null) {
-      const simplifier = SIMPLIFIERS[simplifierId];
-
-      if (simplifier) {
-        return simplifier(d);
-      }
-
-      throw new Error(NO_SIMPLIFIER(simplifierId, d));
+      return SIMPLIFIERS[simplifierId](d);
     }
 
     return d;

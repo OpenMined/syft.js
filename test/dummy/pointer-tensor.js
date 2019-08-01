@@ -1,5 +1,6 @@
 import PointerTensor from '../../src/custom-types/pointer-tensor';
-import { torchSize2 } from './torch-size';
+import { torchSize2, simplifiedTorchSize } from './torch-size';
+import { runReplacers, SIMPLIFY_REPLACERS } from '../../src/serde';
 
 export const id = 23885703668;
 export const idAtLocation = 30300883787;
@@ -24,4 +25,9 @@ export const secondPointerTensor = new PointerTensor(
   null,
   null,
   true
+);
+
+export const simplifiedPointerTensor = runReplacers(
+  `(19, (${id}, ${idAtLocation}, ${locationId}, ${pointToAttr}, ${simplifiedTorchSize}, ${garbageCollectData}))`,
+  SIMPLIFY_REPLACERS
 );
