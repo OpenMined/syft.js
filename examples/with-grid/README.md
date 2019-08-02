@@ -1,4 +1,4 @@
-# syft.js Example
+# syft.js/grid.js Example
 
 In order to get this running, you simply need to run the following:
 
