@@ -55,7 +55,7 @@
     ]
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.2.5",
+    "@tensorflow/tfjs": "^1.2.6",
     "immutable-tuple": "^0.4.10"
   },
   "peerDependencies": {
@@ -68,7 +68,7 @@
     "babel-jest": "^24.8.0",
     "husky": "^3.0.1",
     "jest": "^24.8.0",
-    "mock-socket": "^8.1.0",
+    "mock-socket": "^9.0.0",
     "np": "^5.0.3",
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",
