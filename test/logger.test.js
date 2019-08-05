@@ -8,8 +8,8 @@ describe('Logger', () => {
   });
 
   test('can skip when verbose is false', () => {
-    const testLogger = new Logger(false);
-    const message = 'hello';
+    const testLogger = new Logger(false),
+      message = 'hello';
 
     expect(testLogger.verbose).toBe(false);
     expect(console.log.mock.calls.length).toBe(0);
@@ -20,8 +20,8 @@ describe('Logger', () => {
   });
 
   test('can log under verbose mode', () => {
-    const testLogger = new Logger(true);
-    const message = 'hello';
+    const testLogger = new Logger(true),
+      message = 'hello';
 
     expect(testLogger.verbose).toBe(true);
     expect(console.log.mock.calls.length).toBe(0);
@@ -36,9 +36,9 @@ describe('Logger', () => {
   });
 
   test('can log with data', () => {
-    const testLogger = new Logger(true);
-    const message = 'hello';
-    const myObj = { awesome: true };
+    const testLogger = new Logger(true),
+      message = 'hello',
+      myObj = { awesome: true };
 
     expect(testLogger.verbose).toBe(true);
     expect(console.log.mock.calls.length).toBe(0);
