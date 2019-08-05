@@ -1,5 +1,12 @@
+import regeneratorRuntime from 'regenerator-runtime';
+import syft from '../src/index';
+
 describe('Syft', () => {
-  test('works', () => {});
+  test('works', () => {
+    const mySyft = new syft({
+      url: 'ws://localhost:8080'
+    });
+  });
 });
 
 // import regeneratorRuntime from 'regenerator-runtime';
