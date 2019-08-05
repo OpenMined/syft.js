@@ -1,15 +1,8 @@
-import regeneratorRuntime from 'regenerator-runtime';
-import syft from '../src/index';
-
 describe('Syft', () => {
-  test('works', () => {
-    const mySyft = new syft({
-      url: 'ws://localhost:8080'
-    });
-  });
+  test('can do something', () => {});
 });
 
-// import regeneratorRuntime from 'regenerator-runtime';
+// import 'regenerator-runtime/runtime';
 // import { Server } from 'mock-socket';
 // import Syft from '../src/index';
 // import { TENSOR_REMOVED } from '../src/_constants';
