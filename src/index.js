@@ -30,14 +30,8 @@ export default class syft {
     // Set logger
     this.logger = new Logger(verbose);
 
-    // A saved instance of the socket connection
-    this.socket = new Socket({
-      url,
-      logger: this.logger,
-      onMessage: event => this.onSocketMessage(event),
-      onOpen: event => this.onOpen(event),
-      onClose: event => this.onClose(event)
-    }).socket;
+    // Create a socket connection at this.socket
+    this.createSocketConnection(url);
   }
 
   /* ----- SERDE ----- */
@@ -205,6 +199,19 @@ export default class syft {
   // }
 
   /* ----- SOCKET COMMUNICATION ----- */
+
+  // To create a socket connection internally and externally
+  createSocketConnection(url) {
+    if (!url) return;
+
+    this.socket = new Socket({
+      url,
+      logger: this.logger,
+      onMessage: event => this.onSocketMessage(event),
+      onOpen: event => this.onOpen(event),
+      onClose: event => this.onClose(event)
+    }).socket;
+  }
 
   // When the socket connection is opened
   // This is the internal event listener, the external method to subscribe to is "onSocketStatus => ({ connected: true })"

@@ -1,18 +1,19 @@
 import Plan from '../../src/custom-types/plan';
+import Message from '../../src/custom-types/message';
 import Tuple from 'immutable-tuple';
 import { firstPointerTensor, secondPointerTensor } from './pointer-tensor';
 
 export const simplifiedPlan = `
-(18,
- (((6,
+(19,
+ (((24,
     (1,
      (6,
       ((6,
         ((5, (b'__add__',)),
-         (19,
+         (20,
           (23885703668, 30300883787, 85156589176, None, (13, (2,)), False)),
          (6,
-          ((19,
+          ((20,
             (23885703668,
              30300883787,
              85156589176,
@@ -21,17 +22,17 @@ export const simplifiedPlan = `
              False)),)),
          (0, ()))),
        (6, (53361601662,)))))),
-   (6,
+   (24,
     (1,
      (6,
       ((6,
         ((5, (b'torch.abs',)),
          None,
          (6,
-          ((19, (50671613206, 53361601662, 85156589176, None, None, True)),)),
+          ((20, (50671613206, 53361601662, 85156589176, None, None, True)),)),
          (0, ()))),
        (6, (68554228008,)))))),
-   (6, (9, 53361601662))),
+   (24, (9, 53361601662))),
   85156589176,
   (1, (30300883787,)),
   (6, (68554228008,)),
@@ -42,7 +43,7 @@ export const simplifiedPlan = `
 `;
 
 export const operations = [
-  Tuple(
+  new Message(
     1,
     Tuple(
       Tuple(
@@ -54,14 +55,14 @@ export const operations = [
       Tuple(53361601662)
     )
   ),
-  Tuple(
+  new Message(
     1,
     Tuple(
       Tuple('torch.abs', null, Tuple(secondPointerTensor), new Map()),
       Tuple(68554228008)
     )
   ),
-  Tuple(9, 53361601662)
+  new Message(9, 53361601662)
 ];
 export const id = 85156589176;
 export const args = [30300883787];

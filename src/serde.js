@@ -11,6 +11,7 @@ import TorchTensor from './custom-types/torch-tensor';
 import TorchSize from './custom-types/torch-size';
 import Plan from './custom-types/plan';
 import PointerTensor from './custom-types/pointer-tensor';
+import Message from './custom-types/message';
 
 // Import our helpers
 import { getArgs } from './_helpers';
@@ -73,12 +74,16 @@ export const simplify = data => {
         operations = d[args[0]].map(i => parse(i)),
         rest = args.slice(1).map(i => parse(d[i]));
 
-      return `(18, ((${operations}), ${rest.join()}))`;
+      return `(19, ((${operations}), ${rest.join()}))`;
     },
     pointerTensor: d =>
-      `(19, (${getArgs(PointerTensor)
+      `(20, (${getArgs(PointerTensor)
         .map(i => parse(d[i]))
-        .join()}))` // 18 = pointer-tensor
+        .join()}))`,
+    message: d =>
+      `(24, (${getArgs(Message)
+        .map(i => parse(d[i]))
+        .join()}))`
   };
 
   const parse = d => {
@@ -97,6 +102,7 @@ export const simplify = data => {
     else if (d instanceof TorchSize) simplifierId = 'torchSize';
     else if (d instanceof Plan) simplifierId = 'plan';
     else if (d instanceof PointerTensor) simplifierId = 'pointerTensor';
+    else if (d instanceof Message) simplifierId = 'message';
 
     if (simplifierId !== null) {
       return SIMPLIFIERS[simplifierId](d);
@@ -134,8 +140,13 @@ export const detail = data => {
     null, // 15
     null, // 16
     null, // 17
-    d => new Plan(d[0].map(j => parse(j)), ...d.slice(1).map(i => parse(i))), // 18 = plan
-    d => new PointerTensor(...d.map(i => parse(i))) // 19 = pointer-tensor
+    null,
+    d => new Plan(d[0].map(j => parse(j)), ...d.slice(1).map(i => parse(i))), // 19 = plan
+    d => new PointerTensor(...d.map(i => parse(i))), // 20 = pointer-tensor
+    null,
+    null,
+    null,
+    d => new Message(...d.map(i => parse(i))) // 24 = message
   ];
 
   const parse = d => {

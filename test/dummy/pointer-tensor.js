@@ -28,6 +28,6 @@ export const secondPointerTensor = new PointerTensor(
 );
 
 export const simplifiedPointerTensor = runReplacers(
-  `(19, (${id}, ${idAtLocation}, ${locationId}, ${pointToAttr}, ${simplifiedTorchSize}, ${garbageCollectData}))`,
+  `(20, (${id}, ${idAtLocation}, ${locationId}, ${pointToAttr}, ${simplifiedTorchSize}, ${garbageCollectData}))`,
   SIMPLIFY_REPLACERS
 );
