@@ -1,48 +1,57 @@
 export default class Sockets {
   constructor(opts) {
-    const { url, logger, onOpen, onClose, onMessage, onError } = opts;
+    const { url, logger, instanceId, onOpen, onClose, onMessage } = opts;
 
     const socket = new WebSocket(url);
 
-    socket.onopen = event => this.onOpen(event, onOpen);
-    socket.onclose = event => this.onClose(event, onClose);
-    socket.onmessage = event => this.onMessage(event, onMessage);
-    socket.onerror = event => this.onError(event, onError);
+    socket.onopen = event => {
+      this.logger.log(
+        `Opening socket connection at ${event.currentTarget.url}`,
+        event
+      );
+
+      if (onOpen) onOpen(event);
+    };
+
+    socket.onclose = event => {
+      this.logger.log(
+        `Closing socket connection at ${event.currentTarget.url}`,
+        event
+      );
+
+      if (onClose) onClose(event);
+    };
 
     this.url = url;
     this.logger = logger;
+    this.instanceId = instanceId;
     this.socket = socket;
+    this.onMessage = onMessage;
   }
 
-  onOpen(event, callback) {
-    this.logger.log(
-      `Opening socket connection to ${event.currentTarget.url}`,
-      event
-    );
+  send(type, data = {}) {
+    return new Promise((resolve, reject) => {
+      data.instanceId = this.instanceId;
 
-    if (callback) callback(event);
-  }
+      const message = { type, data };
 
-  onClose(event, callback) {
-    this.logger.log(
-      `Closing socket connection to ${event.currentTarget.url}`,
-      event
-    );
+      this.logger.log('Sending message', message);
 
-    if (callback) callback(event);
-  }
+      this.socket.send(JSON.stringify(message));
 
-  onMessage(event, callback) {
-    const data = JSON.parse(event.data);
+      this.socket.onmessage = event => {
+        const data = JSON.parse(event.data);
 
-    this.logger.log('Receiving message', data);
+        this.logger.log('Receiving message', data);
 
-    if (callback) callback(data);
-  }
+        resolve(this.onMessage(data));
+      };
 
-  onError(event, callback) {
-    this.logger.log('We have a socket error!', event);
+      this.socket.onerror = event => {
+        this.logger.log('We have a socket error!', event);
 
-    if (callback) callback(event);
+        reject(event);
+      };
+    });
   }
 }

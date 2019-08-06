@@ -56,7 +56,8 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
-    "immutable-tuple": "^0.4.10"
+    "immutable-tuple": "^0.4.10",
+    "uuid": "^3.3.2"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^1.2.5"
@@ -77,6 +78,7 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.0.1",
     "rollup-plugin-filesize": "^6.1.1",
+    "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-peer-deps-external": "^2.2.0"
   }

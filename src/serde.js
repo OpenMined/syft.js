@@ -1,5 +1,4 @@
 /*
-  TODO: Arbitrary commas are being inserted by PySyft at various places, usually at the end of strings, tuples, and TorchSize. They don't do anything and should not be there, this is an issue with PySyft
   TODO: Let's look at optimization potentials by using Map() (with the key being the instanceof class) for the SIMPLIFIERS and DETAILERS variables
 */
 

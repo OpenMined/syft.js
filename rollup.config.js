@@ -1,4 +1,5 @@
 import babel from 'rollup-plugin-babel';
+import builtins from 'rollup-plugin-node-builtins';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
@@ -34,9 +35,12 @@ export default {
     }
   ],
   plugins: [
+    builtins(),
     peerDepsExternal(),
     babel({ exclude: 'node_modules/**' }),
-    resolve(),
+    resolve({
+      preferBuiltins: true
+    }),
     commonjs(),
     filesize()
   ]
