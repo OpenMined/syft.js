@@ -1,5 +1,27 @@
+/*
+The following is a step-by-step explanation of what's going on below:
+
+1. Initiate syft.js, create a unique instance ID for the client, and connect to grid.js
+2. Get the protocol we want from grid.js
+3. Create a new "scope" (like creating a private room between this client and other syft.js clients with an invitation)
+ - Depending on the protocol chosen, this will get the number of participants and generate instance ID's for each of them
+ - When creating a new scope, syft.js sends the id of the protocol, their instance ID, and the instance ID's of the other participants
+4. Links are created whereby other participants may join
+ - Note that at this point, the creator of the scope may disconnect from grid.js since grid.js is not going to be a participant
+ - In theory, grid.js could be a participant in protocols. This is not done in this example.
+ - The scope creator should NEVER send the plans of the other participants directly to them
+ - Each participant must connect with grid.js and retrieve them independently
+ - While grid.js will send the entire protocol to the creator of the scope, each participant will only receive their specific list of plans in the protocol
+5. Upon a participant joining, get the plans that have been assigned to them by the grid
+ - At this point, assuming all participants have joined, they should all have their plans................
+*/
+
 import syft from 'syft.js';
-import { getQueryVariable, writeLinksToDOM } from './_helpers';
+import {
+  getQueryVariable,
+  writeIdentityToDOM,
+  writeLinksToDOM
+} from './_helpers';
 
 const instanceId = getQueryVariable('instance_id');
 const scope = getQueryVariable('scope_id');
@@ -16,13 +38,21 @@ mySyft.onSocketStatus(async ({ connected }) => {
   if (connected) {
     // If we have an instanceId and a scope given to us, we must be a participant in the scope...
     if (instanceId && scope) {
-      console.log(`You are participant "${instanceId}" in scope "${scope}"`);
+      writeIdentityToDOM(
+        `You are participant "${instanceId}" in scope "${scope}"`
+      );
 
-      // DO THE PARTICIPANT FLOW NOW
+      // 5. Get the list of plans for the scope we want to join
+      await mySyft.getPlans();
+
+      // Shutdown connection to grid.js because we no longer need it (in this case)
+      mySyft.disconnectFromGrid();
+
+      console.log('PLANS', mySyft.plans);
     }
     // Otherwise, we must be the creator of the scope!
     else {
-      console.log(`You are the creator "${mySyft.instanceId}"!`);
+      writeIdentityToDOM(`You are the creator "${mySyft.instanceId}"`);
 
       // 2. Get the protocol we want (in this case "millionaire-problem")
       const protocol = await mySyft.getProtocol('millionaire-problem');
@@ -32,35 +62,18 @@ mySyft.onSocketStatus(async ({ connected }) => {
         const scope = await mySyft.createScope();
 
         // 4. Create links for the other participants
-        const links = scope.participants.map(
-          id =>
-            `http://localhost:8080?instance_id=${id}&scope_id=${scope.scopeId}`
+        writeLinksToDOM(
+          scope.participants.map(
+            id =>
+              `http://localhost:8080?instance_id=${id}&scope_id=${scope.scopeId}`
+          )
         );
-
-        writeLinksToDOM(links);
 
         // Shutdown connection to grid.js because we no longer need it (in this case)
         mySyft.disconnectFromGrid();
+
+        console.log('PLANS', mySyft.plans);
       }
     }
   }
 });
-
-/*
-STEPS:
-
-1. Initiate syft.js, create a unique instance ID for the client, and connect to grid.js
-2. Get the protocol we want from grid.js
-3. As a developer implementing syft.js, choose one of them with which to create a new scope
- - Depending on the protocol chosen, get the number of participants and generate instance ID's for each of them
- - When creating a new scope, the developer sends the id of the chosen protocol
- - In the same message, syft.js will internally send the client's instance ID and the instance ID's of all the participants
-4. ...
-
-Remember - once we create P2P connections, destroy the connection to grid.js (unless grid.js is a participant)
-
-Protocol will look like a dictionary, where a key is a user and the value is a LIST of plans (not necessarily something to be executed serially)
-The creator can assign participants to a list of plans in the protocol, but the creator cannot physically send the list of plans to the other participants
-Once the scope is created, the links will be generated and sent to each user
-Then the other participants will request the grid to send them ONLY their exact list of plans given their instance id and scope id
-*/

@@ -17,7 +17,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'syft.js Example'
+      template: './index.html'
     })
   ]
 };

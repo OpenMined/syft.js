@@ -5,7 +5,12 @@ import Logger from './logger';
 import Socket from './sockets';
 import { detail } from './serde';
 
-import { SOCKET_STATUS, GET_PROTOCOL, CREATE_SCOPE } from './_constants';
+import {
+  SOCKET_STATUS,
+  GET_PROTOCOL,
+  GET_PLANS,
+  CREATE_SCOPE
+} from './_constants';
 
 const uuid = require('uuid/v4');
 
@@ -14,17 +19,20 @@ export default class syft {
   constructor(opts = {}) {
     const { url, verbose, instanceId, scope } = opts;
 
-    // The chosen protocol syft.js will be working on
+    // The chosen protocol syft.js will be working on (only for scope creators)
     this.currentProtocol = null;
 
-    // The assigned scope ID
+    // The participants we will be working with (only for scope creators)
+    this.participants = [];
+
+    // The list of plans we will be executing
+    this.plans = [];
+
+    // The assigned scope ID (if passed, we're a participant)
     this.scopeId = scope || null;
 
-    // My instance ID
+    // My instance ID (if passed, we're a participant)
     this.instanceId = instanceId || uuid();
-
-    // The participants we will be training with
-    this.participants = [];
 
     // For creating event listeners
     this.observer = new EventObserver();
@@ -41,6 +49,13 @@ export default class syft {
   // Get all the protocols from grid.js and return them to the user
   getProtocol(protocolId) {
     return this.socket.send(GET_PROTOCOL, { protocolId });
+  }
+
+  // Get the list of plans that a participant needs to participate from grid.js
+  getPlans() {
+    return this.socket.send(GET_PLANS, {
+      scopeId: this.scopeId
+    });
   }
 
   // Create a scope with grid.js, passing the instance IDs of the other participants an the ID of the protocol
@@ -81,7 +96,7 @@ export default class syft {
 
   // To close the socket connection with the grid
   disconnectFromGrid() {
-    this.socket.socket.close();
+    this.socket.close();
   }
 
   // When the socket connection is opened
@@ -117,11 +132,25 @@ export default class syft {
           }
         : data.protocol;
 
+      // Save the current protocol
       this.currentProtocol = protocol;
+
       return protocol;
+    } else if (type === GET_PLANS) {
+      // If we're getting returned a list of plans, we need to parse all of them
+      const plans = data.plans.map(plan => detail(plan));
+
+      // Save those plans
+      this.plans = plans;
+
+      return plans;
     } else if (type === CREATE_SCOPE) {
-      // If we're getting a created scope, store the ID and return all the data
+      // If we're getting a created scope store the scopeId
       this.scopeId = data.scopeId;
+
+      // Save the plans that the creator must do
+      this.plans = this.currentProtocol.plans[data.plan];
+
       return data;
     }
   }

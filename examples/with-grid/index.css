@@ -1,0 +1,26 @@
+body {
+  padding: 20px;
+}
+
+#logo {
+  width: 100px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin-top: 0px;
+}
+
+a {
+  text-decoration: none;
+}
+
+#participant-links ul {
+  margin: 0px;
+  padding: 0px;
+  list-style-type: none;
+}
+
+#participant-links li {
+  padding: 5px 0px;
+}

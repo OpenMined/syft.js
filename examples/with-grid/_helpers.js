@@ -14,13 +14,22 @@ export const getQueryVariable = variable => {
 };
 
 export const writeLinksToDOM = links => {
-  document.write('<ul>');
+  document.getElementById('participant-links').innerHTML = `
+    <ul>
+    ${links
+      .map(
+        (link, i) =>
+          `
+          <li>
+            <a href="${link}" target="_blank">Link for participant ${i + 1}</a>
+          </li>
+          `
+      )
+      .join('')}
+    </ul>
+  `;
+};
 
-  links.forEach((link, i) => {
-    document.write(
-      `<li><a href="${link}" target="_blank">Link for participant ${i}</a></li>`
-    );
-  });
-
-  document.write('</ul>');
+export const writeIdentityToDOM = text => {
+  document.getElementById('identity').innerHTML = text;
 };

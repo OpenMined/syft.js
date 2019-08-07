@@ -54,4 +54,8 @@ export default class Sockets {
       };
     });
   }
+
+  close() {
+    this.socket.close();
+  }
 }
