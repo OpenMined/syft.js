@@ -3,6 +3,7 @@
 import EventObserver from './events';
 import Logger from './logger';
 import Socket from './sockets';
+import WebRTCClient from './webrtc';
 import { detail } from './serde';
 
 import {
@@ -17,7 +18,7 @@ const uuid = require('uuid/v4');
 export default class syft {
   /* ----- CONSTRUCTOR ----- */
   constructor(opts = {}) {
-    const { url, verbose, instanceId, scope } = opts;
+    const { url, verbose, instanceId, scope, peerConfig } = opts;
 
     // The chosen protocol syft.js will be working on (only for scope creators)
     this.currentProtocol = null;
@@ -42,6 +43,9 @@ export default class syft {
 
     // Create a socket connection at this.socket
     this.createSocketConnection(url);
+
+    // The WebRTC client used for P2P communication
+    this.createWebRTCClient(peerConfig);
   }
 
   /* ----- FUNCTIONALITY ----- */
@@ -153,5 +157,40 @@ export default class syft {
 
       return data;
     }
+  }
+
+  /* ----- WEBRTC ----- */
+
+  // To create a socket connection internally and externally
+  createWebRTCClient(peerConfig) {
+    // If we don't have a socket sever, we can't create the WebRTCClient
+    if (!this.socket) return;
+
+    // The default STUN/TURN servers to use for NAT traversal
+    if (!peerConfig) {
+      peerConfig = {
+        iceServers: [
+          {
+            urls: [
+              'stun:stun.l.google.com:19302',
+              'stun:stun1.l.google.com:19302',
+              'stun:stun2.l.google.com:19302',
+              'stun:stun3.l.google.com:19302',
+              'stun:stun4.l.google.com:19302'
+            ]
+          }
+        ]
+      };
+    }
+
+    this.rtc = new WebRTCClient({
+      peerConfig,
+      logger: this.logger,
+      socket: this.socket
+    });
+  }
+
+  connectToPeers() {
+    this.rtc.start();
   }
 }

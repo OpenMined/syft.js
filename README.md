@@ -20,21 +20,22 @@ PySyft acts as the parent node, instructing child nodes \(Syft.js instances runn
 If you're using a package manage like NPM:
 
 ```text
-npm install --save syft.js @tensorflow/tfjs
+npm install --save syft.js @tensorflow/tfjs webrtc-adapter
 ```
 
 Or if Yarn is your cup of tea:
 
 ```text
-yarn add syft.js @tensorflow/tfjs
+yarn add syft.js @tensorflow/tfjs webrtc-adapter
 ```
 
-When using a package manager, TensorFlow.js will be automatically installed.
+When using a package manager, [TensorFlow.js](https://www.tensorflow.org/js) and the [WebRTC adapter](https://github.com/webrtc/adapter) will be automatically installed.
 
 If you're not using a package manager, you can also include Syft.js within a `<script>` tag:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 <script src="https://unpkg.com/syft.js@latest"></script>
 ```
 

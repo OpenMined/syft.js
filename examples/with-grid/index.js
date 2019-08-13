@@ -45,10 +45,12 @@ mySyft.onSocketStatus(async ({ connected }) => {
       // 5. Get the list of plans for the scope we want to join
       await mySyft.getPlans();
 
-      // Shutdown connection to grid.js because we no longer need it (in this case)
-      mySyft.disconnectFromGrid();
-
       console.log('PLANS', mySyft.plans);
+
+      mySyft.connectToPeers();
+
+      // Shutdown connection to grid.js because we no longer need it (in this case)
+      // mySyft.disconnectFromGrid();
     }
     // Otherwise, we must be the creator of the scope!
     else {
@@ -69,10 +71,12 @@ mySyft.onSocketStatus(async ({ connected }) => {
           )
         );
 
-        // Shutdown connection to grid.js because we no longer need it (in this case)
-        mySyft.disconnectFromGrid();
-
         console.log('PLANS', mySyft.plans);
+
+        mySyft.connectToPeers();
+
+        // Shutdown connection to grid.js because we no longer need it (in this case)
+        // mySyft.disconnectFromGrid();
       }
     }
   }
