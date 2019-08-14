@@ -34,6 +34,17 @@ const mySyft = new syft({
   scope
 });
 
+const textarea = document.getElementById('message');
+const submitButton = document.getElementById('message-send');
+
+const prepareSubmitMessage = () => {
+  submitButton.onclick = () => {
+    mySyft.sendToPeers(textarea.value);
+
+    textarea.value = '';
+  };
+};
+
 mySyft.onSocketStatus(async ({ connected }) => {
   if (connected) {
     // If we have an instanceId and a scope given to us, we must be a participant in the scope...
@@ -48,6 +59,7 @@ mySyft.onSocketStatus(async ({ connected }) => {
       console.log('PLANS', mySyft.plans);
 
       mySyft.connectToPeers();
+      prepareSubmitMessage();
 
       // Shutdown connection to grid.js because we no longer need it (in this case)
       // mySyft.disconnectFromGrid();
@@ -74,6 +86,7 @@ mySyft.onSocketStatus(async ({ connected }) => {
         console.log('PLANS', mySyft.plans);
 
         mySyft.connectToPeers();
+        prepareSubmitMessage();
 
         // Shutdown connection to grid.js because we no longer need it (in this case)
         // mySyft.disconnectFromGrid();

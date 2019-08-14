@@ -1,3 +1,20 @@
+/*
+TODOS:
+ - Change all socket message types to be prefixed constants (index.js, webrtc.js, and grid.js)
+ - Do then/catch (with logging) on all promise methods:
+   - addIceCandidate
+   - createAnswer
+   - createOffer
+   - setLocalDescription
+   - setRemoteDescription
+ - Maybe switch to async/await
+ - Go through all TODO's in this file
+ - Correct existing comments and write better documentation
+ - Figure out "disconnected" in socket server
+ - Ensure that starting and stopping of both the WebRTCClient and WebSocketClient are working and timed appropriately
+ - TEST IT ALL OUT
+*/
+
 // TODO: Make sure this is working!
 import 'webrtc-adapter';
 
@@ -5,70 +22,246 @@ export default class WebRTCClient {
   constructor(opts) {
     const { peerConfig, logger, socket } = opts;
 
+    // TODO: Set this?
+    const options = {
+      optional: [
+        { DtlsSrtpKeyAgreement: true }, // Required for connection between Chrome and Firefox
+        { RtpDataChannels: true } // Required in Firefox to use the DataChannels API
+      ]
+    };
+
     this.peerConfig = peerConfig;
+    this.peerOptions = options;
     this.logger = logger;
     this.socket = socket;
 
-    // Think of offerPeer as our local client. It's going to create a data channel and an offer and send them to the other peer.
-    this.offerPeer = new RTCPeerConnection(peerConfig);
-    this.offerPeer.onicecandidate = event => this.onOfferICE(event, this);
+    this.peers = {};
 
-    // Think of answerPeer as our remote server. It's going to accept an offer from offerPeer, and create a corresponding answer.
-    this.answerPeer = new RTCPeerConnection(this.peerConfig);
-    this.answerPeer.ondatachannel = event =>
-      this.onAnswerDataChannel(event, this);
-    this.answerPeer.onicecandidate = event => this.onAnswerICE(event, this);
+    this.instanceId = null;
+    this.scopeId = null;
   }
 
-  // This will be called for each offer candidate, which is a potential address that the other peer can attempt to connect to.
-  // Note that event.candidate can be null, so we must guard against that.
-  // The two peers will exchange candidates until they find a connection that works.
-  onOfferICE(event, self) {
-    self.logger.log('WebRTC: offerPeer ice candidate', event);
+  start(instanceId, scopeId) {
+    this.instanceId = instanceId;
+    this.scopeId = scopeId;
 
-    if (event && event.candidate) {
-      // These would normally be sent to answerPeer over some other transport, like a websocket, but since this is local we can just set it here.
-      this.answerPeer.addIceCandidate(event.candidate);
+    this.logger.log(`WebRTC: Joining room ${scopeId}`);
+
+    // Immediately send a request to enter the room
+    this.socket.send('room', { instanceId, scopeId });
+  }
+
+  // TODO: Remember to stop (clear all peer connections) when we're done
+  stop() {
+    this.logger.log('WebRTC: Disconnecting from peers');
+
+    for (let peer in this.peers) {
+      if (this.peers.hasOwnProperty(peer)) {
+        if (this.peers[peer].channel !== undefined) {
+          try {
+            this.peers[peer].channel.close();
+          } catch (e) {}
+        }
+      }
     }
   }
 
-  // The answer peer will also have this method called for each candidate.
-  onAnswerICE(event, self) {
-    self.logger.log('WebRTC: answerPeer ice candidate', event);
+  // Helper function for sending address messages related to WebRTC
+  sendViaSocket(type, message, to) {
+    // Don't send to yourself, silly!
+    if (this.instanceId !== to) {
+      this.logger.log('WebRTC: Sending internal WebRTC message');
 
-    if (event && event.candidate) {
-      // These would normally be sent to offerPeer over some other transport, like a websocket, but since this is local we can just set it here.
-      this.offerPeer.addIceCandidate(event.candidate);
+      this.socket.send('webrtc', {
+        instanceId: this.instanceId,
+        scopeId: this.scopeId,
+        to,
+        type,
+        data: message
+      });
     }
   }
 
-  // This will be called when answerPeer receives the offer, since a data channel was included in the offer.
-  // The event.channel will be answerPeer's end of the channel.
-  // Note that answerPeer does not create a data channel directly, it only uses this one created as a side effect of the offer.
-  onAnswerDataChannel(event, self) {
-    self.logger.log('WebRTC: answerPeer data channel', event);
+  socketNewPeer({ instanceId }) {
+    this.peers[instanceId] = {
+      candidateCache: []
+    };
 
-    this.addDataChannelListeners(event.channel, 'answerPeer');
+    // Create a new connection
+    const pc = new RTCPeerConnection(this.peerConfig, this.peerOptions);
+
+    // Initialize it
+    this.initConnection(pc, instanceId, 'offer');
+
+    // Save the peer in the peer list
+    this.peers[instanceId].connection = pc;
+
+    // TODO: Settings: https://www.html5rocks.com/en/tutorials/webrtc/datachannels/#just-show-me-the-action
+    // Create a DataChannel through which messaging will take place
+    const channel = pc.createDataChannel('dataChannel');
+
+    channel.owner = instanceId;
+    this.peers[instanceId].channel = channel;
+
+    // Install channel event handlers
+    this.addDataChannelListeners(channel);
+
+    // Create an SDP offer
+    pc.createOffer()
+      .then(offer => {
+        this.logger.log('WebRTC: Offer created');
+
+        if (offer) {
+          this.logger.log('WebRTC: Setting offer as local description');
+
+          pc.setLocalDescription(offer);
+        }
+      })
+      .catch(this.handleError('WebRTC: Error creating offer'));
+  }
+
+  initConnection(pc, instanceId, sdpType) {
+    this.logger.log('WebRTC: Initializing connection');
+
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        this.logger.log('WebRTC: Saving new ICE candidate');
+
+        // If a new ICE candidate is discovered, add it to the list for further sending
+        this.peers[instanceId].candidateCache.push(event.candidate);
+      } else {
+        this.logger.log(`WebRTC: Sending ${sdpType} and stored ICE candidates`);
+
+        // When the candidate discovery is completed, the handler will be called again, but without the candidate
+        // In this case, we first send the first SDP offer or SDP answer (depending on the sdpType)...
+        this.sendViaSocket(sdpType, pc.localDescription, instanceId);
+
+        // ... and then all previously found ICE candidates
+        for (let i = 0; i < this.peers[instanceId].candidateCache.length; i++) {
+          this.sendViaSocket(
+            'candidate',
+            this.peers[instanceId].candidateCache[i],
+            instanceId
+          );
+        }
+      }
+    };
+
+    pc.oniceconnectionstatechange = event => {
+      if (pc.iceConnectionState == 'disconnected') {
+        delete this.peers[instanceId];
+      }
+    };
+  }
+
+  socketReceived({ type, instanceId, data }) {
+    switch (type) {
+      case 'candidate':
+        this.remoteCandidateReceived(instanceId, data);
+        break;
+      case 'offer':
+        this.remoteOfferReceived(instanceId, data);
+        break;
+      case 'answer':
+        this.remoteAnswerReceived(instanceId, data);
+        break;
+    }
+  }
+
+  remoteOfferReceived(instanceId, data) {
+    this.createConnection(instanceId);
+
+    const pc = this.peers[instanceId].connection;
+
+    pc.setRemoteDescription(new RTCSessionDescription(data))
+      .then(() => {
+        this.logger.log('WebRTC: Setting data as remote description');
+
+        pc.createAnswer()
+          .then(answer => {
+            this.logger.log('WebRTC: Answer created');
+
+            pc.setLocalDescription(answer);
+
+            this.logger.log('WebRTC: Setting answer as local description');
+          })
+          .catch(this.handleError('WebRTC: Error creating answer'));
+      })
+      .catch(this.handleError('WebRTC: Error setting remote description'));
+  }
+
+  createConnection(instanceId) {
+    if (this.peers[instanceId] === undefined) {
+      this.logger.log('WebRTC: Creating connection');
+
+      this.peers[instanceId] = {
+        candidateCache: []
+      };
+
+      const pc = new RTCPeerConnection(this.peerConfig, this.peerOptions);
+
+      this.initConnection(pc, instanceId, 'answer');
+      this.peers[instanceId].connection = pc;
+
+      pc.ondatachannel = e => {
+        this.logger.log('WebRTC: Calling ondatachannel');
+
+        this.peers[instanceId].channel = e.channel;
+        this.peers[instanceId].channel.owner = instanceId;
+
+        this.addDataChannelListeners(this.peers[instanceId].channel);
+      };
+    }
+  }
+
+  remoteAnswerReceived(instanceId, data) {
+    const pc = this.peers[instanceId].connection;
+
+    this.logger.log('WebRTC: Remote answer received');
+
+    pc.setRemoteDescription(new RTCSessionDescription(data));
+  }
+
+  remoteCandidateReceived(instanceId, data) {
+    this.createConnection(instanceId);
+
+    this.logger.log('WebRTC: Remote candidate received');
+
+    const pc = this.peers[instanceId].connection;
+
+    pc.addIceCandidate(new RTCIceCandidate(data));
+  }
+
+  sendMessage(message) {
+    this.logger.log('WebRTC: Sending message', message);
+
+    for (let peer in this.peers) {
+      if (this.peers.hasOwnProperty(peer)) {
+        if (this.peers[peer].channel !== undefined) {
+          this.peers[peer].channel.send(message);
+        }
+      }
+    }
   }
 
   // This is used to attach generic logging handlers for data channels.
-  addDataChannelListeners(channel, label) {
+  addDataChannelListeners(channel) {
+    console.log('SETTING UP LISTENERS', channel);
+
     channel.onclose = event => {
-      this.logger.log(`WebRTC: ${label} data channel close`, event);
+      this.logger.log('WebRTC: data channel close', event);
     };
 
     channel.onerror = err => {
-      this.logger.log(`WebRTC: ${label} data channel error`, err);
+      this.logger.log('WebRTC: data channel error', err);
     };
 
     channel.onmessage = event => {
-      this.logger.log(`WebRTC: ${label} data channel message`, event);
+      this.logger.log('WebRTC: data channel message', event);
     };
 
     channel.onopen = event => {
-      this.logger.log(`WebRTC: ${label} data channel open`, event);
-
-      channel.send('hello from ' + label);
+      this.logger.log('WebRTC: data channel open', event);
     };
   }
 
@@ -79,74 +272,5 @@ export default class WebRTCClient {
     return error => {
       self.logger.log(message, error);
     };
-  }
-
-  // Start everything
-  start() {
-    // Create the offered data channel. Note that this must happen before the offer is created, so that it is included in the offer.
-    const offerDataChannel = this.offerPeer.createDataChannel('dataChannel', {
-      maxRetransmits: 0,
-      reliable: false
-    });
-
-    this.addDataChannelListeners(offerDataChannel, 'offerPeer');
-
-    // Create an offer to send to answerPeer. Like most operations with the WebRTC API, this is asynchronous.
-    // Our callback will be invoked once an offer has been created.
-    this.offerPeer.createOffer(offer => {
-      this.logger.log('WebRTC: created offer', offer);
-      offer = new RTCSessionDescription(offer);
-
-      this.offerPeer.setLocalDescription(
-        offer,
-        () => {
-          this.logger.log('WebRTC: set local description for offerPeer');
-        },
-
-        this.handleError(
-          'WebRTC: error setting local description for offerPeer'
-        )
-      );
-
-      // Normally we would send this over the wire to answerPeer, but since this is all local, we can just set it here.
-      this.answerPeer.setRemoteDescription(
-        offer,
-        () => {
-          this.logger.log('WebRTC: set remote description for answerPeer');
-
-          this.answerPeer.createAnswer(answer => {
-            this.logger.log('WebRTC: created answer');
-            answer = new RTCSessionDescription(answer);
-
-            this.answerPeer.setLocalDescription(
-              answer,
-              () => {
-                this.logger.log('WebRTC: set local description for answerPeer');
-              },
-
-              this.handleError(
-                'WebRTC: error setting answerPeer local description'
-              )
-            );
-
-            // Normally we would send this over the wire to offerPeer, but since this is all local, we can just set it here.
-            this.offerPeer.setRemoteDescription(
-              answer,
-              () => {
-                this.logger.log('WebRTC: set remote description for offerPeer');
-              },
-
-              this.handleError(
-                'WebRTC: error setting offerPeer remote description'
-              )
-            );
-          }, this.handleError('WebRTC: error creating answer'));
-        },
-
-        this.handleError(
-          'WebRTC: error setting remote description for answerPeer'
-        )
-      );
-    }, this.handleError('WebRTC: error creating offer'));
   }
 }

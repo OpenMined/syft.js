@@ -42,9 +42,11 @@ export default class syft {
     this.logger = new Logger(verbose);
 
     // Create a socket connection at this.socket
+    this.socket = null;
     this.createSocketConnection(url);
 
     // The WebRTC client used for P2P communication
+    this.rtc = null;
     this.createWebRTCClient(peerConfig);
   }
 
@@ -156,6 +158,10 @@ export default class syft {
       this.plans = this.currentProtocol.plans[data.plan];
 
       return data;
+    } else if (type === 'webrtc') {
+      this.rtc.socketReceived(data);
+    } else if (type === 'new') {
+      this.rtc.socketNewPeer(data);
     }
   }
 
@@ -191,6 +197,10 @@ export default class syft {
   }
 
   connectToPeers() {
-    this.rtc.start();
+    this.rtc.start(this.instanceId, this.scopeId);
+  }
+
+  sendToPeers(data) {
+    this.rtc.sendMessage(data);
   }
 }
