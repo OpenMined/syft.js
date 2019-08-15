@@ -1,3 +1,5 @@
+// TODO: Figure out a way to share the contstants file with grid.js
+
 // import * as tf from '@tensorflow/tfjs';
 
 import EventObserver from './events';
@@ -161,16 +163,16 @@ export default class syft {
 
       return data;
     } else if (type === WEBRTC_INTERNAL_MESSAGE) {
-      this.rtc.socketReceived(data);
+      this.rtc.receiveInternalMessage(data);
     } else if (type === WEBRTC_NEW_PEER) {
-      this.rtc.socketNewPeer(data);
+      this.rtc.receiveNewPeer(data);
     }
   }
 
   /* ----- WEBRTC ----- */
 
   // To create a socket connection internally and externally
-  createWebRTCClient(peerConfig) {
+  createWebRTCClient(peerConfig, peerOptions) {
     // If we don't have a socket sever, we can't create the WebRTCClient
     if (!this.socket) return;
 
@@ -191,18 +193,30 @@ export default class syft {
       };
     }
 
+    // TODO: We should determine which of these are reall required
+    // Some standard options for establishing peer connections
+    if (!peerOptions) {
+      peerOptions = {
+        optional: [
+          { DtlsSrtpKeyAgreement: true }, // Required for connection between Chrome and Firefox
+          { RtpDataChannels: true } // Required in Firefox to use the DataChannels API
+        ]
+      };
+    }
+
     this.rtc = new WebRTCClient({
       peerConfig,
+      peerOptions,
       logger: this.logger,
       socket: this.socket
     });
   }
 
-  connectToPeers() {
+  connectToParticipants() {
     this.rtc.start(this.instanceId, this.scopeId);
   }
 
-  sendToPeers(data) {
+  sendToParticipants(data) {
     this.rtc.sendMessage(data);
   }
 }

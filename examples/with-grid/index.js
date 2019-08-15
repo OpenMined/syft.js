@@ -39,7 +39,7 @@ const submitButton = document.getElementById('message-send');
 
 const prepareSubmitMessage = () => {
   submitButton.onclick = () => {
-    mySyft.sendToPeers(textarea.value);
+    mySyft.sendToParticipants(textarea.value);
 
     textarea.value = '';
   };
@@ -58,7 +58,7 @@ mySyft.onSocketStatus(async ({ connected }) => {
 
       console.log('PLANS', mySyft.plans);
 
-      mySyft.connectToPeers();
+      mySyft.connectToParticipants();
       prepareSubmitMessage();
 
       // Shutdown connection to grid.js because we no longer need it (in this case)
@@ -85,7 +85,7 @@ mySyft.onSocketStatus(async ({ connected }) => {
 
         console.log('PLANS', mySyft.plans);
 
-        mySyft.connectToPeers();
+        mySyft.connectToParticipants();
         prepareSubmitMessage();
 
         // Shutdown connection to grid.js because we no longer need it (in this case)
