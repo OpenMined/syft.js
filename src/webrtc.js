@@ -92,30 +92,28 @@ export default class WebRTCClient {
 
   // Create an RTCPeerConnection on our end for each offer or answer we receive
   createConnection(instanceId) {
-    if (this.peers[instanceId]) {
-      this.logger.log('WebRTC: Creating connection');
+    this.logger.log('WebRTC: Creating connection');
 
-      // Create a new peer in the list with a blank candidate cache (to be populated by ICE candidates we receive)
-      this.peers[instanceId] = {
-        candidateCache: []
-      };
+    // Create a new peer in the list with a blank candidate cache (to be populated by ICE candidates we receive)
+    this.peers[instanceId] = {
+      candidateCache: []
+    };
 
-      // Create and initialize the new connection, then add that connection to the peers list
-      const pc = new RTCPeerConnection(this.peerConfig, this.peerOptions);
-      this.initConnection(pc, instanceId, 'answer');
-      this.peers[instanceId].connection = pc;
+    // Create and initialize the new connection, then add that connection to the peers list
+    const pc = new RTCPeerConnection(this.peerConfig, this.peerOptions);
+    this.initConnection(pc, instanceId, 'answer');
+    this.peers[instanceId].connection = pc;
 
-      // When this peer connection receives a data channel
-      pc.ondatachannel = e => {
-        this.logger.log('WebRTC: Calling ondatachannel');
+    // When this peer connection receives a data channel
+    pc.ondatachannel = e => {
+      this.logger.log('WebRTC: Calling ondatachannel');
 
-        this.peers[instanceId].channel = e.channel;
-        this.peers[instanceId].channel.owner = instanceId;
+      this.peers[instanceId].channel = e.channel;
+      this.peers[instanceId].channel.owner = instanceId;
 
-        // Set up all our event listeners for this channel so we can hook into them
-        this.addDataChannelListeners(this.peers[instanceId].channel);
-      };
-    }
+      // Set up all our event listeners for this channel so we can hook into them
+      this.addDataChannelListeners(this.peers[instanceId].channel);
+    };
   }
 
   // Initialize a given RTCPeerConnection ("pc"), for a peer ("instanceId"), with an sdpType of "offer" or "answer"
@@ -235,11 +233,15 @@ export default class WebRTCClient {
   remoteCandidateReceived(instanceId, data) {
     this.logger.log('WebRTC: Remote candidate received');
 
-    this.createConnection(instanceId);
+    // If the connection doesn't exist, create it first
+    if (this.peers[instanceId] === undefined) {
+      this.createConnection(instanceId);
+    }
 
     // Get the peer connection of that user and add the ICE candidate to their list
-    this.peers[instanceId].connection
-      .addIceCandidate(new RTCIceCandidate(data))
+    const pc = this.peers[instanceId].connection;
+
+    pc.addIceCandidate(new RTCIceCandidate(data))
       .then(this.logger.log('WebRTC: Adding ICE candidate to peer connection'))
       .catch(
         this._handleError(
@@ -252,7 +254,10 @@ export default class WebRTCClient {
   remoteOfferReceived(instanceId, data) {
     this.logger.log('WebRTC: Remote offer received');
 
-    this.createConnection(instanceId);
+    // If the connection doesn't exist, create it first
+    if (this.peers[instanceId] === undefined) {
+      this.createConnection(instanceId);
+    }
 
     // Get the peer connection of that user
     const pc = this.peers[instanceId].connection;
@@ -288,8 +293,9 @@ export default class WebRTCClient {
     this.logger.log('WebRTC: Remote answer received');
 
     // Get the peer connection of that user and set the remote description to be the SDP offer
-    this.peers[instanceId].connection
-      .setRemoteDescription(new RTCSessionDescription(data))
+    const pc = this.peers[instanceId].connection;
+
+    pc.setRemoteDescription(new RTCSessionDescription(data))
       .then(this.logger.log('WebRTC: Setting answer as remote description'))
       .catch(
         this._handleError('WebRTC: Error setting answer as remote description')
