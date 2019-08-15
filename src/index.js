@@ -10,7 +10,9 @@ import {
   SOCKET_STATUS,
   GET_PROTOCOL,
   GET_PLANS,
-  CREATE_SCOPE
+  CREATE_SCOPE,
+  WEBRTC_INTERNAL_MESSAGE,
+  WEBRTC_NEW_PEER
 } from './_constants';
 
 const uuid = require('uuid/v4');
@@ -158,9 +160,9 @@ export default class syft {
       this.plans = this.currentProtocol.plans[data.plan];
 
       return data;
-    } else if (type === 'webrtc') {
+    } else if (type === WEBRTC_INTERNAL_MESSAGE) {
       this.rtc.socketReceived(data);
-    } else if (type === 'new') {
+    } else if (type === WEBRTC_NEW_PEER) {
       this.rtc.socketNewPeer(data);
     }
   }

@@ -1,6 +1,5 @@
 /*
 TODOS:
- - Change all socket message types to be prefixed constants (index.js, webrtc.js, and grid.js)
  - Do then/catch (with logging) on all promise methods:
    - addIceCandidate
    - createAnswer
@@ -12,11 +11,12 @@ TODOS:
  - Correct existing comments and write better documentation
  - Figure out "disconnected" in socket server
  - Ensure that starting and stopping of both the WebRTCClient and WebSocketClient are working and timed appropriately
- - TEST IT ALL OUT
+ - TEST IT ALL OUT (including making sure things work cross-browser)
 */
 
 // TODO: Make sure this is working!
 import 'webrtc-adapter';
+import { WEBRTC_JOIN_ROOM, WEBRTC_INTERNAL_MESSAGE } from './_constants';
 
 export default class WebRTCClient {
   constructor(opts) {
@@ -48,7 +48,7 @@ export default class WebRTCClient {
     this.logger.log(`WebRTC: Joining room ${scopeId}`);
 
     // Immediately send a request to enter the room
-    this.socket.send('room', { instanceId, scopeId });
+    this.socket.send(WEBRTC_JOIN_ROOM, { instanceId, scopeId });
   }
 
   // TODO: Remember to stop (clear all peer connections) when we're done
@@ -72,7 +72,7 @@ export default class WebRTCClient {
     if (this.instanceId !== to) {
       this.logger.log('WebRTC: Sending internal WebRTC message');
 
-      this.socket.send('webrtc', {
+      this.socket.send(WEBRTC_INTERNAL_MESSAGE, {
         instanceId: this.instanceId,
         scopeId: this.scopeId,
         to,
@@ -246,8 +246,6 @@ export default class WebRTCClient {
 
   // This is used to attach generic logging handlers for data channels.
   addDataChannelListeners(channel) {
-    console.log('SETTING UP LISTENERS', channel);
-
     channel.onclose = event => {
       this.logger.log('WebRTC: data channel close', event);
     };
