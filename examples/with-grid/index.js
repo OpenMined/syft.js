@@ -13,7 +13,10 @@ The following is a step-by-step explanation of what's going on below:
  - Each participant must connect with grid.js and retrieve them independently
  - While grid.js will send the entire protocol to the creator of the scope, each participant will only receive their specific list of plans in the protocol
 5. Upon a participant joining, get the plans that have been assigned to them by the grid
- - At this point, assuming all participants have joined, they should all have their plans................
+ - At this point, assuming all participants have joined, they should all have their plans
+6. We will want to create a direct peer-to-peer connection with the other participants
+ - This is done using WebRTC under the hood using a mesh network by which ever peer has a private data connection to every other peer
+ - This is an asynchronous action, meaning that peers may come and go at any point and the networking client must handle this appropriately
 */
 
 import syft from 'syft.js';
@@ -58,11 +61,9 @@ mySyft.onSocketStatus(async ({ connected }) => {
 
       console.log('PLANS', mySyft.plans);
 
+      // 6. Create a direct P2P connection with the other participants
       mySyft.connectToParticipants();
       prepareSubmitMessage();
-
-      // Shutdown connection to grid.js because we no longer need it (in this case)
-      // mySyft.disconnectFromGrid();
     }
     // Otherwise, we must be the creator of the scope!
     else {
@@ -85,11 +86,9 @@ mySyft.onSocketStatus(async ({ connected }) => {
 
         console.log('PLANS', mySyft.plans);
 
+        // 6. Create a direct P2P connection with the other participants
         mySyft.connectToParticipants();
         prepareSubmitMessage();
-
-        // Shutdown connection to grid.js because we no longer need it (in this case)
-        // mySyft.disconnectFromGrid();
       }
     }
   }

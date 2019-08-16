@@ -1,4 +1,4 @@
-// TODO: Figure out a way to share the contstants file with grid.js
+// TODO: Figure out a way to share the constants file with grid.js
 
 // import * as tf from '@tensorflow/tfjs';
 
@@ -14,7 +14,8 @@ import {
   GET_PLANS,
   CREATE_SCOPE,
   WEBRTC_INTERNAL_MESSAGE,
-  WEBRTC_NEW_PEER
+  WEBRTC_NEW_PEER,
+  WEBRTC_PEER_LEFT
 } from './_constants';
 
 const uuid = require('uuid/v4');
@@ -106,7 +107,7 @@ export default class syft {
 
   // To close the socket connection with the grid
   disconnectFromGrid() {
-    this.socket.close();
+    this.socket.stop();
   }
 
   // When the socket connection is opened
@@ -166,6 +167,8 @@ export default class syft {
       this.rtc.receiveInternalMessage(data);
     } else if (type === WEBRTC_NEW_PEER) {
       this.rtc.receiveNewPeer(data);
+    } else if (type === WEBRTC_PEER_LEFT) {
+      this.rtc.removePeer(data.instanceId);
     }
   }
 
@@ -193,7 +196,6 @@ export default class syft {
       };
     }
 
-    // TODO: We should determine which of these are reall required
     // Some standard options for establishing peer connections
     if (!peerOptions) {
       peerOptions = {
@@ -216,7 +218,11 @@ export default class syft {
     this.rtc.start(this.instanceId, this.scopeId);
   }
 
-  sendToParticipants(data) {
-    this.rtc.sendMessage(data);
+  disconnectFromParticipants() {
+    this.rtc.stop();
+  }
+
+  sendToParticipants(data, to) {
+    this.rtc.sendMessage(data, to);
   }
 }

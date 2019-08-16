@@ -1,17 +1,11 @@
-/*
-TODOS:
- - Figure out "disconnected" in socket server
- - Ensure that starting and stopping of both the WebRTCClient and WebSocketClient are working and timed appropriately
- - Go through all TODO's in this file
- - TEST IT ALL OUT (including making sure things work cross-browser)
-*/
-
-// NOTE: Adding async/await here requires regenerator-runtime/runtime which adds an unnecessary 2kb on the minified bundled - no thanks!
-
-// TODO: Make sure this is working!
+// NOTE: Adding async/await in this file requires regenerator-runtime/runtime which adds an unnecessary 2kb on the minified bundled - no thanks!
 import 'webrtc-adapter';
 
-import { WEBRTC_JOIN_ROOM, WEBRTC_INTERNAL_MESSAGE } from './_constants';
+import {
+  WEBRTC_JOIN_ROOM,
+  WEBRTC_INTERNAL_MESSAGE,
+  WEBRTC_PEER_LEFT
+} from './_constants';
 
 export default class WebRTCClient {
   constructor(opts) {
@@ -40,21 +34,34 @@ export default class WebRTCClient {
     this.socket.send(WEBRTC_JOIN_ROOM, { instanceId, scopeId });
   }
 
-  // TODO: Remember to stop (clear all peer connections) when we're done
   // The main stop command for WebRTC
   // This goes through all the peers and closes the connection from each one
   stop() {
     this.logger.log('WebRTC: Disconnecting from peers');
 
-    this._forEachPeer(peer => {
+    this.socket.send(WEBRTC_PEER_LEFT, {
+      instanceId: this.instanceId,
+      scopeId: this.scopeId
+    });
+
+    this._forEachPeer((peer, instanceId) => {
       if (peer.channel) {
-        try {
-          this.peers[peer].channel.close();
-        } catch (e) {
-          this.logger.log('WebRTC: Error closing connection', e);
-        }
+        this.removePeer(instanceId);
       }
     }, true);
+  }
+
+  // Remove a peer when the signaling server has notified us they've left or when stop() is run
+  removePeer(instanceId) {
+    this.logger.log(`WebRTC: Closing connection to ${instanceId}`);
+
+    try {
+      this.peers[instanceId].channel.close();
+    } catch (e) {
+      this.logger.log('WebRTC: Error removing peer', e);
+    }
+
+    delete this.peers[instanceId];
   }
 
   // Given a message, this function allows you to "broadcast" a message to all peers
@@ -147,14 +154,6 @@ export default class WebRTCClient {
         }
       }
     };
-
-    // When the ICE connection status changes
-    pc.oniceconnectionstatechange = event => {
-      // When we have a peer disconnect, remove that peer from our list
-      if (pc.iceConnectionState == 'disconnected') {
-        delete this.peers[instanceId];
-      }
-    };
   }
 
   // When we receive a new peer's instanceId from grid.js...
@@ -171,7 +170,6 @@ export default class WebRTCClient {
     this.initConnection(pc, instanceId, 'offer');
     this.peers[instanceId].connection = pc;
 
-    // TODO: Settings: https://www.html5rocks.com/en/tutorials/webrtc/datachannels/#just-show-me-the-action
     // Create a data channel through which messaging will take place, we'll call it "dataChannel"
     // Designate who owns that channel and push it onto the peers list
     const channel = pc.createDataChannel('dataChannel');
@@ -344,9 +342,7 @@ export default class WebRTCClient {
     }
 
     for (let peer in peers) {
-      if (peers.hasOwnProperty(peer)) {
-        callback(peers[peer]);
-      }
+      callback(peers[peer], peer);
     }
   }
 }

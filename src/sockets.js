@@ -55,7 +55,7 @@ export default class Sockets {
     });
   }
 
-  close() {
+  stop() {
     this.socket.close();
   }
 }
