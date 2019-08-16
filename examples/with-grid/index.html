@@ -39,10 +39,18 @@
         >)</i
       >.
     </p>
-    <p id="identity"></p>
-    <div id="participant-links"></div>
-    <textarea id="message" placeholder="Type some message in here..."></textarea
-    ><br />
-    <button id="message-send">Send message</button>
+    <input type="text" id="grid-instance" value="ws://localhost:3000" />
+    <button id="connect">Connect to Grid.js instance</button>
+    <div id="app">
+      <button id="disconnect">Disconnect</button>
+      <p id="identity"></p>
+      <div id="participant-links"></div>
+      <textarea
+        id="message"
+        placeholder="Type some message in here..."
+      ></textarea
+      ><br />
+      <button id="message-send">Send message</button>
+    </div>
   </body>
 </html>
