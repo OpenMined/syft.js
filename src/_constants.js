@@ -1,5 +1,6 @@
 // Sockets
 export const SOCKET_STATUS = 'socket-status';
+export const SOCKET_PING = 'socket-ping';
 
 // Grid
 export const GET_PROTOCOL = 'get-protocol';

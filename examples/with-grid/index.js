@@ -101,7 +101,7 @@ const startSyft = url => {
           writeLinksToDOM(
             scope.participants.map(
               id =>
-                `http://localhost:8080?instance_id=${id}&scope_id=${scope.scopeId}`
+                `${window.location.href}?instance_id=${id}&scope_id=${scope.scopeId}`
             )
           );
 

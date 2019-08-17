@@ -1,4 +1,10 @@
-// TODO: Figure out a way to share the constants file with grid.js
+/*
+  TODO:
+   - Figure out a way to add the instanceId and scopeId to the example and still be a creator OR participant
+   - Figure out a better deployment script in package.json that could include other examples
+   - Figure out Redis on grid.js
+   - Figure out a way to share the constants file with grid.js
+*/
 
 // import * as tf from '@tensorflow/tfjs';
 

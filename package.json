@@ -38,7 +38,9 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "version": "auto-changelog -p && git add CHANGELOG.md",
-    "release": "np"
+    "release": "np",
+    "copy-examples": "rm -rf ./tmp && mkdir tmp && cd tmp && mkdir with-grid && cd ../examples/with-grid && npm run build && cd ../../ && cp -a ./examples/with-grid/dist/. ./tmp/with-grid",
+    "deploy": "npm run copy-examples && gh-pages -d tmp && rm -rf tmp"
   },
   "browserslist": "> 0.25%, not dead",
   "husky": {
@@ -69,6 +71,7 @@
     "@babel/preset-env": "^7.5.5",
     "auto-changelog": "^1.14.1",
     "babel-jest": "^24.8.0",
+    "gh-pages": "^2.1.1",
     "husky": "^3.0.1",
     "jest": "^24.8.0",
     "mock-socket": "^9.0.0",

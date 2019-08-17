@@ -1,14 +1,34 @@
+import { SOCKET_PING } from './_constants';
+
 export default class Sockets {
   constructor(opts) {
     const { url, logger, instanceId, onOpen, onClose, onMessage } = opts;
 
     const socket = new WebSocket(url);
 
+    const keepAlive = () => {
+      const timeout = 20000;
+
+      if (this.socket.readyState == this.socket.OPEN) {
+        this.send(SOCKET_PING);
+      }
+
+      this.timerId = setTimeout(keepAlive, timeout);
+    };
+
+    const cancelKeepAlive = () => {
+      if (this.timerId) {
+        clearTimeout(this.timerId);
+      }
+    };
+
     socket.onopen = event => {
       this.logger.log(
         `Opening socket connection at ${event.currentTarget.url}`,
         event
       );
+
+      keepAlive();
 
       if (onOpen) onOpen(event);
     };
@@ -19,6 +39,8 @@ export default class Sockets {
         event
       );
 
+      cancelKeepAlive();
+
       if (onClose) onClose(event);
     };
 
@@ -27,6 +49,7 @@ export default class Sockets {
     this.instanceId = instanceId;
     this.socket = socket;
     this.onMessage = onMessage;
+    this.timerID = 0;
   }
 
   send(type, data = {}) {
