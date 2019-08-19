@@ -8,7 +8,7 @@ module.exports = (env, argv) => ({
     path: path.join(__dirname, '/dist'),
     filename: 'index.bundle.js'
   },
-  devtool: argv.mode === 'development' ? '#eval-source-map' : 'source-map',
+  devtool: argv.mode === 'development' ? 'eval-source-map' : 'source-map',
   devServer: {
     port: 8080,
     hot: true,
@@ -16,8 +16,7 @@ module.exports = (env, argv) => ({
     stats: {
       children: false, // Hide children information
       maxModules: 0 // Set the maximum number of modules to be shown
-    },
-    watchOptions: {}
+    }
   },
   module: {
     rules: [

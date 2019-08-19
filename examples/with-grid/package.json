@@ -18,8 +18,5 @@
     "webpack": "^4.39.1",
     "webpack-cli": "^3.3.7",
     "webpack-dev-server": "^3.7.2"
-  },
-  "dependencies": {
-    "syft.js": "file:../.."
   }
 }

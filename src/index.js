@@ -1,6 +1,5 @@
 /*
   TODO:
-   - Fix with-grid issue
    - Figure out a better deployment script in package.json that could include other examples
    - Figure out Redis on grid.js
    - Figure out a way to share the constants file with grid.js
