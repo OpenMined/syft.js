@@ -73,17 +73,13 @@ const startSyft = url => {
 
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
-      const myPlans = await mySyft.getPlans();
+      const plans = await mySyft.getPlans();
 
-      console.log(myPlans);
+      console.log('PLANS', plans);
 
-      if (mySyft.role === 'creator') {
-        writeIdentityToDOM(`You are the creator "${mySyft.instanceId}"`);
-      } else {
-        writeIdentityToDOM(
-          `You are participant "${instanceId}" in scope "${scopeId}"`
-        );
-      }
+      writeIdentityToDOM(
+        `You are ${mySyft.role} "${mySyft.instanceId}" in scope "${scopeId}"`
+      );
 
       if (!instanceId && !scopeId) {
         window.history.pushState(
@@ -105,7 +101,7 @@ const startSyft = url => {
       );
 
       // 6. Create a direct P2P connection with the other participants
-      // mySyft.connectToParticipants();
+      mySyft.connectToParticipants();
     }
   });
 };

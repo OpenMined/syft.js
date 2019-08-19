@@ -1,6 +1,5 @@
 /*
   TODO:
-   - Figure out a way to add the instanceId and scopeId to the example and still be a creator OR participant
    - Consider allowing grid.js to assign a user's instanceId, removing the uuid package from syft.js
    - Figure out a better deployment script in package.json that could include other examples
    - Figure out Redis on grid.js
@@ -126,7 +125,7 @@ export default class syft {
       if (data.error) {
         this.logger.log('There was an error getting your plans', data.error);
 
-        return data.error;
+        return data;
       }
 
       // Save those plans after having Serde detail them
