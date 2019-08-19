@@ -59,7 +59,6 @@
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
     "immutable-tuple": "^0.4.10",
-    "uuid": "^3.3.2",
     "webrtc-adapter": "^7.2.9"
   },
   "peerDependencies": {

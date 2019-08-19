@@ -1,6 +1,5 @@
 /*
   TODO:
-   - Consider allowing grid.js to assign a user's instanceId, removing the uuid package from syft.js
    - Fix with-grid issue
    - Figure out a better deployment script in package.json that could include other examples
    - Figure out Redis on grid.js
@@ -23,21 +22,19 @@ import {
   WEBRTC_PEER_LEFT
 } from './_constants';
 
-const uuid = require('uuid/v4');
-
 export default class syft {
   /* ----- CONSTRUCTOR ----- */
   constructor(opts = {}) {
     const { url, verbose, instanceId, scopeId, protocolId, peerConfig } = opts;
 
-    // My instance ID (passed to me if I'm a participant, created if I'm a creator)
-    this.instanceId = instanceId || uuid();
+    // My instance ID
+    this.instanceId = instanceId || null;
 
     // The assigned scope ID
     this.scopeId = scopeId || null;
 
     // The chosen protocol we are working on
-    this.protocolId = protocolId || null;
+    this.protocolId = protocolId;
 
     // Our role in the plans
     this.role = null;
@@ -131,6 +128,10 @@ export default class syft {
 
       // Save those plans after having Serde detail them
       this.plans = data.plans.map(plan => detail(plan));
+
+      // Save our instanceId if we don't already have it (also for the socket connection)
+      this.instanceId = data.user.instanceId;
+      this.socket.instanceId = this.instanceId;
 
       // Save our scopeId if we don't already have it
       this.scopeId = data.user.scopeId;
