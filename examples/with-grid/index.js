@@ -15,6 +15,7 @@ The following is a step-by-step explanation of what's going on below:
  - The syft.js library is capable of handling connections, disconnections, and reconnections without issue
 */
 
+// In the real world: import syft from 'syft.js';
 import syft from '../../src';
 import {
   getQueryVariable,

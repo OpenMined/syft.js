@@ -39,8 +39,7 @@
     "test:watch": "jest --watch",
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "release": "np",
-    "copy-examples": "rm -rf ./tmp && mkdir tmp && cd tmp && mkdir with-grid && cd ../examples/with-grid && npm run build && cd ../../ && cp -a ./examples/with-grid/dist/. ./tmp/with-grid",
-    "deploy": "npm run copy-examples && gh-pages -d tmp && rm -rf tmp"
+    "deploy": "./copy-examples.sh && gh-pages -d tmp && rm -rf tmp"
   },
   "browserslist": "> 0.25%, not dead",
   "husky": {
