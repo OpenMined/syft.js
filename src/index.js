@@ -1,6 +1,7 @@
 /*
   TODO:
    - Figure out a way to add the instanceId and scopeId to the example and still be a creator OR participant
+   - Consider allowing grid.js to assign a user's instanceId, removing the uuid package from syft.js
    - Figure out a better deployment script in package.json that could include other examples
    - Figure out Redis on grid.js
    - Figure out a way to share the constants file with grid.js
@@ -16,9 +17,7 @@ import { detail } from './serde';
 
 import {
   SOCKET_STATUS,
-  GET_PROTOCOL,
   GET_PLANS,
-  CREATE_SCOPE,
   WEBRTC_INTERNAL_MESSAGE,
   WEBRTC_NEW_PEER,
   WEBRTC_PEER_LEFT
@@ -29,22 +28,25 @@ const uuid = require('uuid/v4');
 export default class syft {
   /* ----- CONSTRUCTOR ----- */
   constructor(opts = {}) {
-    const { url, verbose, instanceId, scope, peerConfig } = opts;
+    const { url, verbose, instanceId, scopeId, protocolId, peerConfig } = opts;
 
-    // The chosen protocol syft.js will be working on (only for scope creators)
-    this.currentProtocol = null;
+    // My instance ID (passed to me if I'm a participant, created if I'm a creator)
+    this.instanceId = instanceId || uuid();
+
+    // The assigned scope ID
+    this.scopeId = scopeId || null;
+
+    // The chosen protocol we are working on
+    this.protocolId = protocolId || null;
+
+    // Our role in the plans
+    this.role = null;
 
     // The participants we will be working with (only for scope creators)
     this.participants = [];
 
     // The list of plans we will be executing
     this.plans = [];
-
-    // The assigned scope ID (if passed, we're a participant)
-    this.scopeId = scope || null;
-
-    // My instance ID (if passed, we're a participant)
-    this.instanceId = instanceId || uuid();
 
     // For creating event listeners
     this.observer = new EventObserver();
@@ -63,29 +65,11 @@ export default class syft {
 
   /* ----- FUNCTIONALITY ----- */
 
-  // Get all the protocols from grid.js and return them to the user
-  getProtocol(protocolId) {
-    return this.socket.send(GET_PROTOCOL, { protocolId });
-  }
-
   // Get the list of plans that a participant needs to participate from grid.js
   getPlans() {
     return this.socket.send(GET_PLANS, {
-      scopeId: this.scopeId
-    });
-  }
-
-  // Create a scope with grid.js, passing the instance IDs of the other participants an the ID of the protocol
-  createScope() {
-    const protocol = this.currentProtocol;
-
-    // Create instance IDs for the other participants in the protocol
-    // Note that if you're the creator, you already have an instance ID (this.instanceId)
-    this.participants = [...Array(protocol.plans.length - 1)].map(() => uuid());
-
-    return this.socket.send(CREATE_SCOPE, {
-      protocolId: protocol.id,
-      participants: this.participants
+      scopeId: this.scopeId,
+      protocolId: this.protocolId
     });
   }
 
@@ -138,37 +122,28 @@ export default class syft {
   onMessage(event) {
     const { type, data } = event;
 
-    if (type === GET_PROTOCOL) {
-      // If we're getting returned a protocol, we need to parse all the plans
-      const protocol = data.protocol
-        ? {
-            ...data.protocol,
-            plans: data.protocol.plans.map(list =>
-              list.map(plan => detail(plan))
-            )
-          }
-        : data.protocol;
+    if (type === GET_PLANS) {
+      console.log(data);
 
-      // Save the current protocol
-      this.currentProtocol = protocol;
+      if (data.error) {
+        this.logger.log('There was an error getting your plans', data.error);
 
-      return protocol;
-    } else if (type === GET_PLANS) {
-      // If we're getting returned a list of plans, we need to parse all of them
-      const plans = data.plans.map(plan => detail(plan));
+        return data.error;
+      }
 
-      // Save those plans
-      this.plans = plans;
+      // Save those plans after having Serde detail them
+      this.plans = data.plans.map(plan => detail(plan));
 
-      return plans;
-    } else if (type === CREATE_SCOPE) {
-      // If we're getting a created scope store the scopeId
-      this.scopeId = data.scopeId;
+      // Save our scopeId if we don't already have it
+      this.scopeId = data.user.scopeId;
 
-      // Save the plans that the creator must do
-      this.plans = this.currentProtocol.plans[data.plan];
+      // Save our role
+      this.role = data.user.role;
 
-      return data;
+      // Save the other participant instanceId's
+      this.participants = data.participants;
+
+      return this.plans;
     } else if (type === WEBRTC_INTERNAL_MESSAGE) {
       this.rtc.receiveInternalMessage(data);
     } else if (type === WEBRTC_NEW_PEER) {

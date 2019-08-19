@@ -3,9 +3,7 @@ export const SOCKET_STATUS = 'socket-status';
 export const SOCKET_PING = 'socket-ping';
 
 // Grid
-export const GET_PROTOCOL = 'get-protocol';
 export const GET_PLANS = 'get-plans';
-export const CREATE_SCOPE = 'create-scope';
 
 // Operations
 // export const GET_TENSORS = 'get-tensors';

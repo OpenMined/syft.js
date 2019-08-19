@@ -45,14 +45,15 @@ connectButton.onclick = () => {
 
 const startSyft = url => {
   const instanceId = getQueryVariable('instance_id');
-  const scope = getQueryVariable('scope_id');
+  const scopeId = getQueryVariable('scope_id');
 
   // 1. Initiate syft.js and create socket connection
   const mySyft = new syft({
     verbose: true,
     url,
     instanceId,
-    scope
+    scopeId,
+    protocolId: 'millionaire-problem'
   });
 
   submitButton.onclick = () => {
@@ -72,45 +73,36 @@ const startSyft = url => {
 
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
-      // If we have an instanceId and a scope given to us, we must be a participant in the scope...
-      if (instanceId && scope) {
-        writeIdentityToDOM(
-          `You are participant "${instanceId}" in scope "${scope}"`
-        );
+      const myPlans = mySyft.getPlans();
 
-        // 5. Get the list of plans for the scope we want to join
-        await mySyft.getPlans();
+      console.log(myPlans);
 
-        console.log('PLANS', mySyft.plans);
-
-        // 6. Create a direct P2P connection with the other participants
-        mySyft.connectToParticipants();
-      }
-      // Otherwise, we must be the creator of the scope!
-      else {
+      if (mySyft.role === 'creator') {
         writeIdentityToDOM(`You are the creator "${mySyft.instanceId}"`);
-
-        // 2. Get the protocol we want (in this case "millionaire-problem")
-        const protocol = await mySyft.getProtocol('millionaire-problem');
-
-        if (protocol) {
-          // 3. Create a scope
-          const scope = await mySyft.createScope();
-
-          // 4. Create links for the other participants
-          writeLinksToDOM(
-            scope.participants.map(
-              id =>
-                `${window.location.href}?instance_id=${id}&scope_id=${scope.scopeId}`
-            )
-          );
-
-          console.log('PLANS', mySyft.plans);
-
-          // 6. Create a direct P2P connection with the other participants
-          mySyft.connectToParticipants();
-        }
+      } else {
+        writeIdentityToDOM(
+          `You are participant "${instanceId}" in scope "${scopeId}"`
+        );
       }
+
+      if (!instanceId && !scopeId) {
+        window.history.pushState(
+          {},
+          null,
+          `?instance_id=${mySyft.instanceId}&scope_id=${mySyft.scopeId}`
+        );
+      }
+
+      // 4. Create links for the other participants
+      writeLinksToDOM(
+        mySyft.participants.map(
+          id =>
+            `${window.location.href}?instance_id=${id}&scope_id=${mySyft.scopeId}`
+        )
+      );
+
+      // 6. Create a direct P2P connection with the other participants
+      mySyft.connectToParticipants();
     }
   });
 };
