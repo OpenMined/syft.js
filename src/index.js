@@ -123,8 +123,6 @@ export default class syft {
     const { type, data } = event;
 
     if (type === GET_PLANS) {
-      console.log(data);
-
       if (data.error) {
         this.logger.log('There was an error getting your plans', data.error);
 

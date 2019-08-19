@@ -97,12 +97,15 @@ const startSyft = url => {
       writeLinksToDOM(
         mySyft.participants.map(
           id =>
-            `${window.location.href}?instance_id=${id}&scope_id=${mySyft.scopeId}`
+            `${window.location.origin +
+              window.location.pathname}?instance_id=${id}&scope_id=${
+              mySyft.scopeId
+            }`
         )
       );
 
       // 6. Create a direct P2P connection with the other participants
-      mySyft.connectToParticipants();
+      // mySyft.connectToParticipants();
     }
   });
 };
