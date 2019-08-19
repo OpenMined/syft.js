@@ -78,7 +78,7 @@ const startSyft = url => {
       console.log('PLANS', plans);
 
       writeIdentityToDOM(
-        `You are ${mySyft.role} "${mySyft.instanceId}" in scope "${scopeId}"`
+        `You are ${mySyft.role} "${mySyft.instanceId}" in scope "${mySyft.scopeId}"`
       );
 
       if (!instanceId && !scopeId) {

@@ -1,6 +1,7 @@
 /*
   TODO:
    - Consider allowing grid.js to assign a user's instanceId, removing the uuid package from syft.js
+   - Fix with-grid issue
    - Figure out a better deployment script in package.json that could include other examples
    - Figure out Redis on grid.js
    - Figure out a way to share the constants file with grid.js
