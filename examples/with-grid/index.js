@@ -73,7 +73,7 @@ const startSyft = url => {
 
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
-      const myPlans = mySyft.getPlans();
+      const myPlans = await mySyft.getPlans();
 
       console.log(myPlans);
 
