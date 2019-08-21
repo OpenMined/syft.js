@@ -3,7 +3,9 @@ import 'regenerator-runtime/runtime';
 import Socket from '../src/sockets';
 import Logger from '../src/logger';
 
-import { Server } from 'mock-socket';
+import { WebSocket, Server } from 'mock-socket';
+
+global.WebSocket = WebSocket;
 
 const url = 'ws://localhost:8080/';
 

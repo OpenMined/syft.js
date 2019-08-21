@@ -1,9 +1,3 @@
-/*
-  TODO:
-   - Figure out Redis on grid.js
-   - Figure out a way to share the constants file with grid.js
-*/
-
 // import * as tf from '@tensorflow/tfjs';
 
 import EventObserver from './events';
@@ -17,7 +11,9 @@ import {
   GET_PLANS,
   WEBRTC_INTERNAL_MESSAGE,
   WEBRTC_NEW_PEER,
-  WEBRTC_PEER_LEFT
+  WEBRTC_PEER_LEFT,
+  WEBRTC_PEER_CONFIG,
+  WEBRTC_PEER_OPTIONS
 } from './_constants';
 
 export default class syft {
@@ -158,31 +154,10 @@ export default class syft {
     if (!this.socket) return;
 
     // The default STUN/TURN servers to use for NAT traversal
-    if (!peerConfig) {
-      peerConfig = {
-        iceServers: [
-          {
-            urls: [
-              'stun:stun.l.google.com:19302',
-              'stun:stun1.l.google.com:19302',
-              'stun:stun2.l.google.com:19302',
-              'stun:stun3.l.google.com:19302',
-              'stun:stun4.l.google.com:19302'
-            ]
-          }
-        ]
-      };
-    }
+    if (!peerConfig) peerConfig = WEBRTC_PEER_CONFIG;
 
     // Some standard options for establishing peer connections
-    if (!peerOptions) {
-      peerOptions = {
-        optional: [
-          { DtlsSrtpKeyAgreement: true }, // Required for connection between Chrome and Firefox
-          { RtpDataChannels: true } // Required in Firefox to use the DataChannels API
-        ]
-      };
-    }
+    if (!peerOptions) peerOptions = WEBRTC_PEER_OPTIONS;
 
     this.rtc = new WebRTCClient({
       peerConfig,

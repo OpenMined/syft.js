@@ -53,7 +53,10 @@
       "/node_modules/",
       "<rootDir>/src/_errors.js",
       "<rootDir>/test/dummy"
-    ]
+    ],
+    "globals": {
+      "window": {}
+    }
   },
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
