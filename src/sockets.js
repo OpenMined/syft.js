@@ -1,4 +1,4 @@
-import { SOCKET_PING } from './_constants';
+import { SOCKET_PING } from 'syft-helpers.js';
 
 export default class Sockets {
   constructor(opts) {

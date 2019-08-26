@@ -5,7 +5,7 @@ import {
   WEBRTC_JOIN_ROOM,
   WEBRTC_INTERNAL_MESSAGE,
   WEBRTC_PEER_LEFT
-} from './_constants';
+} from 'syft-helpers.js';
 
 export default class WebRTCClient {
   constructor(opts) {

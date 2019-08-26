@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
-    "immutable-tuple": "^0.4.10",
+    "syft-helpers.js": "https://github.com/OpenMined/syft-helpers.js",
     "webrtc-adapter": "^7.2.9"
   },
   "peerDependencies": {

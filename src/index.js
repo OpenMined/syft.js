@@ -1,12 +1,9 @@
 // import * as tf from '@tensorflow/tfjs';
 
-import EventObserver from './events';
-import Logger from './logger';
-import Socket from './sockets';
-import WebRTCClient from './webrtc';
-import { detail } from './serde';
-
 import {
+  EventObserver,
+  Logger,
+  detail,
   SOCKET_STATUS,
   GET_PLANS,
   WEBRTC_INTERNAL_MESSAGE,
@@ -14,7 +11,10 @@ import {
   WEBRTC_PEER_LEFT,
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS
-} from './_constants';
+} from 'syft-helpers.js';
+
+import Socket from './sockets';
+import WebRTCClient from './webrtc';
 
 export default class syft {
   /* ----- CONSTRUCTOR ----- */
