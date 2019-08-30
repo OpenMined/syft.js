@@ -46,8 +46,8 @@ For further API documentation, [please check that out here](https://docs.openmin
 ### Local Development
 
 1. Fork and clone
-2. Run `yarn` ([make sure you have Yarn installed](https://yarnpkg.com/))
-3. Run `yarn start`
+2. Run `npm install`
+3. Run `npm start`
 4. Do your work.
 5. Push to your clone
 6. Submit a PR to openmined/syft.js
