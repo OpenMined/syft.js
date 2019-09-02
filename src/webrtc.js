@@ -53,6 +53,9 @@ export default class WebRTCClient {
 
   // Remove a peer when the signaling server has notified us they've left or when stop() is run
   removePeer(instanceId) {
+    // If this peer doesn't exist, forget about it
+    if (!this.peers[instanceId]) return;
+
     this.logger.log(`WebRTC: Closing connection to ${instanceId}`);
 
     try {
