@@ -9,18 +9,13 @@ export default class Sockets {
     const keepAlive = () => {
       const timeout = keepAliveTimeout || 20000;
 
-      if (this.socket.readyState == this.socket.OPEN) {
-        this.send(SOCKET_PING);
-      }
-
+      this.send(SOCKET_PING);
       this.timerId = setTimeout(keepAlive, timeout);
     };
 
     const cancelKeepAlive = () => {
-      if (this.timerId) {
-        clearTimeout(this.timerId);
-        this.timerId = null;
-      }
+      clearTimeout(this.timerId);
+      this.timerId = null;
     };
 
     socket.onopen = event => {
