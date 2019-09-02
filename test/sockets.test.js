@@ -9,11 +9,6 @@ global.WebSocket = WebSocket;
 
 const url = 'ws://localhost:8080/';
 
-const onMessage = event => console.log('NEW MESSAGE', event);
-const onOpen = event => console.log('NEW OPEN', event);
-const onClose = event => console.log('NEW CLOSE', event);
-const onError = event => console.log('NEW ERROR', event);
-
 /**
  * Creates promise from the first event call
  * @param emitter Object that emits the event
@@ -110,14 +105,13 @@ describe('Sockets', () => {
       // weird that onMessage listener must provide the result of Socket.send()
       onMessage: data => data
     });
-    // wait for connection and the first keep alive message
+    // wait for connection and skip the first keep alive message
     const serverSocket = await mockServer.connected;
     await makeEventPromise(serverSocket, 'message');
 
     // send & receive the message on the server and send server response
     const responsePromise = mySocket.send(testReqType, testReqData);
     const message = await makeEventPromise(serverSocket, 'message');
-    console.log(message);
     serverSocket.send(JSON.stringify(testResponse));
     // get the response on the client
     const response = await responsePromise;
@@ -163,41 +157,30 @@ describe('Sockets', () => {
     expect(mockServer.clients()).toHaveLength(0);
   });
 
-  test('can communicate with a socket server', async () => {
-    const message = { message: 'This is a test' };
+  test('onmessage event works', async () => {
+    const testResponse = {"response": "test"};
+    const testInstanceId = "test-instance";
+
+    const onMessage = jest.fn(message => message);
     const mySocket = new Socket({
+      instanceId: testInstanceId,
       url,
       logger: new Logger(true),
-      onMessage: event => onMessage(event),
-      onOpen: event => onOpen(event),
-      onClose: event => onClose(event),
-      onError: event => onError(event)
+      onMessage: onMessage
     });
-
-    expect(console.log.mock.calls.length).toBe(0);
-
-    await mockServer.on('connection', async socket => {
-      await expect(console.log.mock.calls.length).toBe(2);
-      await expect(console.log.mock.calls[0][0]).toEqual(
-        expect.stringContaining(`Opening socket connection to ${url}`)
-      );
-      await expect(console.log.mock.calls[1][0]).toBe(`NEW OPEN`);
-
-      await socket.send(JSON.stringify(message));
-
-      await expect(console.log.mock.calls.length).toBe(4);
-      await expect(console.log.mock.calls[2][0]).toEqual(
-        expect.stringContaining('Receiving message')
-      );
-      await expect(console.log.mock.calls[3][0]).toBe(`NEW MESSAGE`);
-
-      await socket.close();
-
-      await expect(console.log.mock.calls.length).toBe(6);
-      await expect(console.log.mock.calls[4][0]).toEqual(
-        expect.stringContaining(`Closing socket connection to ${url}`)
-      );
-      await expect(console.log.mock.calls[5][0]).toBe(`NEW CLOSE`);
+    // wait for connection and skip the first keep-alive message
+    const serverSocket = await mockServer.connected;
+    await makeEventPromise(serverSocket, 'message');
+    // always send static response
+    serverSocket.on('message', () => {
+      serverSocket.send(JSON.stringify(testResponse));
     });
+    // send something and wait for server response
+    await mySocket.send("test1", {});
+    await mySocket.send("test2", {});
+
+    expect(onMessage).toHaveBeenCalledTimes(2);
+    expect(onMessage).toHaveBeenLastCalledWith(testResponse);
   });
+
 });
