@@ -7,7 +7,7 @@ import {
   SOCKET_STATUS,
   GET_PLANS,
   WEBRTC_INTERNAL_MESSAGE,
-  WEBRTC_NEW_PEER,
+  WEBRTC_JOIN_ROOM,
   WEBRTC_PEER_LEFT,
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS
@@ -139,7 +139,7 @@ export default class syft {
       return this.plans;
     } else if (type === WEBRTC_INTERNAL_MESSAGE) {
       this.rtc.receiveInternalMessage(data);
-    } else if (type === WEBRTC_NEW_PEER) {
+    } else if (type === WEBRTC_JOIN_ROOM) {
       this.rtc.receiveNewPeer(data);
     } else if (type === WEBRTC_PEER_LEFT) {
       this.rtc.removePeer(data.instanceId);

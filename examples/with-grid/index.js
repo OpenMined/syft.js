@@ -92,15 +92,17 @@ const startSyft = url => {
       }
 
       // 3. Create links for the other participants
-      writeLinksToDOM(
-        mySyft.participants.map(
-          id =>
-            `${window.location.origin +
-              window.location.pathname}?instance_id=${id}&scope_id=${
-              mySyft.scopeId
-            }`
-        )
-      );
+      if (mySyft.role === 'creator') {
+        writeLinksToDOM(
+          mySyft.participants.map(
+            id =>
+              `${window.location.origin +
+                window.location.pathname}?instance_id=${id}&scope_id=${
+                mySyft.scopeId
+              }`
+          )
+        );
+      }
 
       // 4. Create a direct P2P connection with the other participants
       mySyft.connectToParticipants();
