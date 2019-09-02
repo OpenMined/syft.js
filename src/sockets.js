@@ -2,12 +2,12 @@ import { SOCKET_PING } from 'syft-helpers.js';
 
 export default class Sockets {
   constructor(opts) {
-    const { url, logger, instanceId, onOpen, onClose, onMessage } = opts;
+    const { url, logger, instanceId, onOpen, onClose, onMessage, keepAliveTimeout } = opts;
 
     const socket = new WebSocket(url);
 
     const keepAlive = () => {
-      const timeout = 20000;
+      const timeout = keepAliveTimeout || 20000;
 
       if (this.socket.readyState == this.socket.OPEN) {
         this.send(SOCKET_PING);
@@ -19,6 +19,7 @@ export default class Sockets {
     const cancelKeepAlive = () => {
       if (this.timerId) {
         clearTimeout(this.timerId);
+        this.timerId = null;
       }
     };
 
@@ -49,14 +50,18 @@ export default class Sockets {
     this.instanceId = instanceId;
     this.socket = socket;
     this.onMessage = onMessage;
-    this.timerID = 0;
+    this.timerId = null;
   }
 
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
-      data.instanceId = this.instanceId;
+      // shallow copy + instanceId
+      let _data = Object.assign(
+        {}, data,
+        { instanceId: this.instanceId }
+      );
 
-      const message = { type, data };
+      const message = { type, data: _data };
 
       this.logger.log('Sending message', message);
 
