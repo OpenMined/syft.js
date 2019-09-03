@@ -27,7 +27,7 @@ describe('Sockets', () => {
     const mockServer = new Server(url);
     const mySocket = new Socket({
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       onMessage: event => onMessage(event),
       onOpen: event => onOpen(event),
       onClose: event => onClose(event),

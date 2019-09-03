@@ -43,7 +43,7 @@ export default class syft {
     this.observer = new EventObserver();
 
     // For creating verbose logging should the user desire
-    this.logger = new Logger(verbose);
+    this.logger = new Logger('syft.js', verbose);
 
     // Create a socket connection at this.socket
     this.socket = null;
