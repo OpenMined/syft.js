@@ -10,7 +10,7 @@ const url = 'ws://localhost:8080/';
 
 describe('WebRTC', () => {
   test('THIS IS A DUMMY TEST', () => {
-    const logger = new Logger(true);
+    const logger = new Logger('syft.js', true);
 
     const socket = new Socket({
       url,

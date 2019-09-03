@@ -44,7 +44,7 @@ describe('Sockets', () => {
 
     const mySocket = new Socket({
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       keepAliveTimeout
     });
     let serverSocket = await mockServer.connected;
@@ -68,7 +68,7 @@ describe('Sockets', () => {
     const onOpen = jest.fn();
     const mySocket = new Socket({
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       onOpen
     });
     await mockServer.connected;
@@ -80,7 +80,7 @@ describe('Sockets', () => {
     const onClose = jest.fn();
     const mySocket = new Socket({
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       onClose
     });
     await mockServer.connected;
@@ -101,7 +101,7 @@ describe('Sockets', () => {
     const mySocket = new Socket({
       instanceId: testInstanceId,
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       // weird that onMessage listener must provide the result of Socket.send()
       onMessage: data => data
     });
@@ -125,7 +125,7 @@ describe('Sockets', () => {
   test('send returns error', async () => {
     const mySocket = new Socket({
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       // weird that onMessage listener must provide the result of Socket.send()
       onMessage: data => data
     });
@@ -147,7 +147,7 @@ describe('Sockets', () => {
   test('stop disconnects', async () => {
     const mySocket = new Socket({
       url,
-      logger: new Logger(true)
+      logger: new Logger('syft.js', true)
     });
     // wait for connection and the first keep alive message
     const serverSocket = await mockServer.connected;
@@ -165,7 +165,7 @@ describe('Sockets', () => {
     const mySocket = new Socket({
       instanceId: testInstanceId,
       url,
-      logger: new Logger(true),
+      logger: new Logger('syft.js', true),
       onMessage: onMessage
     });
     // wait for connection and skip the first keep-alive message
