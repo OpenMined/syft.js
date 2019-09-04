@@ -1,6 +1,10 @@
 import { WebSocket } from 'mock-socket';
 
-import { WEBRTC_PEER_CONFIG, WEBRTC_PEER_OPTIONS, Logger }  from 'syft-helpers.js';
+import {
+  WEBRTC_PEER_CONFIG,
+  WEBRTC_PEER_OPTIONS,
+  Logger
+} from 'syft-helpers.js';
 import Socket from '../src/sockets';
 import WebRTCClient from '../src/webrtc';
 

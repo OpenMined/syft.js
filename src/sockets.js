@@ -2,7 +2,15 @@ import { SOCKET_PING } from 'syft-helpers.js';
 
 export default class Sockets {
   constructor(opts) {
-    const { url, logger, instanceId, onOpen, onClose, onMessage, keepAliveTimeout } = opts;
+    const {
+      url,
+      logger,
+      instanceId,
+      onOpen,
+      onClose,
+      onMessage,
+      keepAliveTimeout
+    } = opts;
 
     const socket = new WebSocket(url);
 
@@ -51,10 +59,7 @@ export default class Sockets {
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
       // shallow copy + instanceId
-      let _data = Object.assign(
-        {}, data,
-        { instanceId: this.instanceId }
-      );
+      let _data = Object.assign({}, data, { instanceId: this.instanceId });
 
       const message = { type, data: _data };
 
