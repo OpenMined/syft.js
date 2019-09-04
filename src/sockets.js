@@ -2,19 +2,26 @@ import { SOCKET_PING } from 'syft-helpers.js';
 
 export default class Sockets {
   constructor(opts) {
-    const { url, logger, instanceId, onOpen, onClose, onMessage } = opts;
+    const {
+      url,
+      logger,
+      instanceId,
+      onOpen,
+      onClose,
+      onMessage,
+      keepAliveTimeout = 20000
+    } = opts;
 
     const socket = new WebSocket(url);
 
     const keepAlive = () => {
-      const timeout = 20000;
-
       this.send(SOCKET_PING);
-      this.timerId = setTimeout(keepAlive, timeout);
+      this.timerId = setTimeout(keepAlive, keepAliveTimeout);
     };
 
     const cancelKeepAlive = () => {
       clearTimeout(this.timerId);
+      this.timerId = null;
     };
 
     socket.onopen = event => {
@@ -44,7 +51,7 @@ export default class Sockets {
     this.instanceId = instanceId;
     this.socket = socket;
     this.onMessage = onMessage;
-    this.timerID = 0;
+    this.timerId = null;
   }
 
   send(type, data = {}) {

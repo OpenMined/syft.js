@@ -1,9 +1,12 @@
 import { WebSocket } from 'mock-socket';
 
-import Logger from '../src/logger';
+import {
+  WEBRTC_PEER_CONFIG,
+  WEBRTC_PEER_OPTIONS,
+  Logger
+} from 'syft-helpers.js';
 import Socket from '../src/sockets';
 import WebRTCClient from '../src/webrtc';
-import { WEBRTC_PEER_CONFIG, WEBRTC_PEER_OPTIONS } from '../src/_constants';
 
 global.WebSocket = WebSocket;
 
