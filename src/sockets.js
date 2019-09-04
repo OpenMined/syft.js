@@ -9,16 +9,14 @@ export default class Sockets {
       onOpen,
       onClose,
       onMessage,
-      keepAliveTimeout
+      keepAliveTimeout = 20000
     } = opts;
 
     const socket = new WebSocket(url);
 
     const keepAlive = () => {
-      const timeout = keepAliveTimeout || 20000;
-
       this.send(SOCKET_PING);
-      this.timerId = setTimeout(keepAlive, timeout);
+      this.timerId = setTimeout(keepAlive, keepAliveTimeout);
     };
 
     const cancelKeepAlive = () => {
