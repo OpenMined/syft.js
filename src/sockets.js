@@ -58,10 +58,9 @@ export default class Sockets {
 
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
-      // shallow copy + instanceId
-      let _data = Object.assign({}, data, { instanceId: this.instanceId });
+      data.instanceId = this.instanceId;
 
-      const message = { type, data: _data };
+      const message = { type, data };
 
       this.logger.log('Sending message', message);
 

@@ -112,8 +112,6 @@ describe('Sockets', () => {
     serverSocket.send(JSON.stringify(testResponse));
     const response = await responsePromise;
 
-    // Add instanceId inside `data`, like Sockets lib does.
-    testReqData.instanceId = testInstanceId;
     expect(JSON.parse(message)).toEqual({
       type: testReqType,
       data: testReqData
