@@ -24,8 +24,6 @@ describe('Sockets', () => {
 
   let mockServer;
 
-  jest.spyOn(console, 'log');
-
   beforeEach(() => {
     mockServer = new Server(url);
     mockServer.connected = makeEventPromise(mockServer, 'connection');
@@ -33,7 +31,6 @@ describe('Sockets', () => {
 
   afterEach(() => {
     mockServer.close();
-    jest.clearAllMocks();
   });
 
   test('sends keep-alive messages automatically', async () => {
