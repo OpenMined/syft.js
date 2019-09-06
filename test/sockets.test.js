@@ -40,7 +40,7 @@ describe('Sockets', () => {
       expectedTypes = [];
 
     // Creating a socket will open connection and start keep-alive pings.
-    new Socket({url, logger, keepAliveTimeout});
+    new Socket({ url, logger, keepAliveTimeout });
 
     const serverSocket = await mockServer.connected;
 
@@ -66,7 +66,7 @@ describe('Sockets', () => {
   test('triggers onOpen event', async () => {
     const onOpen = jest.fn();
 
-    new Socket({url, logger, onOpen});
+    new Socket({ url, logger, onOpen });
 
     await mockServer.connected;
 
