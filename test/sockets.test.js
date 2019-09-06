@@ -39,14 +39,8 @@ describe('Sockets', () => {
       messages = [],
       expectedTypes = [];
 
-    // TODO: @Vova - do we need this line at all? Apparently we're not using 'mySocket' anymore.
-    // TODO: @Vova - matter of fact, it seems like we don't even need this test... removing the whole thing doesn't affect our coverage at all
-    // TODO: @Vova - would you mind making sure this test is actually testing the keep-alive functionality or just remove it if we don't need it
-    const mySocket = new Socket({
-      url,
-      logger,
-      keepAliveTimeout
-    });
+    // Creating a socket will open connection and start keep-alive pings.
+    new Socket({url, logger, keepAliveTimeout});
 
     const serverSocket = await mockServer.connected;
 
@@ -70,14 +64,9 @@ describe('Sockets', () => {
   });
 
   test('triggers onOpen event', async () => {
-    // TODO: @Vova - this test does do something, but why is 'mySocket' still unused?
-    // TODO: @Vova - can you correct this test to actually use the variable or remove it?
-    const onOpen = jest.fn(),
-      mySocket = new Socket({
-        url,
-        logger,
-        onOpen
-      });
+    const onOpen = jest.fn();
+
+    new Socket({url, logger, onOpen});
 
     await mockServer.connected;
 
@@ -165,8 +154,7 @@ describe('Sockets', () => {
       logger
     });
 
-    // TODO: @Vova - are we using 'serverSocket'? What's the point of this variable?
-    const serverSocket = await mockServer.connected;
+    await mockServer.connected;
 
     expect(mockServer.clients()).toHaveLength(1);
 
