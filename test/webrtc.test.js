@@ -4,19 +4,21 @@ import {
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS,
   WEBRTC_JOIN_ROOM,
-  Logger, WEBRTC_INTERNAL_MESSAGE, WEBRTC_PEER_LEFT
+  WEBRTC_INTERNAL_MESSAGE,
+  WEBRTC_PEER_LEFT,
+  Logger
 } from 'syft-helpers.js';
 import WebRTCClient from '../src/webrtc';
 
 // WebRTC mocks.
 import {
-  RTCPeerConnectionMock,
-  RTCSessionDescriptionMock,
-  RTCIceCandidateMock
+  RTCPeerConnection,
+  RTCSessionDescription,
+  RTCIceCandidate
 } from './_webrtc-mocks';
-global.RTCPeerConnection = RTCPeerConnectionMock;
-global.RTCSessionDescription = RTCSessionDescriptionMock;
-global.RTCIceCandidate = RTCIceCandidateMock;
+global.RTCPeerConnection = RTCPeerConnection;
+global.RTCSessionDescription = RTCSessionDescription;
+global.RTCIceCandidate = RTCIceCandidate;
 
 // Socket mock.
 class SocketMock {
@@ -24,8 +26,9 @@ class SocketMock {
 }
 
 describe('WebRTC', () => {
-  const logger = new Logger('syft.js', true);
-  const socketMock = new SocketMock();
+  const logger = new Logger('syft.js', true),
+    logSpy = jest.spyOn(logger, 'log'),
+    socketMock = new SocketMock();
   let rtc, socketSendMock;
 
   beforeEach(() => {
@@ -56,21 +59,42 @@ describe('WebRTC', () => {
       instanceId = 'testId',
       scopeId = 'testScopeId',
       peerInstanceId = 'peerInstanceId',
-      rtcConstructorMock = jest.spyOn(RTCPeerConnection.prototype, 'constructorSpy'),
       pcOnIceCandidateMock = jest.spyOn(RTCPeerConnection.prototype, 'onicecandidate', 'set');
 
     rtc.start(instanceId, scopeId);
     rtc.receiveNewPeer({instanceId: peerInstanceId});
     await new Promise(done => setImmediate(done));
 
-    expect(rtcConstructorMock).toBeCalledWith(WEBRTC_PEER_CONFIG, WEBRTC_PEER_OPTIONS);
     expect(rtc.peers).toHaveProperty(peerInstanceId);
     expect(rtc.peers[peerInstanceId]).toHaveProperty("connection");
     expect(rtc.peers[peerInstanceId]["connection"]).toBeInstanceOf(RTCPeerConnection);
     expect(rtc.peers[peerInstanceId]).toHaveProperty("channel");
 
+    // Check channel events are set.
+    const channel = rtc.peers[peerInstanceId]["channel"];
+    expect(channel.onopen).toBeInstanceOf(Function);
+    expect(channel.onclose).toBeInstanceOf(Function);
+    expect(channel.onmessage).toBeInstanceOf(Function);
+    expect(channel.onerror).toBeInstanceOf(Function);
+
+    // Check events are logged.
+    logSpy.mockReset();
+    channel.onopen("onopen");
+    channel.onclose("onclose");
+    channel.onmessage("onmessage");
+    channel.onerror("onerror");
+    expect(logSpy).toHaveBeenCalledTimes(4);
+    expect(logSpy.mock.calls[0][1]).toBe("onopen");
+    expect(logSpy.mock.calls[1][1]).toBe("onclose");
+    expect(logSpy.mock.calls[2][1]).toBe("onmessage");
+    expect(logSpy.mock.calls[3][1]).toBe("onerror");
+
+    const pc = rtc.peers[peerInstanceId]["connection"];
+    expect(pc.options).toStrictEqual(WEBRTC_PEER_CONFIG);
+    expect(pc.optional).toStrictEqual(WEBRTC_PEER_OPTIONS);
+
     expect(pcOnIceCandidateMock).toHaveBeenCalledTimes(1);
-    const onIceCandidate = pcOnIceCandidateMock.mock.calls[0][0];
+    const onIceCandidate = pc.onicecandidate;
     expect(onIceCandidate).toBeInstanceOf(Function);
 
     // Emulate onicecandidate event.
@@ -107,8 +131,6 @@ describe('WebRTC', () => {
       instanceId = 'testId',
       scopeId = 'testScopeId',
       peerInstanceId = 'peerInstanceId',
-      rtcConstructorMock = jest.spyOn(RTCPeerConnection.prototype, 'constructorSpy'),
-      pcOnIceCandidateMock = jest.spyOn(RTCPeerConnection.prototype, 'onicecandidate', 'set'),
       pcOnDataChannelMock = jest.spyOn(RTCPeerConnection.prototype, 'ondatachannel', 'set');
 
     rtc.start(instanceId, scopeId);
@@ -122,7 +144,6 @@ describe('WebRTC', () => {
 
     await new Promise(done => setImmediate(done));
 
-    expect(rtcConstructorMock).toBeCalledWith(WEBRTC_PEER_CONFIG, WEBRTC_PEER_OPTIONS);
     expect(rtc.peers).toHaveProperty(peerInstanceId);
     expect(rtc.peers[peerInstanceId]).toHaveProperty("connection");
     expect(rtc.peers[peerInstanceId]["connection"]).toBeInstanceOf(RTCPeerConnection);
@@ -132,7 +153,7 @@ describe('WebRTC', () => {
     expect(pc.remoteDescription).toStrictEqual(new RTCSessionDescription({type: "offer", sdp: "testOfferSdp"}));
 
     expect(pcOnDataChannelMock).toHaveBeenCalledTimes(1);
-    const onDataChannel = pcOnDataChannelMock.mock.calls[0][0];
+    const onDataChannel = pc.ondatachannel;
     expect(onDataChannel).toBeInstanceOf(Function);
     // Simulate ondatachannel.
     onDataChannel.call(pc, {channel: {dummy: 1}});
@@ -168,15 +189,18 @@ describe('WebRTC', () => {
     const
       instanceId = 'testId',
       scopeId = 'testScopeId',
-      peerInstanceId = 'peerInstanceId',
+      peer1InstanceId = 'peer1InstanceId',
+      peer2InstanceId = 'peer2InstanceId',
       pc = new RTCPeerConnection();
 
     rtc.start(instanceId, scopeId);
-    rtc.peers[peerInstanceId] = {
+
+    // Connection already exists.
+    rtc.peers[peer1InstanceId] = {
       connection: pc
     };
     rtc.receiveInternalMessage({
-        instanceId: peerInstanceId,
+        instanceId: peer1InstanceId,
         scopeId,
         to: instanceId,
         type: 'candidate',
@@ -187,6 +211,25 @@ describe('WebRTC', () => {
 
     expect(pc.iceCandidates).toHaveLength(1);
     expect(pc.iceCandidates[0]).toStrictEqual(new RTCIceCandidate({"dummy": 1}))
+
+    // Connection doesn't exists and must be created.
+    rtc.receiveInternalMessage({
+        instanceId: peer2InstanceId,
+        scopeId,
+        to: instanceId,
+        type: 'candidate',
+        data: {"dummy": 2}
+    });
+
+    await new Promise(done => setImmediate(done));
+
+    expect(rtc.peers).toHaveProperty(peer2InstanceId);
+    expect(rtc.peers[peer2InstanceId]).toHaveProperty("connection");
+    expect(rtc.peers[peer2InstanceId]["connection"]).toBeInstanceOf(RTCPeerConnection);
+
+    const pc2 = rtc.peers[peer2InstanceId]["connection"];
+    expect(pc2.iceCandidates).toHaveLength(1);
+    expect(pc2.iceCandidates[0]).toStrictEqual(new RTCIceCandidate({"dummy": 2}))
   });
 
   test('sendMessage() should send messages to peers', async () => {
@@ -197,7 +240,8 @@ describe('WebRTC', () => {
       peer2InstanceId = 'peer2InstanceId',
       channelSendMock = jest.fn(),
       channel1 = {send: (data) => { channelSendMock(1, data) }},
-      channel2 = {send: (data) => { channelSendMock(2, data) }};
+      channel2 = {send: (data) => { channelSendMock(2, data) }},
+      channelWithError = {send: () => { throw new Error() }};
 
     rtc.start(instanceId, scopeId);
     rtc.peers = {};
@@ -213,7 +257,17 @@ describe('WebRTC', () => {
 
     // Single peer.
     rtc.sendMessage({"dummy": "hello there"}, peer1InstanceId);
+    expect(channelSendMock).toHaveBeenCalledTimes(3);
     expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, {"dummy": "hello there"});
+
+    // Error handling.
+    rtc.peers[peer1InstanceId] = { channel: channelWithError };
+    expect(() => {
+      rtc.sendMessage({"dummy": "hello error"});
+    }).not.toThrow();
+
+    expect(channelSendMock).toHaveBeenCalledTimes(4);
+    expect(channelSendMock).toHaveBeenNthCalledWith(4, 2, {"dummy": "hello error"});
   });
 
   test('removePeer() should close channel', async () => {
@@ -224,7 +278,8 @@ describe('WebRTC', () => {
       peer2InstanceId = 'peer2InstanceId',
       channelCloseMock = jest.fn(),
       channel1 = {close: () => { channelCloseMock(1) }},
-      channel2 = {close: () => { channelCloseMock(2) }};
+      channel2 = {close: () => { channelCloseMock(2) }},
+      channelWithError = {send: () => { throw new Error() }};
 
     rtc.start(instanceId, scopeId);
     rtc.peers = {};
@@ -242,6 +297,14 @@ describe('WebRTC', () => {
     rtc.removePeer("invalid");
     expect(channelCloseMock).toHaveBeenCalledTimes(1);
     expect(rtc.peers).toHaveProperty(peer2InstanceId);
+
+    // Error handling.
+    rtc.peers[peer1InstanceId] = { channel: channelWithError };
+    expect(() => {
+      rtc.removePeer(peer1InstanceId);
+    }).not.toThrow();
+
+    expect(rtc.peers).not.toHaveProperty(peer1InstanceId);
   });
 
   test('stop() should close all channels and send peer left message', async () => {
@@ -272,4 +335,12 @@ describe('WebRTC', () => {
     });
   });
 
+  test('error handler logs message', async () => {
+    logSpy.mockReset();
+    const error = new Error("dummy");
+    rtc._handleError("test error message")(error);
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    expect(logSpy.mock.calls[0][0]).toBe("test error message");
+    expect(logSpy.mock.calls[0][1]).toStrictEqual(error);
+  });
 });

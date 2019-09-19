@@ -1,14 +1,15 @@
 // RTC classes mocks
-export class RTCPeerConnectionMock {
+export class RTCPeerConnection {
+
   constructor(options, optional) {
-    this.constructorSpy.apply(this, arguments);
+    this.options = options;
+    this.optional = optional;
     this.localDescription = null;
     this.remoteDescription = null;
     this.iceCandidates = [];
     this.sentMessages = [];
-  }
-
-  constructorSpy() {
+    this.ondatachannelListener = null;
+    this.onicecandidateListener = null;
   }
 
   createDataChannel(label, options) {
@@ -38,29 +39,30 @@ export class RTCPeerConnectionMock {
     return Promise.resolve();
   }
 
+  get onicecandidate() {
+    return this.onicecandidateListener;
+  }
+
+  set onicecandidate(cb) {
+    this.onicecandidateListener = cb;
+  }
+
+  get ondatachannel() {
+    return this.ondatachannelListener;
+  }
+
+  set ondatachannel(cb) {
+    this.ondatachannelListener = cb;
+  }
 }
 
-Object.defineProperty(RTCPeerConnectionMock.prototype, 'onicecandidate', {
-  get() {},
-  set(newValue) {},
-  enumerable: true,
-  configurable: true,
-});
-
-Object.defineProperty(RTCPeerConnectionMock.prototype, 'ondatachannel', {
-  get() {},
-  set(newValue) {},
-  enumerable: true,
-  configurable: true,
-});
-
-export class RTCSessionDescriptionMock {
+export class RTCSessionDescription {
   constructor(sessionDescription) {
     Object.assign(this, sessionDescription);
   }
 }
 
-export class RTCIceCandidateMock {
+export class RTCIceCandidate {
   constructor(iceCandidate) {
     Object.assign(this, iceCandidate);
   }
