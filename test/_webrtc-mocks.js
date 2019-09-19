@@ -1,6 +1,5 @@
 // RTC classes mocks
 export class RTCPeerConnection {
-
   constructor(options, optional) {
     this.options = options;
     this.optional = optional;
@@ -17,11 +16,11 @@ export class RTCPeerConnection {
   }
 
   async createOffer(options) {
-    return Promise.resolve({type: "offer", sdp: "testOfferSdp"});
+    return Promise.resolve({ type: 'offer', sdp: 'testOfferSdp' });
   }
 
   async createAnswer(options) {
-    return Promise.resolve({type: "answer", sdp: "testAnswerSdp"});
+    return Promise.resolve({ type: 'answer', sdp: 'testAnswerSdp' });
   }
 
   async setLocalDescription(sessionDescription) {
