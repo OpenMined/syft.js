@@ -385,12 +385,6 @@ describe('WebRTC', () => {
     expect(channelCloseMock).toHaveBeenCalledTimes(2);
     expect(rtc.peers).not.toHaveProperty(peer1InstanceId);
     expect(rtc.peers).not.toHaveProperty(peer2InstanceId);
-
-    expect(socketSendMock).toBeCalledTimes(2);
-    expect(socketSendMock).lastCalledWith(WEBRTC_PEER_LEFT, {
-      instanceId,
-      scopeId
-    });
   });
 
   test('error handler logs message', async () => {

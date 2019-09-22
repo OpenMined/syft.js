@@ -39,11 +39,6 @@ export default class WebRTCClient {
   stop() {
     this.logger.log('WebRTC: Disconnecting from peers');
 
-    this.socket.send(WEBRTC_PEER_LEFT, {
-      instanceId: this.instanceId,
-      scopeId: this.scopeId
-    });
-
     this._forEachPeer((peer, instanceId) => {
       if (peer.channel) {
         this.removePeer(instanceId);
