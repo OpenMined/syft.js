@@ -3,9 +3,9 @@ The following is a step-by-step explanation of what's going on below:
 
 1. Initiate syft.js and connect to grid.js
 2. Get the list of plans that this user is supposed to work on
- - If there is no instanceId, grid.js will generate one for us
+ - If there is no workerId, grid.js will generate one for us
  - If there is no scopeId, grid.js will generate a scope and make this user the creator
- - Altogether, grid.js will send back this user's information, their list of plans, and the instanceId's of the other participants
+ - Altogether, grid.js will send back this user's information, their list of plans, and the workerId's of the other participants
 3. Links are created whereby other participants may join
  - These links are to be shared with the other participants
  - Note that each user will need to request their list of plans from the grid... they won't have access to another user's list of plans
@@ -23,7 +23,7 @@ import {
   writeLinksToDOM
 } from './_helpers';
 
-const gridInstance = document.getElementById('grid-instance');
+const gridServer = document.getElementById('grid-server');
 const connectButton = document.getElementById('connect');
 const disconnectButton = document.getElementById('disconnect');
 const appContainer = document.getElementById('app');
@@ -34,21 +34,21 @@ appContainer.style.display = 'none';
 
 connectButton.onclick = () => {
   appContainer.style.display = 'block';
-  gridInstance.style.display = 'none';
+  gridServer.style.display = 'none';
   connectButton.style.display = 'none';
 
-  startSyft(gridInstance.value);
+  startSyft(gridServer.value);
 };
 
 const startSyft = url => {
-  const instanceId = getQueryVariable('instance_id');
+  const workerId = getQueryVariable('worker_id');
   const scopeId = getQueryVariable('scope_id');
 
   // 1. Initiate syft.js and create socket connection
   const mySyft = new syft({
     verbose: true,
     url,
-    instanceId,
+    workerId,
     scopeId,
     protocolId: 'millionaire-problem'
   });
@@ -64,7 +64,7 @@ const startSyft = url => {
     mySyft.disconnectFromGrid();
 
     appContainer.style.display = 'none';
-    gridInstance.style.display = 'block';
+    gridServer.style.display = 'block';
     connectButton.style.display = 'block';
   };
 
@@ -77,17 +77,17 @@ const startSyft = url => {
 
       // Write my identity to the screen - not required
       writeIdentityToDOM(
-        `You are ${mySyft.role} "${mySyft.instanceId}" in scope "${mySyft.scopeId}"`
+        `You are ${mySyft.role} "${mySyft.workerId}" in scope "${mySyft.scopeId}"`
       );
 
-      // Push the instanceId and scopeId onto the current URL if they aren't already there
+      // Push the workerId and scopeId onto the current URL if they aren't already there
       // This isn't strictly necessary, but if a user is a creator of a scope (instead of a participant),
       // then they won't be able to refresh and rejoin the scope they created
-      if (!instanceId && !scopeId) {
+      if (!workerId && !scopeId) {
         window.history.pushState(
           {},
           null,
-          `?instance_id=${mySyft.instanceId}&scope_id=${mySyft.scopeId}`
+          `?worker_id=${mySyft.workerId}&scope_id=${mySyft.scopeId}`
         );
       }
 
@@ -97,7 +97,7 @@ const startSyft = url => {
           mySyft.participants.map(
             id =>
               `${window.location.origin +
-                window.location.pathname}?instance_id=${id}&scope_id=${
+                window.location.pathname}?worker_id=${id}&scope_id=${
                 mySyft.scopeId
               }`
           )

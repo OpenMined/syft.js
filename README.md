@@ -9,13 +9,13 @@
 
 Of course, [PySyft](https://github.com/openmined/pysyft) has the ability to run in its own environment. But if you would like to train FL models in the browser, you must resort to using some ML framework like [TensorFlow.js](https://js.tensorflow.org/).
 
-**Syft.js is a microlibrary built on top of TensorFlow.js, allowing for a socket connection with any running PySyft instance.**
+**Syft.js is a microlibrary built on top of TensorFlow.js, allowing for training and prediction of PySyft models in the browser.**
 
-PySyft acts as the parent node, instructing child nodes \(Syft.js instances running in a website on users' browsers\) of what tensors to add to a list, remove from a list, and operate against.
+PySyft acts as the parent node, instructing child nodes \(Syft.js clients running in a website on users' browsers\) of what tensors to add to a list, remove from a list, and operate against.
 
 [Link to full documentation here](https://docs.openmined.org/syft-js)
 
-### Installation
+### Installation in a Web Application
 
 If you're using a package manage like NPM:
 
