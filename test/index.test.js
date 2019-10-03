@@ -32,7 +32,7 @@ describe('Syft', () => {
 
 //   /* ----- CONSTRUCTOR ----- */
 
-//   test('can constructor an instance', async () => {
+//   test('can construct a syft client', async () => {
 //     const newSyft = new Syft({
 //       url: fakeURL,
 //       verbose: true

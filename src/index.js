@@ -19,10 +19,10 @@ import WebRTCClient from './webrtc';
 export default class syft {
   /* ----- CONSTRUCTOR ----- */
   constructor(opts = {}) {
-    const { url, verbose, instanceId, scopeId, protocolId, peerConfig } = opts;
+    const { url, verbose, workerId, scopeId, protocolId, peerConfig } = opts;
 
-    // My instance ID
-    this.instanceId = instanceId || null;
+    // My worker ID
+    this.workerId = workerId || null;
 
     // The assigned scope ID
     this.scopeId = scopeId || null;
@@ -79,7 +79,7 @@ export default class syft {
     this.socket = new Socket({
       url,
       logger: this.logger,
-      instanceId: this.instanceId,
+      workerId: this.workerId,
       onOpen: event => this.onOpen(event),
       onClose: event => this.onClose(event),
       onMessage: event => this.onMessage(event)
@@ -123,9 +123,9 @@ export default class syft {
       // Save those plans after having Serde detail them
       this.plans = data.plans.map(plan => detail(plan));
 
-      // Save our instanceId if we don't already have it (also for the socket connection)
-      this.instanceId = data.user.instanceId;
-      this.socket.instanceId = this.instanceId;
+      // Save our workerId if we don't already have it (also for the socket connection)
+      this.workerId = data.user.workerId;
+      this.socket.workerId = this.workerId;
 
       // Save our scopeId if we don't already have it
       this.scopeId = data.user.scopeId;
@@ -133,7 +133,7 @@ export default class syft {
       // Save our role
       this.role = data.user.role;
 
-      // Save the other participant instanceId's
+      // Save the other participant workerId's
       this.participants = data.participants;
 
       return this.plans;
@@ -142,7 +142,7 @@ export default class syft {
     } else if (type === WEBRTC_JOIN_ROOM) {
       this.rtc.receiveNewPeer(data);
     } else if (type === WEBRTC_PEER_LEFT) {
-      this.rtc.removePeer(data.instanceId);
+      this.rtc.removePeer(data.workerId);
     }
   }
 
@@ -168,7 +168,7 @@ export default class syft {
   }
 
   connectToParticipants() {
-    this.rtc.start(this.instanceId, this.scopeId);
+    this.rtc.start(this.workerId, this.scopeId);
   }
 
   disconnectFromParticipants() {

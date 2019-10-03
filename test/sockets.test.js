@@ -96,9 +96,9 @@ describe('Sockets', () => {
     const testReqType = 'test',
       testReqData = { blob: 1 },
       testResponse = { response: 'test' },
-      testInstanceId = 'test-instance',
+      testworkerId = 'test-worker',
       mySocket = new Socket({
-        instanceId: testInstanceId,
+        workerId: testworkerId,
         url,
         logger,
         onMessage: data => data
@@ -167,10 +167,10 @@ describe('Sockets', () => {
 
   test('triggers onMessage event', async () => {
     const testResponse = { response: 'test' },
-      testInstanceId = 'test-instance',
+      testworkerId = 'test-worker',
       onMessage = jest.fn(message => message),
       mySocket = new Socket({
-        instanceId: testInstanceId,
+        workerId: testworkerId,
         url,
         logger,
         onMessage: onMessage

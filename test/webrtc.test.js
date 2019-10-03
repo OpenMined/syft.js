@@ -49,34 +49,34 @@ describe('WebRTC', () => {
     rtc.start('joinTestId', 'joinTestScope');
     expect(socketSendMock).toBeCalledTimes(1);
     expect(socketSendMock).lastCalledWith(WEBRTC_JOIN_ROOM, {
-      instanceId: 'joinTestId',
+      workerId: 'joinTestId',
       scopeId: 'joinTestScope'
     });
   });
 
   test('receiveNewPeer() should initiate new rtc data channel', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peerInstanceId = 'peerInstanceId',
+      peerworkerId = 'peerworkerId',
       pcOnIceCandidateMock = jest.spyOn(
         RTCPeerConnection.prototype,
         'onicecandidate',
         'set'
       );
 
-    rtc.start(instanceId, scopeId);
-    rtc.receiveNewPeer({ instanceId: peerInstanceId });
+    rtc.start(workerId, scopeId);
+    rtc.receiveNewPeer({ workerId: peerworkerId });
     await new Promise(done => setImmediate(done));
 
-    expect(rtc.peers).toHaveProperty(peerInstanceId);
-    expect(rtc.peers[peerInstanceId]).toHaveProperty('connection');
-    expect(rtc.peers[peerInstanceId]['connection']).toBeInstanceOf(
+    expect(rtc.peers).toHaveProperty(peerworkerId);
+    expect(rtc.peers[peerworkerId]).toHaveProperty('connection');
+    expect(rtc.peers[peerworkerId]['connection']).toBeInstanceOf(
       RTCPeerConnection
     );
-    expect(rtc.peers[peerInstanceId]).toHaveProperty('channel');
+    expect(rtc.peers[peerworkerId]).toHaveProperty('channel');
 
     // Check channel events are set.
-    const channel = rtc.peers[peerInstanceId]['channel'];
+    const channel = rtc.peers[peerworkerId]['channel'];
     expect(channel.onopen).toBeInstanceOf(Function);
     expect(channel.onclose).toBeInstanceOf(Function);
     expect(channel.onmessage).toBeInstanceOf(Function);
@@ -94,7 +94,7 @@ describe('WebRTC', () => {
     expect(logSpy.mock.calls[2][1]).toBe('onmessage');
     expect(logSpy.mock.calls[3][1]).toBe('onerror');
 
-    const pc = rtc.peers[peerInstanceId]['connection'];
+    const pc = rtc.peers[peerworkerId]['connection'];
     expect(pc.options).toStrictEqual(WEBRTC_PEER_CONFIG);
     expect(pc.optional).toStrictEqual(WEBRTC_PEER_OPTIONS);
 
@@ -103,66 +103,66 @@ describe('WebRTC', () => {
     expect(onIceCandidate).toBeInstanceOf(Function);
 
     // Emulate onicecandidate event.
-    onIceCandidate.call(rtc.peers[peerInstanceId].connection, {
+    onIceCandidate.call(rtc.peers[peerworkerId].connection, {
       candidate: 'test-candidate1'
     });
-    onIceCandidate.call(rtc.peers[peerInstanceId].connection, {
+    onIceCandidate.call(rtc.peers[peerworkerId].connection, {
       candidate: 'test-candidate2'
     });
-    onIceCandidate.call(rtc.peers[peerInstanceId].connection, {});
+    onIceCandidate.call(rtc.peers[peerworkerId].connection, {});
 
     expect(socketSendMock).toHaveBeenCalledTimes(4);
     expect(socketSendMock).nthCalledWith(2, WEBRTC_INTERNAL_MESSAGE, {
-      instanceId,
+      workerId,
       scopeId,
-      to: peerInstanceId,
+      to: peerworkerId,
       type: 'offer',
       data: { type: 'offer', sdp: 'testOfferSdp' }
     });
     expect(socketSendMock).nthCalledWith(3, WEBRTC_INTERNAL_MESSAGE, {
-      instanceId,
+      workerId,
       scopeId,
-      to: peerInstanceId,
+      to: peerworkerId,
       type: 'candidate',
       data: 'test-candidate1'
     });
     expect(socketSendMock).nthCalledWith(4, WEBRTC_INTERNAL_MESSAGE, {
-      instanceId,
+      workerId,
       scopeId,
-      to: peerInstanceId,
+      to: peerworkerId,
       type: 'candidate',
       data: 'test-candidate2'
     });
   });
 
   test('should handle "offer" internal message', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peerInstanceId = 'peerInstanceId',
+      peerworkerId = 'peerworkerId',
       pcOnDataChannelMock = jest.spyOn(
         RTCPeerConnection.prototype,
         'ondatachannel',
         'set'
       );
 
-    rtc.start(instanceId, scopeId);
+    rtc.start(workerId, scopeId);
     rtc.receiveInternalMessage({
-      instanceId: peerInstanceId,
+      workerId: peerworkerId,
       scopeId,
-      to: instanceId,
+      to: workerId,
       type: 'offer',
       data: { type: 'offer', sdp: 'testOfferSdp' }
     });
 
     await new Promise(done => setImmediate(done));
 
-    expect(rtc.peers).toHaveProperty(peerInstanceId);
-    expect(rtc.peers[peerInstanceId]).toHaveProperty('connection');
-    expect(rtc.peers[peerInstanceId]['connection']).toBeInstanceOf(
+    expect(rtc.peers).toHaveProperty(peerworkerId);
+    expect(rtc.peers[peerworkerId]).toHaveProperty('connection');
+    expect(rtc.peers[peerworkerId]['connection']).toBeInstanceOf(
       RTCPeerConnection
     );
 
-    const pc = rtc.peers[peerInstanceId]['connection'];
+    const pc = rtc.peers[peerworkerId]['connection'];
     expect(pc.localDescription).toStrictEqual({
       type: 'answer',
       sdp: 'testAnswerSdp'
@@ -177,23 +177,23 @@ describe('WebRTC', () => {
     // Simulate ondatachannel.
     onDataChannel.call(pc, { channel: { dummy: 1 } });
 
-    expect(rtc.peers[peerInstanceId]).toHaveProperty('channel');
+    expect(rtc.peers[peerworkerId]).toHaveProperty('channel');
   });
 
   test('should handle "answer" internal message', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peerInstanceId = 'peerInstanceId',
+      peerworkerId = 'peerworkerId',
       pc = new RTCPeerConnection();
 
-    rtc.start(instanceId, scopeId);
-    rtc.peers[peerInstanceId] = {
+    rtc.start(workerId, scopeId);
+    rtc.peers[peerworkerId] = {
       connection: pc
     };
     rtc.receiveInternalMessage({
-      instanceId: peerInstanceId,
+      workerId: peerworkerId,
       scopeId,
-      to: instanceId,
+      to: workerId,
       type: 'answer',
       data: { type: 'answer', sdp: 'testAnswerSdp' }
     });
@@ -206,22 +206,22 @@ describe('WebRTC', () => {
   });
 
   test('should handle "candidate" internal message', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peer1InstanceId = 'peer1InstanceId',
-      peer2InstanceId = 'peer2InstanceId',
+      peer1workerId = 'peer1workerId',
+      peer2workerId = 'peer2workerId',
       pc = new RTCPeerConnection();
 
-    rtc.start(instanceId, scopeId);
+    rtc.start(workerId, scopeId);
 
     // Connection already exists.
-    rtc.peers[peer1InstanceId] = {
+    rtc.peers[peer1workerId] = {
       connection: pc
     };
     rtc.receiveInternalMessage({
-      instanceId: peer1InstanceId,
+      workerId: peer1workerId,
       scopeId,
-      to: instanceId,
+      to: workerId,
       type: 'candidate',
       data: { dummy: 1 }
     });
@@ -235,22 +235,22 @@ describe('WebRTC', () => {
 
     // Connection doesn't exists and must be created.
     rtc.receiveInternalMessage({
-      instanceId: peer2InstanceId,
+      workerId: peer2workerId,
       scopeId,
-      to: instanceId,
+      to: workerId,
       type: 'candidate',
       data: { dummy: 2 }
     });
 
     await new Promise(done => setImmediate(done));
 
-    expect(rtc.peers).toHaveProperty(peer2InstanceId);
-    expect(rtc.peers[peer2InstanceId]).toHaveProperty('connection');
-    expect(rtc.peers[peer2InstanceId]['connection']).toBeInstanceOf(
+    expect(rtc.peers).toHaveProperty(peer2workerId);
+    expect(rtc.peers[peer2workerId]).toHaveProperty('connection');
+    expect(rtc.peers[peer2workerId]['connection']).toBeInstanceOf(
       RTCPeerConnection
     );
 
-    const pc2 = rtc.peers[peer2InstanceId]['connection'];
+    const pc2 = rtc.peers[peer2workerId]['connection'];
     expect(pc2.iceCandidates).toHaveLength(1);
     expect(pc2.iceCandidates[0]).toStrictEqual(
       new RTCIceCandidate({ dummy: 2 })
@@ -258,10 +258,10 @@ describe('WebRTC', () => {
   });
 
   test('sendMessage() should send messages to peers', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peer1InstanceId = 'peer1InstanceId',
-      peer2InstanceId = 'peer2InstanceId',
+      peer1workerId = 'peer1workerId',
+      peer2workerId = 'peer2workerId',
       channelSendMock = jest.fn(),
       channel1 = {
         send: data => {
@@ -279,10 +279,10 @@ describe('WebRTC', () => {
         }
       };
 
-    rtc.start(instanceId, scopeId);
+    rtc.start(workerId, scopeId);
     rtc.peers = {};
-    rtc.peers[peer1InstanceId] = { channel: channel1 };
-    rtc.peers[peer2InstanceId] = { channel: channel2 };
+    rtc.peers[peer1workerId] = { channel: channel1 };
+    rtc.peers[peer2workerId] = { channel: channel2 };
 
     // Broadcast.
     rtc.sendMessage({ dummy: 'hello' });
@@ -292,14 +292,14 @@ describe('WebRTC', () => {
     expect(channelSendMock).toHaveBeenNthCalledWith(2, 2, { dummy: 'hello' });
 
     // Single peer.
-    rtc.sendMessage({ dummy: 'hello there' }, peer1InstanceId);
+    rtc.sendMessage({ dummy: 'hello there' }, peer1workerId);
     expect(channelSendMock).toHaveBeenCalledTimes(3);
     expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, {
       dummy: 'hello there'
     });
 
     // Error handling.
-    rtc.peers[peer1InstanceId] = { channel: channelWithError };
+    rtc.peers[peer1workerId] = { channel: channelWithError };
     expect(() => {
       rtc.sendMessage({ dummy: 'hello error' });
     }).not.toThrow();
@@ -311,10 +311,10 @@ describe('WebRTC', () => {
   });
 
   test('removePeer() should close channel', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peer1InstanceId = 'peer1InstanceId',
-      peer2InstanceId = 'peer2InstanceId',
+      peer1workerId = 'peer1workerId',
+      peer2workerId = 'peer2workerId',
       channelCloseMock = jest.fn(),
       channel1 = {
         close: () => {
@@ -332,37 +332,37 @@ describe('WebRTC', () => {
         }
       };
 
-    rtc.start(instanceId, scopeId);
+    rtc.start(workerId, scopeId);
     rtc.peers = {};
-    rtc.peers[peer1InstanceId] = { channel: channel1 };
-    rtc.peers[peer2InstanceId] = { channel: channel2 };
+    rtc.peers[peer1workerId] = { channel: channel1 };
+    rtc.peers[peer2workerId] = { channel: channel2 };
 
-    rtc.removePeer(peer1InstanceId);
+    rtc.removePeer(peer1workerId);
 
     expect(channelCloseMock).toHaveBeenCalledTimes(1);
     expect(channelCloseMock).toHaveBeenNthCalledWith(1, 1);
-    expect(rtc.peers).not.toHaveProperty(peer1InstanceId);
-    expect(rtc.peers).toHaveProperty(peer2InstanceId);
+    expect(rtc.peers).not.toHaveProperty(peer1workerId);
+    expect(rtc.peers).toHaveProperty(peer2workerId);
 
     // Non-existing peer.
     rtc.removePeer('invalid');
     expect(channelCloseMock).toHaveBeenCalledTimes(1);
-    expect(rtc.peers).toHaveProperty(peer2InstanceId);
+    expect(rtc.peers).toHaveProperty(peer2workerId);
 
     // Error handling.
-    rtc.peers[peer1InstanceId] = { channel: channelWithError };
+    rtc.peers[peer1workerId] = { channel: channelWithError };
     expect(() => {
-      rtc.removePeer(peer1InstanceId);
+      rtc.removePeer(peer1workerId);
     }).not.toThrow();
 
-    expect(rtc.peers).not.toHaveProperty(peer1InstanceId);
+    expect(rtc.peers).not.toHaveProperty(peer1workerId);
   });
 
   test('stop() should close all channels and send peer left message', async () => {
-    const instanceId = 'testId',
+    const workerId = 'testId',
       scopeId = 'testScopeId',
-      peer1InstanceId = 'peer1InstanceId',
-      peer2InstanceId = 'peer2InstanceId',
+      peer1workerId = 'peer1workerId',
+      peer2workerId = 'peer2workerId',
       channelCloseMock = jest.fn(),
       channel1 = {
         close: () => {
@@ -375,16 +375,16 @@ describe('WebRTC', () => {
         }
       };
 
-    rtc.start(instanceId, scopeId);
+    rtc.start(workerId, scopeId);
     rtc.peers = {};
-    rtc.peers[peer1InstanceId] = { channel: channel1 };
-    rtc.peers[peer2InstanceId] = { channel: channel2 };
+    rtc.peers[peer1workerId] = { channel: channel1 };
+    rtc.peers[peer2workerId] = { channel: channel2 };
 
     rtc.stop();
 
     expect(channelCloseMock).toHaveBeenCalledTimes(2);
-    expect(rtc.peers).not.toHaveProperty(peer1InstanceId);
-    expect(rtc.peers).not.toHaveProperty(peer2InstanceId);
+    expect(rtc.peers).not.toHaveProperty(peer1workerId);
+    expect(rtc.peers).not.toHaveProperty(peer2workerId);
   });
 
   test('error handler logs message', async () => {

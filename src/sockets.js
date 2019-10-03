@@ -5,7 +5,7 @@ export default class Sockets {
     const {
       url,
       logger,
-      instanceId,
+      workerId,
       onOpen,
       onClose,
       onMessage,
@@ -48,7 +48,7 @@ export default class Sockets {
 
     this.url = url;
     this.logger = logger;
-    this.instanceId = instanceId;
+    this.workerId = workerId;
     this.socket = socket;
     this.onMessage = onMessage;
     this.timerId = null;
@@ -56,7 +56,7 @@ export default class Sockets {
 
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
-      data.instanceId = this.instanceId;
+      data.workerId = this.workerId;
 
       const message = { type, data };
 
