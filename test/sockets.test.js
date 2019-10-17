@@ -1,6 +1,7 @@
 import 'regenerator-runtime/runtime';
 
-import { Logger, SOCKET_PING } from 'syft-helpers.js';
+import { SOCKET_PING } from '../src/_constants';
+import Logger from '../src/logger';
 import { WebSocket, Server } from 'mock-socket';
 
 import Socket from '../src/sockets';

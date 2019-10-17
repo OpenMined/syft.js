@@ -4,10 +4,9 @@ import {
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS,
   WEBRTC_JOIN_ROOM,
-  WEBRTC_INTERNAL_MESSAGE,
-  WEBRTC_PEER_LEFT,
-  Logger
-} from 'syft-helpers.js';
+  WEBRTC_INTERNAL_MESSAGE
+} from '../src/_constants';
+import Logger from '../src/logger';
 import WebRTCClient from '../src/webrtc';
 
 // WebRTC mocks.

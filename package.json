@@ -60,7 +60,8 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
-    "syft-helpers.js": "https://github.com/OpenMined/syft-helpers.js",
+    "pysyft-proto": "git+https://github.com/OpenMined/proto.git",
+    "tuple-w": "^1.1.1",
     "webrtc-adapter": "^7.2.9"
   },
   "peerDependencies": {
@@ -84,6 +85,7 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.0.1",
     "rollup-plugin-filesize": "^6.1.1",
+    "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-peer-deps-external": "^2.2.0"

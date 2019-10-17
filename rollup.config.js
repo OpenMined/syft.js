@@ -1,5 +1,6 @@
 import babel from 'rollup-plugin-babel';
 import builtins from 'rollup-plugin-node-builtins';
+import json from 'rollup-plugin-json';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
@@ -10,6 +11,7 @@ import pkg from './package.json';
 const sharedOutput = {
   name: 'syft',
   sourcemap: true,
+  exports: 'named',
   globals: {
     '@tensorflow/tfjs': 'tf'
   }
@@ -36,6 +38,7 @@ export default {
   ],
   plugins: [
     builtins(),
+    json(),
     peerDepsExternal(),
     babel({ exclude: 'node_modules/**' }),
     resolve({

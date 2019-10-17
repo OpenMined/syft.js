@@ -16,7 +16,7 @@ The following is a step-by-step explanation of what's going on below:
 */
 
 // In the real world: import syft from 'syft.js';
-import syft from '../../src';
+import Syft from '../../src';
 import {
   getQueryVariable,
   writeIdentityToDOM,
@@ -45,7 +45,7 @@ const startSyft = url => {
   const scopeId = getQueryVariable('scope_id');
 
   // 1. Initiate syft.js and create socket connection
-  const mySyft = new syft({
+  const mySyft = new Syft({
     verbose: true,
     url,
     workerId,
