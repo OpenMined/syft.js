@@ -1,6 +1,4 @@
 // NOTE: Adding async/await in this file requires regenerator-runtime/runtime which adds an unnecessary 2kb on the minified bundled - no thanks!
-import 'webrtc-adapter';
-
 import { WEBRTC_JOIN_ROOM, WEBRTC_INTERNAL_MESSAGE } from './_constants';
 
 export default class WebRTCClient {

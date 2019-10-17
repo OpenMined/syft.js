@@ -61,8 +61,7 @@
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.6",
     "pysyft-proto": "git+https://github.com/OpenMined/proto.git",
-    "tuple-w": "^1.1.1",
-    "webrtc-adapter": "^7.2.9"
+    "tuple-w": "^1.1.1"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^1.2.5"
