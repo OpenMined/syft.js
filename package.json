@@ -65,8 +65,7 @@
     "webrtc-adapter": "^7.2.9"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.2.5",
-    "webrtc-adapter": "^7.2.9"
+    "@tensorflow/tfjs": "^1.2.5"
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
