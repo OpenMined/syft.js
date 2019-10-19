@@ -2,9 +2,7 @@
 import { WEBRTC_JOIN_ROOM, WEBRTC_INTERNAL_MESSAGE } from './_constants';
 
 export default class WebRTCClient {
-  constructor(opts) {
-    const { peerConfig, peerOptions, logger, socket } = opts;
-
+  constructor({ peerConfig, peerOptions, logger, socket }) {
     this.peerConfig = peerConfig;
     this.peerOptions = peerOptions;
     this.logger = logger;

@@ -15,11 +15,9 @@ import { detail } from './serde';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 
-export default class syft {
+export default class Syft {
   /* ----- CONSTRUCTOR ----- */
-  constructor(opts = {}) {
-    const { url, verbose, workerId, scopeId, protocolId, peerConfig } = opts;
-
+  constructor({ url, verbose, workerId, scopeId, protocolId, peerConfig }) {
     // My worker ID
     this.workerId = workerId || null;
 
@@ -120,7 +118,6 @@ export default class syft {
       }
 
       // TODO: Need to replace all locationId params in PointerTensor with my workerId, consider storing the workerId as a prop on a class of Serde (rather than passing it as a function arg)
-      // TODO: Consider desctructuring all arguments to all types... this will make things a lot more flexible as the PySyft spec changes over time
       // TODO: Need to put all TorchTensors and PointerTensors inside of this.objects
       // TODO: Need to convert all TorchTensors and PointerTensors to extend tf.tensor
 

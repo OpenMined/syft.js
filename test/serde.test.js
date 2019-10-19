@@ -55,8 +55,8 @@ import {
 } from './dummy/message';
 
 // NOTE: There's a few things we need to get PySyft and syft.js on equal footing.
-// Msgpack in Python appears to add extraneous commas to the end of a lot of different Python objects, we should remove these from tests since they aren't syntactically significant
-// Likewise, let's trim all white space so that we can ensure there are no issues related to indention or spacing
+// Python appears to add extraneous commas to the end of a lot of different Python objects, we should remove these from tests since they aren't syntactically significant
+// Likewise, let's trim all white space so that we can ensure there are no issues related to indention or spacing as that is also syntatically insignificant
 const EQUALIZERS = [
   [/\s/g, ''], // Remove all extra spaces
   [/,\)/g, ')'] // Remove all extra commas

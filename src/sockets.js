@@ -1,17 +1,15 @@
 import { SOCKET_PING } from './_constants';
 
 export default class Sockets {
-  constructor(opts) {
-    const {
-      url,
-      logger,
-      workerId,
-      onOpen,
-      onClose,
-      onMessage,
-      keepAliveTimeout = 20000
-    } = opts;
-
+  constructor({
+    url,
+    logger,
+    workerId,
+    onOpen,
+    onClose,
+    onMessage,
+    keepAliveTimeout = 20000
+  }) {
     const socket = new WebSocket(url);
 
     const keepAlive = () => {
