@@ -4,6 +4,7 @@ import { default as proto } from './proto';
 import { Dict, List, Range, Slice, Tuple } from './types/native';
 import { TorchTensor, TorchSize } from './types/torch';
 import { Plan, Procedure, State } from './types/plan';
+import Protocol from './types/protocol';
 import PointerTensor from './types/pointer-tensor';
 import {
   Message,
@@ -88,6 +89,7 @@ export const detail = data => {
     [proto['syft.messaging.plan.plan.Plan']]: d => new Plan(...d.map(i => parse(i))),
     [proto['syft.messaging.plan.state.State']]: d => new State(...d.map(i => parse(i))),
     [proto['syft.messaging.plan.procedure.Procedure']]: d => new Procedure(...d.map(i => parse(i))),
+    [proto['syft.messaging.protocol.Protocol']]: d => new Protocol(...d.map(i => parse(i))),
     [proto['syft.generic.pointers.pointer_tensor.PointerTensor']]: d => new PointerTensor(...d.map(i => parse(i))),
     [proto['syft.messaging.message.Message']]: d => new Message(d[0], parse(d[1])),
     [proto['syft.messaging.message.Operation']]: d => new Operation(...d[1].map(i => parse(i))),

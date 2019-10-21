@@ -29,6 +29,7 @@ import {
   simplifiedProcedure,
   detailedProcedure
 } from './dummy/plan';
+import { simplifiedProtocol, detailedProtocol } from './dummy/protocol';
 import {
   simplifiedPointerTensor,
   firstPointerTensor
@@ -227,6 +228,21 @@ describe('Serde', () => {
     const computedDetailedProcedure = detail(simplifiedProcedure);
 
     expect(detailedProcedure).toStrictEqual(computedDetailedProcedure);
+  });
+
+  test('can simplify a Protocol', () => {
+    const equalizedPresetProtocol = runEqualizers(simplifiedProtocol);
+    const equalizedSimplifiedProtocol = runEqualizers(
+      simplify(detailedProtocol)
+    );
+
+    expect(equalizedPresetProtocol).toBe(equalizedSimplifiedProtocol);
+  });
+
+  test('can detail a Protocol', () => {
+    const computedDetailedProtocol = detail(simplifiedProtocol);
+
+    expect(detailedProtocol).toStrictEqual(computedDetailedProtocol);
   });
 
   test('can simplify a PointerTensor', () => {
