@@ -73,85 +73,77 @@ export default class Syft {
   createSocketConnection(url) {
     if (!url) return;
 
+    // When a socket connection is opened...
+    const onOpen = event => {
+      this.observer.broadcast(SOCKET_STATUS, {
+        connected: true,
+        event
+      });
+    };
+
+    // When a socket connection is closed...
+    const onClose = event => {
+      this.observer.broadcast(SOCKET_STATUS, {
+        connected: false,
+        event
+      });
+    };
+
+    // When a socket message is received...
+    const onMessage = event => {
+      const { type, data } = event;
+
+      if (type === GET_PLANS) {
+        if (data.error) {
+          this.logger.log('There was an error getting your plans', data.error);
+
+          return data;
+        }
+
+        // TODO: Need to update proto again
+        // TODO: Need to replace all locationId params in PointerTensor with my workerId, consider storing the workerId as a prop on a class of Serde (rather than passing it as a function arg)
+        // TODO: Need to put all TorchTensors, PointerTensors, Plans, and Protocols inside of this.objects
+        // TODO: Need to convert all TorchTensors and PointerTensors to extend tf.tensor
+
+        // Save our workerId if we don't already have it (also for the socket connection)
+        this.workerId = data.user.workerId;
+        this.socket.workerId = this.workerId;
+
+        // Save our scopeId if we don't already have it
+        this.scopeId = data.user.scopeId;
+
+        // Save our role
+        this.role = data.user.role;
+
+        // Save the other participant workerId's
+        this.participants = data.participants;
+
+        // Save those plans after having Serde detail them
+        this.plans = data.plans.map(plan => detail(plan));
+
+        return this.plans;
+      } else if (type === WEBRTC_INTERNAL_MESSAGE) {
+        this.rtc.receiveInternalMessage(data);
+      } else if (type === WEBRTC_JOIN_ROOM) {
+        this.rtc.receiveNewPeer(data);
+      } else if (type === WEBRTC_PEER_LEFT) {
+        this.rtc.removePeer(data.workerId);
+      }
+    };
+
     this.socket = new Socket({
       url,
       logger: this.logger,
       workerId: this.workerId,
-      onOpen: event => this.onOpen(event),
-      onClose: event => this.onClose(event),
-      onMessage: event => this.onMessage(event)
+      onOpen,
+      onClose,
+      onMessage
     });
   }
 
   // To close the socket connection with the grid
   disconnectFromGrid() {
     this.socket.stop();
-  }
-
-  // When the socket connection is opened
-  // This is the internal event listener, the external method to subscribe to is "onSocketStatus => ({ connected: true })"
-  onOpen(event) {
-    this.observer.broadcast(SOCKET_STATUS, {
-      connected: true,
-      event
-    });
-  }
-
-  // When the socket connection is closed
-  // This is the internal event listener, the external method to subscribe to is "onSocketStatus => ({ connected: false })"
-  onClose(event) {
-    this.observer.broadcast(SOCKET_STATUS, {
-      connected: false,
-      event
-    });
-  }
-
-  // When a socket message is received, parse the message, store it, and return it
-  onMessage(event) {
-    const { type, data } = event;
-
-    if (type === GET_PLANS) {
-      if (data.error) {
-        this.logger.log('There was an error getting your plans', data.error);
-
-        return data;
-      }
-
-      // TODO: Need to replace all locationId params in PointerTensor with my workerId, consider storing the workerId as a prop on a class of Serde (rather than passing it as a function arg)
-      // TODO: Need to put all TorchTensors and PointerTensors inside of this.objects
-      // TODO: Need to convert all TorchTensors and PointerTensors to extend tf.tensor
-
-      // New workflow: I could receive at ANY MOMENT a Plan, Protocol, or Operation...
-      // 1. First I need to log in and "authenticate" myself with Grid
-      // 2. Upon receiving a tensor, plan, or protocol - I will store them in this.objects, no matter what it is
-      // 3. Upon receiving an Operation message, I execute what I'm told
-
-      // Note: You can send and receive Plans and Operations via P2P or via the Grid
-
-      // Save our workerId if we don't already have it (also for the socket connection)
-      this.workerId = data.user.workerId;
-      this.socket.workerId = this.workerId;
-
-      // Save our scopeId if we don't already have it
-      this.scopeId = data.user.scopeId;
-
-      // Save our role
-      this.role = data.user.role;
-
-      // Save the other participant workerId's
-      this.participants = data.participants;
-
-      // Save those plans after having Serde detail them
-      this.plans = data.plans.map(plan => detail(plan));
-
-      return this.plans;
-    } else if (type === WEBRTC_INTERNAL_MESSAGE) {
-      this.rtc.receiveInternalMessage(data);
-    } else if (type === WEBRTC_JOIN_ROOM) {
-      this.rtc.receiveNewPeer(data);
-    } else if (type === WEBRTC_PEER_LEFT) {
-      this.rtc.removePeer(data.workerId);
-    }
   }
 
   /* ----- WEBRTC ----- */
