@@ -14,6 +14,7 @@ import Logger from './logger';
 import { detail } from './serde';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
+import { pickTensors } from './_helpers';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -27,14 +28,20 @@ export default class Syft {
     // The chosen protocol we are working on
     this.protocolId = protocolId;
 
-    // Our role in the plans
+    // Our role in the protocol
     this.role = null;
 
     // The participants we will be working with (only for scope creators)
     this.participants = [];
 
-    // The list of plans we will be executing
-    this.plans = [];
+    // The protocol we will are participating in
+    this.protocol = null;
+
+    // The plan we have been assigned
+    this.plan = null;
+
+    // All the tensors we've either computed ourselves or captured from Grid or other peers
+    this.objects = {};
 
     // For creating event listeners
     this.observer = new EventObserver();
@@ -53,8 +60,10 @@ export default class Syft {
 
   /* ----- FUNCTIONALITY ----- */
 
-  // Get the list of plans that a participant needs to participate from grid.js
-  getPlans() {
+  // Get the protocol and plan assignment from the Grid
+  getProtocol(protocol) {
+    this.protocolId = protocol;
+
     return this.socket.send(GET_PROTOCOL, {
       scopeId: this.scopeId,
       protocolId: this.protocolId
@@ -95,14 +104,13 @@ export default class Syft {
 
       if (type === GET_PROTOCOL) {
         if (data.error) {
-          this.logger.log('There was an error getting your plans', data.error);
+          this.logger.log(
+            'There was an error getting the protocol you requested',
+            data.error
+          );
 
           return data;
         }
-
-        // TODO: Need to replace all locationId params in PointerTensor with my workerId, consider storing the workerId as a prop on a class of Serde (rather than passing it as a function arg)
-        // TODO: Need to put all TorchTensors, PointerTensors, Plans, and Protocols inside of this.objects
-        // TODO: Need to convert all TorchTensors and PointerTensors to extend tf.tensor
 
         // Save our workerId if we don't already have it (also for the socket connection)
         this.workerId = data.user.workerId;
@@ -117,10 +125,17 @@ export default class Syft {
         // Save the other participant workerId's
         this.participants = data.participants;
 
-        // Save those plans after having Serde detail them
-        this.plans = data.plans.map(plan => detail(plan));
+        // Save the protocol and plan assignment after having Serde detail them
+        const detailedProtocol = detail(data.protocol);
+        const detailedPlan = detail(data.plan);
 
-        return this.plans;
+        this.protocol = detailedProtocol;
+        this.plan = detailedPlan;
+
+        // Pick all the tensors from the plan we just received
+        this.objects = { ...this.objects, ...pickTensors(detailedPlan) };
+
+        return this.plan;
       } else if (type === WEBRTC_INTERNAL_MESSAGE) {
         this.rtc.receiveInternalMessage(data);
       } else if (type === WEBRTC_JOIN_ROOM) {

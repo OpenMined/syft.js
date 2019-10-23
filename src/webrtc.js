@@ -146,7 +146,7 @@ export default class WebRTCClient {
     };
   }
 
-  // When we receive a new peer's workerId from grid.js...
+  // When we receive a new peer's workerId from Grid...
   receiveNewPeer({ workerId }) {
     this.logger.log('WebRTC: Adding new peer');
 
