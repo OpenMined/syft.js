@@ -3,7 +3,7 @@ export const SOCKET_STATUS = 'socket-status';
 export const SOCKET_PING = 'socket-ping';
 
 // Grid
-export const GET_PLANS = 'get-plans';
+export const GET_PROTOCOL = 'get-protocol';
 
 // WebRTC
 export const WEBRTC_JOIN_ROOM = 'webrtc: join-room';

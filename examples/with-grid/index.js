@@ -50,7 +50,7 @@ const startSyft = url => {
     url,
     workerId,
     scopeId,
-    protocolId: 'millionaire-problem'
+    protocolId: '18797824900'
   });
 
   submitButton.onclick = () => {

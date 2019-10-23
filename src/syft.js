@@ -2,7 +2,7 @@
 
 import {
   SOCKET_STATUS,
-  GET_PLANS,
+  GET_PROTOCOL,
   WEBRTC_INTERNAL_MESSAGE,
   WEBRTC_JOIN_ROOM,
   WEBRTC_PEER_LEFT,
@@ -55,7 +55,7 @@ export default class Syft {
 
   // Get the list of plans that a participant needs to participate from grid.js
   getPlans() {
-    return this.socket.send(GET_PLANS, {
+    return this.socket.send(GET_PROTOCOL, {
       scopeId: this.scopeId,
       protocolId: this.protocolId
     });
@@ -93,14 +93,13 @@ export default class Syft {
     const onMessage = event => {
       const { type, data } = event;
 
-      if (type === GET_PLANS) {
+      if (type === GET_PROTOCOL) {
         if (data.error) {
           this.logger.log('There was an error getting your plans', data.error);
 
           return data;
         }
 
-        // TODO: Need to update proto again
         // TODO: Need to replace all locationId params in PointerTensor with my workerId, consider storing the workerId as a prop on a class of Serde (rather than passing it as a function arg)
         // TODO: Need to put all TorchTensors, PointerTensors, Plans, and Protocols inside of this.objects
         // TODO: Need to convert all TorchTensors and PointerTensors to extend tf.tensor
