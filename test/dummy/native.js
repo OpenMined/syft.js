@@ -28,8 +28,8 @@ export const nullStepSlice = new Slice(start, end);
 export const simplifiedSlice = `(${proto['slice']}, (${start}, ${end}, ${step}))`; // prettier-ignore
 
 // ----- STRING ----- //
-export const string = 'hello';
-export const simplifiedString = `(${proto['str']}, (b'hello',))`; // prettier-ignore
+export const string = 'bob';
+export const simplifiedString = `(${proto['str']}, (b'bob',))`; // prettier-ignore
 
 // ----- TUPLE ----- //
 export const tuple = new Tuple('apple', 'cherry', 'banana');
