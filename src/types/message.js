@@ -1,4 +1,7 @@
 import { default as proto } from '../proto';
+import PointerTensor from './pointer-tensor';
+
+import { torchToTF } from '../_helpers';
 
 export const CODES = {
   CMD: 1,
@@ -33,12 +36,65 @@ export class Operation extends Message {
     super(CODES.CMD);
 
     this.message = message;
+    this.command = message[0];
+    this.self = message[1];
+    this.args = message[2];
+    this.kwargs = message[3];
     this.returnIds = returnIds;
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.Operation'];
     return `(${TYPE}, (${this.type}, (${f(this.message)}, ${f(this.returnIds)})))`; // prettier-ignore
+  }
+
+  execute(d, objects) {
+    console.log(this.command, this.self, this.args, this.kwargs, d, objects);
+
+    // TODO: No idea what to do with "kwargs" in this case...
+
+    const pointerTensorExists = tensor =>
+      tensor instanceof PointerTensor &&
+      objects.hasOwnProperty(tensor.idAtLocation);
+
+    const allPointerTensorsExist = tensors => {
+      let allExist = true;
+
+      tensors.forEach(tensor => {
+        if (!pointerTensorExists(tensor)) allExist = false;
+      });
+
+      return allExist;
+    };
+
+    // If the "self" is a PointerTensor and exists in objects
+    // AND if the "args" either contains all existent PointerTensor(s) OR none at all
+    // THEN we can execute the command (because we have all the values we need)
+    if (
+      pointerTensorExists(this.self) &&
+      ((this.args.length > 0 && allPointerTensorsExist(this.args)) ||
+        this.args.length === 0)
+    ) {
+      const command = torchToTF(this.command);
+      const self = objects[this.self.idAtLocation];
+
+      console.log(this.command, command);
+
+      // If we're executing the command against itself only, let's roll
+      if (this.args.length === 0) {
+        return tf[command](self);
+      }
+
+      console.log('HEY', this.args);
+
+      // Otherwise, we need to get the actual objects of each of the PointerTensors in args
+      const args = [];
+      this.args.forEach(arg => args.push(objects[arg.idAtLocation]));
+
+      return tf[command](self, ...args);
+    }
+
+    return 'NOT ENOUGH INFO';
   }
 }
 

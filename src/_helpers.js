@@ -21,3 +21,17 @@ export const pickTensors = tree => {
 
   return objects;
 };
+
+export const torchToTF = command => {
+  // If the command exists in TensorFlow.js already
+  if (tf.hasOwnProperty(command)) return command;
+  // If the command exists in TensorFlow.js already by removing the underscores
+  else if (tf.hasOwnProperty(command.split('_').join('')))
+    return command.split('_').join('');
+  // The command definitely doesn't exist under the name given and we must manually map it to a function
+  else {
+    console.log('WE MUST DO A LOOKUP');
+
+    return 'add';
+  }
+};

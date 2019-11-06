@@ -52,27 +52,13 @@ const startSyft = url => {
     scopeId
   });
 
-  submitButton.onclick = () => {
-    mySyft.sendToParticipants(textarea.value);
-
-    textarea.value = '';
-  };
-
-  disconnectButton.onclick = () => {
-    mySyft.disconnectFromParticipants();
-    mySyft.disconnectFromGrid();
-
-    appContainer.style.display = 'none';
-    gridServer.style.display = 'block';
-    connectButton.style.display = 'block';
-  };
-
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
       // 2. Get the protocol and associated plan that are assigned to me
-      const protocol = await mySyft.getProtocol('18797824900');
+      await mySyft.getProtocol('18797824900');
 
-      console.log('PROTOCOL', protocol);
+      console.log('PROTOCOL', mySyft.protocol);
+      console.log('PLAN', mySyft.plan);
 
       // Write my identity to the screen - not required
       writeIdentityToDOM(
@@ -105,6 +91,24 @@ const startSyft = url => {
 
       // 4. Create a direct P2P connection with the other participants
       mySyft.connectToParticipants();
+
+      // 5. Execute plan with supplied data
+      mySyft.executePlan(tf.tensor([[-1, 2], [3, -4]]));
     }
   });
+
+  submitButton.onclick = () => {
+    mySyft.sendToParticipants(textarea.value);
+
+    textarea.value = '';
+  };
+
+  disconnectButton.onclick = () => {
+    mySyft.disconnectFromParticipants();
+    mySyft.disconnectFromGrid();
+
+    appContainer.style.display = 'none';
+    gridServer.style.display = 'block';
+    connectButton.style.display = 'block';
+  };
 };

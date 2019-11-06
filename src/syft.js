@@ -1,5 +1,3 @@
-// import * as tf from '@tensorflow/tfjs';
-
 import {
   SOCKET_STATUS,
   GET_PROTOCOL,
@@ -9,6 +7,7 @@ import {
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS
 } from './_constants';
+import { NO_PLAN, NOT_ENOUGH_ARGS } from './_errors';
 import EventObserver from './events';
 import Logger from './logger';
 import { detail } from './serde';
@@ -68,6 +67,34 @@ export default class Syft {
       scopeId: this.scopeId,
       protocolId: this.protocolId
     });
+  }
+
+  // Execute the current plan given data the user passes
+  executePlan(...data) {
+    // If we don't have a plan yet, calling this function is premature
+    if (!this.plan) throw new Error(NO_PLAN);
+
+    const argsLength = this.plan.procedure.argIds.length;
+
+    // If the number of arguments supplied does not match the number of arguments required...
+    if (data.length !== argsLength)
+      throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
+
+    // For each argument supplied, store them in this.objects
+    data.forEach((datum, i) => {
+      this.objects[this.plan.procedure.argIds[i]] = datum;
+    });
+
+    // Execute the plan
+    for (let i = 0; i < this.plan.procedure.operations.length; i++) {
+      const currentOp = this.plan.procedure.operations[i];
+
+      const result = currentOp.execute(data, this.objects);
+
+      this.objects[currentOp.returnIds[0]] = result;
+    }
+
+    console.log(this.objects);
   }
 
   /* ----- EVENT HANDLERS ----- */
