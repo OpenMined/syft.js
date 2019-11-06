@@ -23,15 +23,15 @@ export const pickTensors = tree => {
 };
 
 export const torchToTF = command => {
-  // If the command exists in TensorFlow.js already
-  if (tf.hasOwnProperty(command)) return command;
-  // If the command exists in TensorFlow.js already by removing the underscores
-  else if (tf.hasOwnProperty(command.split('_').join('')))
-    return command.split('_').join('');
-  // The command definitely doesn't exist under the name given and we must manually map it to a function
-  else {
-    console.log('WE MUST DO A LOOKUP');
+  // In Python, some commands in TensorFlow and PyTorch are submitted with double-underscores to avoid method collision
+  // Since we don't need this nonsense in TensorFlow.js... let's strip all the underscores
+  command = command.split('_').join('');
 
-    return 'add';
-  }
+  // If the command as it's currently named exists in TensorFlow.js already, return the command name
+  if (tf.hasOwnProperty(command)) return command;
+
+  // If not, we will need to do a lookup of the command in question
+  console.log('WE MUST DO A LOOKUP');
+
+  return 'add';
 };

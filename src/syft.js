@@ -85,16 +85,31 @@ export default class Syft {
       this.objects[this.plan.procedure.argIds[i]] = datum;
     });
 
+    let finished = true;
+
     // Execute the plan
     for (let i = 0; i < this.plan.procedure.operations.length; i++) {
+      // The current operation
       const currentOp = this.plan.procedure.operations[i];
 
+      // The result of the current operation
       const result = currentOp.execute(data, this.objects);
 
-      this.objects[currentOp.returnIds[0]] = result;
+      // Place the result of the current operation into this.objects at the 0th item in returnIds
+      if (result) {
+        this.objects[currentOp.returnIds[0]] = result;
+      } else {
+        finished = false;
+
+        break;
+      }
     }
 
-    console.log(this.objects);
+    if (finished) {
+      console.log(this.objects);
+    } else {
+      console.log('NOT ENOUGH INFORMATION YET');
+    }
   }
 
   /* ----- EVENT HANDLERS ----- */
