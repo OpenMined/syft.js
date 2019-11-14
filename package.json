@@ -34,7 +34,7 @@
   "scripts": {
     "start": "rollup -cw",
     "build": "rollup -c",
-    "prepare": "npm run build",
+    "prepublish": "npm run build",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "version": "auto-changelog -p && git add CHANGELOG.md",
