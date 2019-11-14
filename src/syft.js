@@ -7,7 +7,7 @@ import {
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS
 } from './_constants';
-import { NO_PLAN, NOT_ENOUGH_ARGS } from './_errors';
+import { NO_PLAN, PLAN_ALREADY_COMPLETED, NOT_ENOUGH_ARGS } from './_errors';
 import EventObserver from './events';
 import Logger from './logger';
 import { detail } from './serde';
@@ -38,6 +38,9 @@ export default class Syft {
 
     // The plan we have been assigned
     this.plan = null;
+
+    // The index of the last plan operation we weren't able to complete (this defaults to 0 until we've started to execute)
+    this.lastUnfinishedOperation = 0;
 
     // All the tensors we've either computed ourselves or captured from Grid or other peers
     this.objects = {};
@@ -74,11 +77,16 @@ export default class Syft {
     // If we don't have a plan yet, calling this function is premature
     if (!this.plan) throw new Error(NO_PLAN);
 
-    const argsLength = this.plan.procedure.argIds.length;
+    const argsLength = this.plan.procedure.argIds.length,
+      opsLength = this.plan.procedure.operations.length;
 
     // If the number of arguments supplied does not match the number of arguments required...
     if (data.length !== argsLength)
       throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
+
+    // If we have already completed the plan, there's no need to execute
+    if (this.lastUnfinishedOperation === opsLength)
+      throw new Error(PLAN_ALREADY_COMPLETED(this.plan.name, this.plan.id));
 
     // For each argument supplied, store them in this.objects
     data.forEach((datum, i) => {
@@ -88,7 +96,7 @@ export default class Syft {
     let finished = true;
 
     // Execute the plan
-    for (let i = 0; i < this.plan.procedure.operations.length; i++) {
+    for (let i = this.lastUnfinishedOperation; i < opsLength; i++) {
       // The current operation
       const currentOp = this.plan.procedure.operations[i];
 
@@ -100,15 +108,21 @@ export default class Syft {
         this.objects[currentOp.returnIds[0]] = result;
       } else {
         finished = false;
+        this.lastUnfinishedOperation = i;
 
         break;
       }
     }
 
     if (finished) {
+      // Set the lastUnfinishedOperation as the number of operations (meaning, we've already executed the plan successfully)
+      this.lastUnfinishedOperation = opsLength;
+
       console.log(this.objects);
     } else {
-      console.log('NOT ENOUGH INFORMATION YET');
+      console.log(
+        'NOT ENOUGH INFORMATION YET, BUT WE HAVE SAVED YOUR PROGRESS'
+      );
     }
   }
 

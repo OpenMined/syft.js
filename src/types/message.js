@@ -49,59 +49,56 @@ export class Operation extends Message {
   }
 
   execute(d, objects) {
-    // TODO: No idea what to do with "kwargs" in this case...
     console.log(this.command, this.self, this.args, this.kwargs, d, objects);
 
-    // Function to check if the tensors in question is a PointerTensor and exists in "objects"
-    const pointerTensorExists = tensor =>
-      tensor instanceof PointerTensor &&
-      objects.hasOwnProperty(tensor.idAtLocation);
+    // A helper function for helping us determine if all PointerTensors inside of "this.args" also exist as tensors inside of "objects"
+    const haveValuesForAllArgs = args => {
+      let enoughInfo = true;
 
-    // Function to check if all tensors in a list are each PointerTensor(s) and also exist in "objects"
-    const allPointerTensorsExist = tensors => {
-      let allExist = true;
-
-      tensors.forEach(tensor => {
-        if (!pointerTensorExists(tensor)) allExist = false;
+      args.forEach(arg => {
+        if (
+          arg instanceof PointerTensor &&
+          !objects.hasOwnProperty(arg.idAtLocation)
+        ) {
+          enoughInfo = false;
+        }
       });
 
-      return allExist;
+      return enoughInfo;
     };
 
-    // If the "self" is a PointerTensor and exists in "objects"
-    // AND if every item in the "args" list is a PointerTensor OR if the "args" list is empty
-    // THEN we can execute the command (because we have all the values we need)
-    if (
-      pointerTensorExists(this.self) &&
-      ((this.args.length > 0 && allPointerTensorsExist(this.args)) ||
-        this.args.length === 0)
-    ) {
-      // Make sure to convert the command name that was given into a valid TensorFlow.js command
-      const command = torchToTF(this.command);
+    // Get the actual tensor inside the PointerTensor "this.self"
+    const self = objects[this.self.idAtLocation];
 
-      console.log(
-        `Given command: ${this.command}`,
-        `Converted command: ${command}`
-      );
+    // Make sure to convert the command name that was given into a valid TensorFlow.js command
+    const command = torchToTF(this.command);
 
-      // Get the actual tensor inside the PointerTensor "this.self"
-      const self = objects[this.self.idAtLocation];
+    console.log(
+      `Given command: ${this.command}`,
+      `Converted command: ${command}`
+    );
 
-      // If we're executing the command against itself only, let's roll!
-      if (this.args.length === 0) {
-        return tf[command](self);
+    // TODO: We need to do something with kwargs here
+
+    // If we're executing the command against itself only, let's roll!
+    if (this.args.length === 0) return tf[command](self);
+    else {
+      if (haveValuesForAllArgs(this.args)) {
+        // Get the actual tensors in each of the items of "args"
+        const args = [];
+        this.args.forEach(arg => {
+          if (arg instanceof PointerTensor)
+            args.push(objects[arg.idAtLocation]);
+          else args.push(arg);
+        });
+
+        // Now we can execute a multi-argument method
+        return tf[command](self, ...args);
       }
 
-      // Otherwise, we need to get the actual tensors in each of the items of "args"
-      const args = [];
-      this.args.forEach(arg => args.push(objects[arg.idAtLocation]));
-
-      // Now we can execute a multi-argument method
-      return tf[command](self, ...args);
+      // Otherwise, we don't have enough information, return null
+      return null;
     }
-
-    // We don't have enough information, return null
-    return null;
   }
 }
 

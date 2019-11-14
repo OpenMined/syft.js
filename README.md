@@ -46,6 +46,8 @@ For further API documentation, [please check that out here](https://docs.openmin
 
 ### Local Development
 
+[It's highly suggested you use PNPM as your Javascript package manager.](https://github.com/pnpm/pnpm)
+
 1. Fork and clone
 2. Run `npm install`
 3. Run `npm start`
