@@ -86,11 +86,14 @@ export class Operation extends Message {
       if (haveValuesForAllArgs(this.args)) {
         // Get the actual tensors in each of the items of "args"
         const args = [];
+
         this.args.forEach(arg => {
           if (arg instanceof PointerTensor)
             args.push(objects[arg.idAtLocation]);
           else args.push(arg);
         });
+
+        console.log(this.args, args);
 
         // Now we can execute a multi-argument method
         return tf[command](self, ...args);

@@ -55,7 +55,7 @@ const startSyft = url => {
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
       // 2. Get the protocol and associated plan that are assigned to me
-      await mySyft.getProtocol('18797824900');
+      await mySyft.getProtocol('27083550402');
 
       console.log('PROTOCOL', mySyft.protocol);
       console.log('PLAN', mySyft.plan);
@@ -93,7 +93,12 @@ const startSyft = url => {
       mySyft.connectToParticipants();
 
       // 5. Execute plan with supplied data
-      mySyft.executePlan(tf.tensor([[-1, 2], [3, -4]]));
+      mySyft.executePlan(
+        tf.tensor([
+          [-1, 2],
+          [3, -4]
+        ])
+      );
     }
   });
 
