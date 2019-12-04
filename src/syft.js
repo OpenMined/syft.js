@@ -25,7 +25,7 @@ export default class Syft {
     this.scopeId = scopeId || null;
 
     // The chosen protocol we are working on
-    this.protocolId = protocolId;
+    this.protocolId = protocolId || null;
 
     // Our role in the protocol
     this.role = null;
@@ -64,7 +64,8 @@ export default class Syft {
 
   // Get the protocol and plan assignment from the Grid
   getProtocol(protocol) {
-    this.protocolId = protocol;
+    if (!protocol && !this.protocolId) return null;
+    if (protocol && !this.protocolId) this.protocolId = protocol;
 
     return this.socket.send(GET_PROTOCOL, {
       scopeId: this.scopeId,
@@ -74,56 +75,70 @@ export default class Syft {
 
   // Execute the current plan given data the user passes
   executePlan(...data) {
-    // If we don't have a plan yet, calling this function is premature
-    if (!this.plan) throw new Error(NO_PLAN);
+    return new Promise((resolve, reject) => {
+      // If we don't have a plan yet, calling this function is premature
+      if (!this.plan) throw new Error(NO_PLAN);
 
-    const argsLength = this.plan.procedure.argIds.length,
-      opsLength = this.plan.procedure.operations.length;
+      const argsLength = this.plan.procedure.argIds.length,
+        opsLength = this.plan.procedure.operations.length;
 
-    // If the number of arguments supplied does not match the number of arguments required...
-    if (data.length !== argsLength)
-      throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
+      // If the number of arguments supplied does not match the number of arguments required...
+      if (data.length !== argsLength)
+        throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
 
-    // If we have already completed the plan, there's no need to execute
-    if (this.lastUnfinishedOperation === opsLength)
-      throw new Error(PLAN_ALREADY_COMPLETED(this.plan.name, this.plan.id));
+      // If we have already completed the plan, there's no need to execute
+      if (this.lastUnfinishedOperation === opsLength)
+        throw new Error(PLAN_ALREADY_COMPLETED(this.plan.name, this.plan.id));
 
-    // For each argument supplied, store them in this.objects
-    data.forEach((datum, i) => {
-      this.objects[this.plan.procedure.argIds[i]] = datum;
-    });
+      // For each argument supplied, store them in this.objects
+      data.forEach((datum, i) => {
+        this.objects[this.plan.procedure.argIds[i]] = datum;
+      });
 
-    let finished = true;
+      let finished = true;
 
-    // Execute the plan
-    for (let i = this.lastUnfinishedOperation; i < opsLength; i++) {
-      // The current operation
-      const currentOp = this.plan.procedure.operations[i];
+      // Execute the plan
+      for (let i = this.lastUnfinishedOperation; i < opsLength; i++) {
+        // The current operation
+        const currentOp = this.plan.procedure.operations[i];
 
-      // The result of the current operation
-      const result = currentOp.execute(data, this.objects);
+        // The result of the current operation
+        const result = currentOp.execute(this.objects, this.logger);
 
-      // Place the result of the current operation into this.objects at the 0th item in returnIds
-      if (result) {
-        this.objects[currentOp.returnIds[0]] = result;
-      } else {
-        finished = false;
-        this.lastUnfinishedOperation = i;
+        // Place the result of the current operation into this.objects at the 0th item in returnIds
+        if (result) {
+          this.objects[currentOp.returnIds[0]] = result;
+        } else {
+          finished = false;
+          this.lastUnfinishedOperation = i;
 
-        break;
+          break;
+        }
       }
-    }
 
-    if (finished) {
-      // Set the lastUnfinishedOperation as the number of operations (meaning, we've already executed the plan successfully)
-      this.lastUnfinishedOperation = opsLength;
+      if (finished) {
+        // Set the lastUnfinishedOperation as the number of operations (meaning, we've already executed the plan successfully)
+        this.lastUnfinishedOperation = opsLength;
 
-      console.log(this.objects);
-    } else {
-      console.log(
-        'NOT ENOUGH INFORMATION YET, BUT WE HAVE SAVED YOUR PROGRESS'
-      );
-    }
+        // Resolve all of the requested resultId's as specific by the plan
+        const resolvedResultingTensors = [];
+
+        this.plan.procedure.resultIds.forEach(resultId => {
+          resolvedResultingTensors.push({
+            id: resultId,
+            value: this.objects[resultId]
+          });
+        });
+
+        // Return them to the user
+        resolve(resolvedResultingTensors);
+      } else {
+        // If the plan wasn't finished, notify the user that they may try again once they have the appropriate information
+        reject(
+          'There is not enough information to execute this plan, but we have saved your progress!'
+        );
+      }
+    });
   }
 
   /* ----- EVENT HANDLERS ----- */

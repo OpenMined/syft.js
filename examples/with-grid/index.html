@@ -48,15 +48,15 @@
       id="logo"
       alt="OpenMined"
     />
-    <h1>Millionaire's problem</h1>
+    <h1>syft.js/grid.js testing</h1>
     <p id="explanation">
       <i
         >This is a demo using
         <a href="https://github.com/OpenMined/syft.js" target="_blank"
           >syft.js from OpenMined</a
         >
-        to display secure multi-party computation in the browser. Please open
-        your Javascript console to see what's going on (instructions for
+        to execute a multi-worker protocol hosted on grid.js. Please open your
+        Javascript console to see what's going on (instructions for
         <a
           href="https://developers.google.com/web/tools/chrome-devtools/open#console"
           target="_blank"
@@ -71,7 +71,8 @@
       >.
     </p>
     <input type="text" id="grid-server" value="ws://localhost:3000" />
-    <button id="connect">Connect to Grid server</button>
+    <input type="text" id="protocol" value="76495696739" />
+    <button id="connect">Connect to grid.js server</button>
     <div id="app">
       <button id="disconnect">Disconnect</button>
       <p id="identity"></p>

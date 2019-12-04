@@ -2,6 +2,7 @@ import { default as proto } from '../proto';
 import PointerTensor from './pointer-tensor';
 
 import { torchToTF } from '../_helpers';
+import { TorchTensor } from './torch';
 
 export class Message {
   constructor(contents) {
@@ -21,11 +22,12 @@ export class Operation extends Message {
     super();
 
     this.message = message;
-    this.command = message[0];
-    this.self = message[1];
-    this.args = message[2];
-    this.kwargs = message[3];
     this.returnIds = returnIds;
+
+    this._command = message[0];
+    this._self = message[1];
+    this._args = message[2];
+    this._kwargs = message[3];
   }
 
   serdeSimplify(f) {
@@ -33,10 +35,8 @@ export class Operation extends Message {
     return `(${TYPE}, (${f(this.message)}, ${f(this.returnIds)}))`; // prettier-ignore
   }
 
-  execute(d, objects) {
-    console.log(this.command, this.self, this.args, this.kwargs, d, objects);
-
-    // A helper function for helping us determine if all PointerTensors inside of "this.args" also exist as tensors inside of "objects"
+  execute(objects, logger) {
+    // A helper function for helping us determine if all PointerTensors inside of "this._args" also exist as tensors inside of "objects"
     const haveValuesForAllArgs = args => {
       let enoughInfo = true;
 
@@ -52,33 +52,54 @@ export class Operation extends Message {
       return enoughInfo;
     };
 
-    // Get the actual tensor inside the PointerTensor "this.self"
-    const self = objects[this.self.idAtLocation];
+    // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
+    const pullTensorsFromArgs = args => {
+      const resolvedArgs = [];
+
+      args.forEach(arg => {
+        if (arg instanceof PointerTensor) {
+          const tensor = objects[arg.idAtLocation];
+
+          if (tensor && tensor instanceof tf.Tensor) {
+            resolvedArgs.push(objects[arg.idAtLocation]);
+          } else if (tensor instanceof TorchTensor) {
+            resolvedArgs.push(objects[arg.idAtLocation]._tfTensor);
+          }
+        } else if (arg instanceof TorchTensor) {
+          resolvedArgs.push(arg._tfTensor);
+        } else resolvedArgs.push(null);
+      });
+
+      return resolvedArgs;
+    };
+
+    // TODO: We need to do something with kwargs!
 
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
-    const command = torchToTF(this.command);
+    const command = torchToTF(this._command, logger);
 
-    console.log(
-      `Given command: ${this.command}`,
-      `Converted command: ${command}`
+    logger.log(
+      `Given command: ${this._command}, converted command: ${command}`
     );
 
-    // TODO: We need to do something with kwargs here
-
     // If we're executing the command against itself only, let's roll!
-    if (this.args.length === 0) return tf[command](self);
-    else {
-      if (haveValuesForAllArgs(this.args)) {
-        // Get the actual tensors in each of the items of "args"
-        const args = [];
+    if (this._self === null) {
+      if (haveValuesForAllArgs(this._args)) {
+        // Resolve all PointerTensors in our arguments to operable tensors
+        const args = pullTensorsFromArgs(this._args);
 
-        this.args.forEach(arg => {
-          if (arg instanceof PointerTensor)
-            args.push(objects[arg.idAtLocation]);
-          else args.push(arg);
-        });
+        return tf[command](...args);
+      }
 
-        console.log(this.args, args);
+      // Otherwise, we don't have enough information, return null
+      return null;
+    } else {
+      if (haveValuesForAllArgs(this._args)) {
+        // Get the actual tensor inside the PointerTensor "this.self"
+        const self = objects[this._self.idAtLocation];
+
+        // Resolve all PointerTensors in our arguments to operable tensors
+        const args = pullTensorsFromArgs(this._args);
 
         // Now we can execute a multi-argument method
         return tf[command](self, ...args);
