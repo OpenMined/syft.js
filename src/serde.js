@@ -88,18 +88,18 @@ export const detail = data => {
     [proto['torch.Size']]: d => new TorchSize(d),
     [proto['syft.messaging.plan.plan.Plan']]: d => new Plan(...d.map(i => parse(i))),
     [proto['syft.messaging.plan.state.State']]: d => new State(...d.map(i => parse(i))),
-    [proto['syft.messaging.plan.procedure.Procedure']]: d => new Procedure(...d.map(i => parse(i))),
+    [proto['syft.messaging.plan.procedure.Procedure']]: d => new Procedure(d[0].map(i => parse(i)), ...d.slice(1).map(i => parse(i))),
     [proto['syft.messaging.protocol.Protocol']]: d => new Protocol(...d.map(i => parse(i))),
     [proto['syft.generic.pointers.pointer_tensor.PointerTensor']]: d => new PointerTensor(...d.map(i => parse(i))),
-    [proto['syft.messaging.message.Message']]: d => new Message(d[0], parse(d[1])),
-    [proto['syft.messaging.message.Operation']]: d => new Operation(...d[1].map(i => parse(i))),
-    [proto['syft.messaging.message.ObjectMessage']]: d => new ObjectMessage(parse(d[1])),
-    [proto['syft.messaging.message.ObjectRequestMessage']]: d => new ObjectRequestMessage(parse(d[1])),
-    [proto['syft.messaging.message.IsNoneMessage']]: d => new IsNoneMessage(parse(d[1])),
-    [proto['syft.messaging.message.GetShapeMessage']]: d => new GetShapeMessage(parse(d[1])),
-    [proto['syft.messaging.message.ForceObjectDeleteMessage']]: d => new ForceObjectDeleteMessage(parse(d[1])),
-    [proto['syft.messaging.message.SearchMessage']]: d => new SearchMessage(parse(d[1])),
-    [proto['syft.messaging.message.PlanCommandMessage']]: d => new PlanCommandMessage(...d[1].map(i => parse(i)))
+    [proto['syft.messaging.message.Message']]: d => new Message(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.Operation']]: d => new Operation(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.ObjectMessage']]: d => new ObjectMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.ObjectRequestMessage']]: d => new ObjectRequestMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.IsNoneMessage']]: d => new IsNoneMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.GetShapeMessage']]: d => new GetShapeMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.ForceObjectDeleteMessage']]: d => new ForceObjectDeleteMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.SearchMessage']]: d => new SearchMessage(...d.map(i => parse(i))),
+    [proto['syft.messaging.message.PlanCommandMessage']]: d => new PlanCommandMessage(...d.map(i => parse(i)))
   };
 
   const parse = d => {

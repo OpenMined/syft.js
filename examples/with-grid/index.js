@@ -55,7 +55,7 @@ const startSyft = url => {
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
       // 2. Get the protocol and associated plan that are assigned to me
-      await mySyft.getProtocol('27083550402');
+      await mySyft.getProtocol('59466701815');
 
       console.log('PROTOCOL', mySyft.protocol);
       console.log('PLAN', mySyft.plan);

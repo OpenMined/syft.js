@@ -3,23 +3,8 @@ import PointerTensor from './pointer-tensor';
 
 import { torchToTF } from '../_helpers';
 
-export const CODES = {
-  CMD: 1,
-  OBJ: 2,
-  OBJ_REQ: 3,
-  OBJ_DEL: 4,
-  EXCEPTION: 5,
-  IS_NONE: 6,
-  GET_SHAPE: 7,
-  SEARCH: 8,
-  FORCE_OBJ_DEL: 9,
-  PLAN_CMD: 10
-};
-
 export class Message {
-  constructor(type, contents) {
-    this.type = type;
-
+  constructor(contents) {
     if (contents) {
       this.contents = contents;
     }
@@ -27,13 +12,13 @@ export class Message {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.Message'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class Operation extends Message {
   constructor(message, returnIds) {
-    super(CODES.CMD);
+    super();
 
     this.message = message;
     this.command = message[0];
@@ -45,7 +30,7 @@ export class Operation extends Message {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.Operation'];
-    return `(${TYPE}, (${this.type}, (${f(this.message)}, ${f(this.returnIds)})))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.message)}, ${f(this.returnIds)}))`; // prettier-ignore
   }
 
   execute(d, objects) {
@@ -107,73 +92,73 @@ export class Operation extends Message {
 
 export class ObjectMessage extends Message {
   constructor(contents) {
-    super(CODES.OBJ, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ObjectMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class ObjectRequestMessage extends Message {
   constructor(contents) {
-    super(CODES.OBJ_REQ, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ObjectRequestMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class IsNoneMessage extends Message {
   constructor(contents) {
-    super(CODES.IS_NONE, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.IsNoneMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class GetShapeMessage extends Message {
   constructor(contents) {
-    super(CODES.GET_SHAPE, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.GetShapeMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class ForceObjectDeleteMessage extends Message {
   constructor(contents) {
-    super(CODES.FORCE_OBJ_DEL, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ForceObjectDeleteMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class SearchMessage extends Message {
   constructor(contents) {
-    super(CODES.SEARCH, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.SearchMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class PlanCommandMessage extends Message {
   constructor(commandName, message) {
-    super(CODES.PLAN_CMD);
+    super();
 
     this.commandName = commandName;
     this.message = message;
@@ -181,6 +166,6 @@ export class PlanCommandMessage extends Message {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.PlanCommandMessage'];
-    return `(${TYPE}, (${this.type}, (${f(this.commandName)}, ${f(this.message)})))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.commandName)}, ${f(this.message)}))`; // prettier-ignore
   }
 }
