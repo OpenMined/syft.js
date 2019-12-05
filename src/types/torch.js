@@ -11,10 +11,10 @@ export class TorchTensor {
     this.serializer = serializer;
 
     // We need a TensorFlow.js tensor to interact with, but we'll still save all the info above
-    this._shape = bin[0];
+    this._shape = Array.from(bin[0]);
     this._type = bin[1];
     this._value = bin[2];
-    this._tfTensor = tf.tensor(this._value, this._shape.toArray(), this._type);
+    this._tfTensor = tf.tensor(this._value, this._shape, this._type);
   }
 
   serdeSimplify(f) {

@@ -54,6 +54,9 @@
       "<rootDir>/src/_errors.js",
       "<rootDir>/test/dummy"
     ],
+    "setupFiles": [
+      "<rootDir>/jest-globals.js"
+    ],
     "globals": {
       "window": {}
     }

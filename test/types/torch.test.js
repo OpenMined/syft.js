@@ -6,6 +6,7 @@ import {
   gradChain,
   tags,
   description,
+  serializer,
   torchSizeShape,
   torchSize2
 } from '../dummy/torch';
@@ -18,6 +19,7 @@ describe('TorchTensor', () => {
     expect(torchTensor.gradChain).toStrictEqual(gradChain);
     expect(torchTensor.tags).toStrictEqual(tags);
     expect(torchTensor.description).toStrictEqual(description);
+    expect(torchTensor.serializer).toStrictEqual(serializer);
   });
 });
 
