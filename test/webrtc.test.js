@@ -14,7 +14,7 @@ import {
   RTCPeerConnection,
   RTCSessionDescription,
   RTCIceCandidate
-} from './_webrtc-mocks';
+} from './mocks/webrtc';
 global.RTCPeerConnection = RTCPeerConnection;
 global.RTCSessionDescription = RTCSessionDescription;
 global.RTCIceCandidate = RTCIceCandidate;

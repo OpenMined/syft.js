@@ -37,5 +37,5 @@ export const torchToTF = (command, logger) => {
   // If not, we will need to do a lookup of the command in question
   logger.log(CANNOT_FIND_COMMAND(command));
 
-  return 'add';
+  return null;
 };
