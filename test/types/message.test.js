@@ -1,5 +1,4 @@
 import {
-  type,
   contents,
   detailedMessage,
   message,
@@ -17,7 +16,6 @@ import {
 
 describe('Message', () => {
   test('can be properly constructed', () => {
-    expect(detailedMessage.type).toStrictEqual(type);
     expect(detailedMessage.contents).toStrictEqual(contents);
   });
 });
@@ -26,6 +24,10 @@ describe('Operation', () => {
   test('can be properly constructed', () => {
     expect(detailedOperation.message).toStrictEqual(message);
     expect(detailedOperation.returnIds).toStrictEqual(returnIds);
+  });
+
+  test('can execute a plan', () => {
+    // TODO: Gotta do this one...
   });
 });
 

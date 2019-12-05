@@ -61,15 +61,21 @@ export const simplifiedProcedure = runReplacers(
 );
 
 // ----- STATE ----- //
+export const serializer = 'all';
+export const simplifiedSerializer = `(${proto['str']}, (b'${serializer}'))`;
+export const detailedTorchTensorBin = new Tuple(new Tuple(1), 'float32', new List(4.2)); // prettier-ignore
+export const simplifiedTorchTensorBin = `(6, ((6, (1,)), (5, (b'float32',)), (1, (4.2,))))`; // prettier-ignore
+
 export const detailedStateIds = new List(4863941835);
-export const detailedTensors = new List(new TorchTensor(4863941835, 'somethinghere', null, null, null, null)); // prettier-ignore
+export const detailedTensors = new List(new TorchTensor(4863941835, detailedTorchTensorBin, null, null, null, null, serializer)); // prettier-ignore
 
 export const simplifiedStateIdsList = runReplacers(
   `(${proto['list']}, (${detailedStateIds.join()},))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
+
 export const simplifiedTensorsList = runReplacers(
-  `(${proto['list']}, ((${proto['torch.Tensor']}, (4863941835, (5,(b'somethinghere')), null, null, null, null)),))`, // prettier-ignore
+  `(${proto['list']}, ((${proto['torch.Tensor']}, (4863941835, ${simplifiedTorchTensorBin}, null, null, null, null, ${simplifiedSerializer})),))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
 
