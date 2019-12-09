@@ -1,7 +1,7 @@
 // A simple logging function
 export default class Logger {
   constructor(system, verbose) {
-    if(!Logger.instance) {
+    if (!Logger.instance) {
       this.system = system;
       this.verbose = verbose;
       Logger.instance = this;
