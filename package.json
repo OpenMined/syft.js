@@ -49,10 +49,8 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "<rootDir>/src/_errors.js",
-      "<rootDir>/test/dummy"
+    "collectCoverageFrom": [
+      "**/src/**/*.js"
     ],
     "setupFiles": [
       "<rootDir>/jest-globals.js"
