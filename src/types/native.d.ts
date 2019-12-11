@@ -19,8 +19,8 @@ export declare class Range implements SerdeSimplifiable {
 
 // Instead of using primitive "Set", we create an extenion which is SerdeSimplifiable
 // Now this can be used where needed, or if we need primitive Set we can use that aswell
-// This will cause a name conflit so import with caution
-export declare class Set extends Set implements SerdeSimplifiable {
+export declare class SerdeSimplifiableSet extends Set
+  implements SerdeSimplifiable {
   serdeSimplify(f: any): string;
 }
 
@@ -34,8 +34,8 @@ export declare class Slice implements SerdeSimplifiable {
 
 // Instead of using primitive "String", we create an extenion which is SerdeSimplifiable
 // Now this can be used where needed, or if we need primitive Set we can use that aswell
-// This will cause a name conflit so import with caution
-export declare class String extends String implements SerdeSimplifiable {
+export declare class SerdeSimplifiableString extends String
+  implements SerdeSimplifiable {
   serdeSimplify(f: any): string;
 }
 
