@@ -7,16 +7,16 @@ export declare interface SerdeSimplifiable {
 // Message Types
 ////////////////
 export declare class Message implements SerdeSimplifiable {
-  contents: any;
+  contents: Array<any>;
 
   serdeSimplify(f: any): string;
 }
 
 export declare class Operation extends Message {
-  message: any;
-  returnIds: any;
-  private _command: any;
-  private _self: any;
+  message: Message;
+  returnIds: Array<number>;
+  private _command: string;
+  private _self: Operation;
   private _args: any;
   private _kwargs: any;
 
@@ -37,8 +37,8 @@ export declare class ForceObjectDeleteMessage extends Message {}
 export declare class SearchMessage extends Message {}
 
 export declare class PlanCommandMessage extends Message {
-  commandName: any;
-  message: any;
+  commandName: string;
+  message: Message;
 }
 
 ///////////////
@@ -55,9 +55,9 @@ export declare class List extends Array implements SerdeSimplifiable {
 }
 
 export declare class Range implements SerdeSimplifiable {
-  start: Number;
-  end: Number;
-  step: Number;
+  start: number;
+  end: number;
+  step: number;
 
   serdeSimplify(f: any): string;
 }
@@ -70,9 +70,9 @@ export declare class SerdeSimplifiableSet extends Set
 }
 
 export declare class Slice implements SerdeSimplifiable {
-  start: Number;
-  end: Number;
-  step: Number;
+  start: number;
+  end: number;
+  step: number;
 
   serdeSimplify(f: any): string;
 }
@@ -92,31 +92,31 @@ export declare class Tuple extends TupleW implements SerdeSimplifiable {
 // Plan Types
 /////////////
 export declare class Plan implements SerdeSimplifiable {
-  id: any;
-  procedure: any;
-  state: any;
-  includeState: any;
-  inputShape: any;
-  outputShape: any;
-  name: any;
-  tags: any;
-  description: any;
+  id: number;
+  procedure: Procedure;
+  state: State;
+  includeState: boolean;
+  inputShape: boolean;
+  outputShape: Array<any>;
+  name: string;
+  tags: Array<string>;
+  description: string;
 
   serdeSimplify(f: any): string;
 }
 
 export declare class Procedure implements SerdeSimplifiable {
-  operations: any;
-  argIds: any;
-  resultIds: any;
-  promiseOutId: any;
+  operations: Array<string>; // the array of (serialized) operations
+  argIds: Array<number>; // the argument ids present in the operations
+  resultIds: Array<number>; // the result ids present in the operations
+  promiseOutId: number;
 
   serdeSimplify(f: any): string;
 }
 
 export declare class State implements SerdeSimplifiable {
-  stateIds: any;
-  tensors: any;
+  stateIds: Array<number>;
+  tensors: Array<any>;
 
   serdeSimplify(f: any): string;
 }
@@ -126,9 +126,9 @@ export declare class State implements SerdeSimplifiable {
 //////////////////////
 
 export declare class PointerTensor implements SerdeSimplifiable {
-  id: any;
-  idAtLocation: any;
-  locationId: any;
+  id: number;
+  idAtLocation: number;
+  locationId: number;
   pointToAttr: any;
   shape: any;
   garbageCollectData: any;
@@ -141,10 +141,10 @@ export declare class PointerTensor implements SerdeSimplifiable {
 /////////////////
 
 export declare class Protocol implements SerdeSimplifiable {
-  id: any;
-  tags: any;
+  id: number;
+  tags: Array<string>;
   description: string;
-  plans: any;
+  plans: Array<Plan>;
   workersResolved: any;
 
   serdeSimplify(f: any): string;
@@ -155,11 +155,11 @@ export declare class Protocol implements SerdeSimplifiable {
 //////////////
 
 export declare class TorchTensor implements SerdeSimplifiable {
-  id: any;
+  id: number;
   bin: any;
   chain: any;
   gradChain: any;
-  tags: any;
+  tags: Array<string>;
   description: string;
   serializer: any;
   private _shape: Array<any>;
