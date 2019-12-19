@@ -41,6 +41,7 @@
     "release": "np",
     "deploy": "./copy-examples.sh && gh-pages -d tmp && rm -rf tmp"
   },
+  "types": "src/types/index.d.ts",
   "browserslist": "> 0.25%, not dead",
   "husky": {
     "hooks": {
