@@ -2,28 +2,29 @@
 The following is a step-by-step explanation of what's going on below:
 
 1. Initiate syft.js and connect to the Grid
-2. Get the protocol and assigned plan that this user is supposed to work on
+2. Get the protocol and assigned plan that this worker is supposed to work on
  - If there is no workerId, Grid will generate one for us
- - If there is no scopeId, Grid will generate a scope and make this user the creator
- - Altogether, Grid will send back this user's information, their protocol, their assigned plan, and the workerId's and assignments of the other participants
+ - If there is no scopeId, Grid will generate a scope and make this worker the creator
+ - Altogether, Grid will send back this worker's information, their protocol, their assigned plan, and the workerId's and assignments of the other participants
 3. Links are created whereby other participants may join
  - These links are to be shared with the other participants
- - Note that each user will need to request their protocol and assigned plan from the grid... they won't have access to another user's assigned plan
+ - Note that each worker will need to request their protocol and assigned plan from the grid... they won't have access to another worker's assigned plan
 4. Create a direct peer-to-peer connection with the other participants
  - This is done using WebRTC under the hood using a mesh network by which every peer has a private data connection to every other peer
  - This is an asynchronous action, meaning that peers may come and go at any point
  - The syft.js library is capable of handling connections, disconnections, and reconnections without issue
-5. Execute the plan using data supplied by the user
+5. Execute the plan using data supplied by the worker
  - The executePlan() function always returns a Promise, be sure to handle both a resolved and a rejected case
 */
 
-// In the real world: import syft from 'syft.js';
-import Syft from '../../src';
 import {
   getQueryVariable,
   writeIdentityToDOM,
   writeLinksToDOM
 } from './_helpers';
+
+// In the real world: import syft from 'syft.js';
+import Syft from '../../src';
 
 const gridServer = document.getElementById('grid-server');
 const protocol = document.getElementById('protocol');
@@ -71,7 +72,7 @@ const startSyft = (url, protocolId) => {
       );
 
       // Push the workerId and scopeId onto the current URL if they aren't already there
-      // This isn't strictly necessary, but if a user is a creator of a scope (instead of a participant),
+      // This isn't strictly necessary, but if a worker is a creator of a scope (instead of a participant),
       // then they won't be able to refresh and rejoin the scope they created
       if (!workerId && !scopeId) {
         window.history.pushState(

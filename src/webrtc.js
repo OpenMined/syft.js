@@ -67,7 +67,7 @@ export default class WebRTCClient {
       }
     };
 
-    // If "to" is specified, send to that users
+    // If "to" is specified, send to that workers
     if (
       to &&
       to !== this.workerId &&
@@ -77,7 +77,7 @@ export default class WebRTCClient {
       send(this.peers[to].channel, message);
     }
 
-    // Otherwise, send to each user specified
+    // Otherwise, send to each worker specified
     else {
       this._forEachPeer(peer => {
         if (peer.channel) {
@@ -226,7 +226,7 @@ export default class WebRTCClient {
       this.createConnection(workerId);
     }
 
-    // Get the peer connection of that user and add the ICE candidate to their list
+    // Get the peer connection of that worker and add the ICE candidate to their list
     const pc = this.peers[workerId].connection;
 
     pc.addIceCandidate(new RTCIceCandidate(data))
@@ -247,7 +247,7 @@ export default class WebRTCClient {
       this.createConnection(workerId);
     }
 
-    // Get the peer connection of that user
+    // Get the peer connection of that worker
     const pc = this.peers[workerId].connection;
 
     // Set the remote description to be the SDP offer
@@ -280,7 +280,7 @@ export default class WebRTCClient {
   remoteAnswerReceived(workerId, data) {
     this.logger.log('WebRTC: Remote answer received');
 
-    // Get the peer connection of that user and set the remote description to be the SDP offer
+    // Get the peer connection of that worker and set the remote description to be the SDP offer
     const pc = this.peers[workerId].connection;
 
     pc.setRemoteDescription(new RTCSessionDescription(data))

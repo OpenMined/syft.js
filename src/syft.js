@@ -1,18 +1,19 @@
 import {
-  SOCKET_STATUS,
   GET_PROTOCOL,
+  SOCKET_STATUS,
   WEBRTC_INTERNAL_MESSAGE,
   WEBRTC_JOIN_ROOM,
-  WEBRTC_PEER_LEFT,
   WEBRTC_PEER_CONFIG,
+  WEBRTC_PEER_LEFT,
   WEBRTC_PEER_OPTIONS
 } from './_constants';
-import { NO_PLAN, PLAN_ALREADY_COMPLETED, NOT_ENOUGH_ARGS } from './_errors';
+import { NOT_ENOUGH_ARGS, NO_PLAN, PLAN_ALREADY_COMPLETED } from './_errors';
+
 import EventObserver from './events';
 import Logger from './logger';
-import { detail } from './serde';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
+import { detail } from './serde';
 import { pickTensors } from './_helpers';
 
 export default class Syft {
@@ -48,7 +49,7 @@ export default class Syft {
     // For creating event listeners
     this.observer = new EventObserver();
 
-    // For creating verbose logging should the user desire
+    // For creating verbose logging should the worker desire
     this.logger = new Logger('syft.js', verbose);
 
     // Create a socket connection at this.socket
@@ -73,7 +74,7 @@ export default class Syft {
     });
   }
 
-  // Execute the current plan given data the user passes
+  // Execute the current plan given data the worker passes
   executePlan(...data) {
     return new Promise((resolve, reject) => {
       // If we don't have a plan yet, calling this function is premature
@@ -130,10 +131,10 @@ export default class Syft {
           });
         });
 
-        // Return them to the user
+        // Return them to the worker
         resolve(resolvedResultingTensors);
       } else {
-        // If the plan wasn't finished, notify the user that they may try again once they have the appropriate information
+        // If the plan wasn't finished, notify the worker that they may try again once they have the appropriate information
         reject(
           'There is not enough information to execute this plan, but we have saved your progress!'
         );
@@ -184,14 +185,14 @@ export default class Syft {
         }
 
         // Save our workerId if we don't already have it (also for the socket connection)
-        this.workerId = data.user.workerId;
+        this.workerId = data.worker.workerId;
         this.socket.workerId = this.workerId;
 
         // Save our scopeId if we don't already have it
-        this.scopeId = data.user.scopeId;
+        this.scopeId = data.worker.scopeId;
 
         // Save our role
-        this.role = data.user.role;
+        this.role = data.worker.role;
 
         // Save the other participant workerId's
         this.participants = data.participants;
