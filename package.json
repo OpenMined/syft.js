@@ -34,13 +34,14 @@
   "scripts": {
     "start": "rollup -cw",
     "build": "rollup -c",
-    "prepare": "npm run build",
+    "prepublish": "npm run build",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "release": "np",
     "deploy": "./copy-examples.sh && gh-pages -d tmp && rm -rf tmp"
   },
+  "types": "src/types/index.d.ts",
   "browserslist": "> 0.25%, not dead",
   "husky": {
     "hooks": {
@@ -49,10 +50,11 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "<rootDir>/src/_errors.js",
-      "<rootDir>/test/dummy"
+    "collectCoverageFrom": [
+      "**/src/**/*.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest-globals.js"
     ],
     "globals": {
       "window": {}

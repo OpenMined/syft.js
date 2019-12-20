@@ -13,6 +13,8 @@ The following is a step-by-step explanation of what's going on below:
  - This is done using WebRTC under the hood using a mesh network by which every peer has a private data connection to every other peer
  - This is an asynchronous action, meaning that peers may come and go at any point
  - The syft.js library is capable of handling connections, disconnections, and reconnections without issue
+5. Execute the plan using data supplied by the worker
+ - The executePlan() function always returns a Promise, be sure to handle both a resolved and a rejected case
 */
 
 import {
@@ -25,6 +27,7 @@ import {
 import Syft from '../../src';
 
 const gridServer = document.getElementById('grid-server');
+const protocol = document.getElementById('protocol');
 const connectButton = document.getElementById('connect');
 const disconnectButton = document.getElementById('disconnect');
 const appContainer = document.getElementById('app');
@@ -36,12 +39,13 @@ appContainer.style.display = 'none';
 connectButton.onclick = () => {
   appContainer.style.display = 'block';
   gridServer.style.display = 'none';
+  protocol.style.display = 'none';
   connectButton.style.display = 'none';
 
-  startSyft(gridServer.value);
+  startSyft(gridServer.value, protocol.value);
 };
 
-const startSyft = url => {
+const startSyft = (url, protocolId) => {
   const workerId = getQueryVariable('worker_id');
   const scopeId = getQueryVariable('scope_id');
 
@@ -50,30 +54,17 @@ const startSyft = url => {
     verbose: true,
     url,
     workerId,
-    scopeId
+    scopeId,
+    protocolId
   });
-
-  submitButton.onclick = () => {
-    mySyft.sendToParticipants(textarea.value);
-
-    textarea.value = '';
-  };
-
-  disconnectButton.onclick = () => {
-    mySyft.disconnectFromParticipants();
-    mySyft.disconnectFromGrid();
-
-    appContainer.style.display = 'none';
-    gridServer.style.display = 'block';
-    connectButton.style.display = 'block';
-  };
 
   mySyft.onSocketStatus(async ({ connected }) => {
     if (connected) {
       // 2. Get the protocol and associated plan that are assigned to me
-      const protocol = await mySyft.getProtocol('18797824900');
+      await mySyft.getProtocol();
 
-      console.log('PROTOCOL', protocol);
+      console.log('PROTOCOL', mySyft.protocol);
+      console.log('PLAN', mySyft.plan);
 
       // Write my identity to the screen - not required
       writeIdentityToDOM(
@@ -106,6 +97,42 @@ const startSyft = url => {
 
       // 4. Create a direct P2P connection with the other participants
       mySyft.connectToParticipants();
+
+      // 5. Execute plan with supplied data
+      const data = tf.tensor([
+        [-1, 2],
+        [3, -4]
+      ]);
+
+      mySyft
+        .executePlan(data)
+        .then(results => {
+          // For each resultId specified by the plan, output the resulting value
+          results.forEach(result => {
+            result.value
+              .array()
+              .then(arrayValue => console.log(result.id, arrayValue));
+          });
+        })
+        .catch(error => {
+          console.log('Handle the error...', error);
+        });
     }
   });
+
+  submitButton.onclick = () => {
+    mySyft.sendToParticipants(textarea.value);
+
+    textarea.value = '';
+  };
+
+  disconnectButton.onclick = () => {
+    mySyft.disconnectFromParticipants();
+    mySyft.disconnectFromGrid();
+
+    appContainer.style.display = 'none';
+    gridServer.style.display = 'inline-block';
+    protocol.style.display = 'inline-block';
+    connectButton.style.display = 'inline-block';
+  };
 };

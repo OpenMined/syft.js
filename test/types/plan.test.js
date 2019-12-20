@@ -3,6 +3,8 @@ import {
   id,
   includeState,
   isBuilt,
+  inputShape,
+  outputShape,
   name,
   tags,
   description,
@@ -12,7 +14,8 @@ import {
   detailedProcedure,
   detailedOperations,
   detailedArgIds,
-  detailedResultIds
+  detailedResultIds,
+  detailedPromiseOutId
 } from '../dummy/plan';
 
 describe('State', () => {
@@ -27,6 +30,7 @@ describe('Procedure', () => {
     expect(detailedProcedure.operations).toStrictEqual(detailedOperations);
     expect(detailedProcedure.argIds).toStrictEqual(detailedArgIds);
     expect(detailedProcedure.resultIds).toStrictEqual(detailedResultIds);
+    expect(detailedProcedure.promiseOutId).toStrictEqual(detailedPromiseOutId);
   });
 });
 
@@ -37,6 +41,8 @@ describe('Plan', () => {
     expect(detailedPlan.state).toStrictEqual(detailedState);
     expect(detailedPlan.includeState).toStrictEqual(includeState);
     expect(detailedPlan.isBuilt).toStrictEqual(isBuilt);
+    expect(detailedPlan.inputShape).toStrictEqual(inputShape);
+    expect(detailedPlan.outputShape).toStrictEqual(outputShape);
     expect(detailedPlan.name).toStrictEqual(name);
     expect(detailedPlan.tags).toStrictEqual(tags);
     expect(detailedPlan.description).toStrictEqual(description);

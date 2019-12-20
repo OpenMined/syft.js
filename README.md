@@ -50,8 +50,19 @@ For further API documentation, [please check that out here](https://docs.openmin
 2. Run `npm install`
 3. Run `npm start`
 4. Do your work.
-5. Push to your clone
+5. Push to your fork
 6. Submit a PR to openmined/syft.js
+
+### Running Demos
+
+It's important to note that each of the examples are self-sustaining projects. This means that they run independent of the `npm start` command run at the root syft.js directory. In order to run the demos, please do the following:
+
+1. Make sure that grid.js is [running and seeded with data](https://github.com/OpenMined/grid.js/#development).
+2. Open a terminal to the root syft.js directory.
+3. Run `npm install` and then `npm start`.
+4. Open a new terminal tab and `cd` into one of the examples.
+5. Run `npm install` and then `npm start` inside of that example's directory. This should open a new browser tab for that example.
+6. Leave both tasks going as you proceed with normal development. The example will automatically refresh in your browser every time you make a change to syft.js or to the example itself.
 
 ### Contributing
 

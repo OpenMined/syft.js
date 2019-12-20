@@ -1,22 +1,11 @@
 import { default as proto } from '../proto';
+import PointerTensor from './pointer-tensor';
 
-export const CODES = {
-  CMD: 1,
-  OBJ: 2,
-  OBJ_REQ: 3,
-  OBJ_DEL: 4,
-  EXCEPTION: 5,
-  IS_NONE: 6,
-  GET_SHAPE: 7,
-  SEARCH: 8,
-  FORCE_OBJ_DEL: 9,
-  PLAN_CMD: 10
-};
+import { torchToTF } from '../_helpers';
+import { TorchTensor } from './torch';
 
 export class Message {
-  constructor(type, contents) {
-    this.type = type;
-
+  constructor(contents) {
     if (contents) {
       this.contents = contents;
     }
@@ -24,93 +13,173 @@ export class Message {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.Message'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class Operation extends Message {
   constructor(message, returnIds) {
-    super(CODES.CMD);
+    super();
 
     this.message = message;
     this.returnIds = returnIds;
+
+    this._command = message[0];
+    this._self = message[1];
+    this._args = message[2];
+    this._kwargs = message[3];
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.Operation'];
-    return `(${TYPE}, (${this.type}, (${f(this.message)}, ${f(this.returnIds)})))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.message)}, ${f(this.returnIds)}))`; // prettier-ignore
+  }
+
+  execute(objects, logger) {
+    // A helper function for helping us determine if all PointerTensors inside of "this._args" also exist as tensors inside of "objects"
+    const haveValuesForAllArgs = args => {
+      let enoughInfo = true;
+
+      args.forEach(arg => {
+        if (
+          arg instanceof PointerTensor &&
+          !objects.hasOwnProperty(arg.idAtLocation)
+        ) {
+          enoughInfo = false;
+        }
+      });
+
+      return enoughInfo;
+    };
+
+    // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
+    const pullTensorsFromArgs = args => {
+      const resolvedArgs = [];
+
+      args.forEach(arg => {
+        if (arg instanceof PointerTensor) {
+          const tensor = objects[arg.idAtLocation];
+
+          if (tensor && tensor instanceof tf.Tensor) {
+            resolvedArgs.push(objects[arg.idAtLocation]);
+          } else if (tensor instanceof TorchTensor) {
+            resolvedArgs.push(objects[arg.idAtLocation]._tfTensor);
+          }
+        } else if (arg instanceof TorchTensor) {
+          resolvedArgs.push(arg._tfTensor);
+        } else resolvedArgs.push(null);
+      });
+
+      return resolvedArgs;
+    };
+
+    // TODO: We need to do something with kwargs!
+
+    // Make sure to convert the command name that was given into a valid TensorFlow.js command
+    const command = torchToTF(this._command, logger);
+
+    logger.log(
+      `Given command: ${this._command}, converted command: ${command}`
+    );
+
+    // If we're executing the command against itself only, let's roll!
+    if (this._self === null) {
+      if (haveValuesForAllArgs(this._args)) {
+        // Resolve all PointerTensors in our arguments to operable tensors
+        const args = pullTensorsFromArgs(this._args);
+
+        return tf[command](...args);
+      }
+
+      // Otherwise, we don't have enough information, return null
+      return null;
+    } else {
+      if (haveValuesForAllArgs(this._args)) {
+        // Get the actual tensor inside the PointerTensor "this.self"
+        const self = objects[this._self.idAtLocation];
+
+        // Resolve all PointerTensors in our arguments to operable tensors
+        const args = pullTensorsFromArgs(this._args);
+
+        // Now we can execute a multi-argument method
+        return tf[command](self, ...args);
+      }
+
+      // Otherwise, we don't have enough information, return null
+      return null;
+    }
   }
 }
 
 export class ObjectMessage extends Message {
   constructor(contents) {
-    super(CODES.OBJ, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ObjectMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class ObjectRequestMessage extends Message {
   constructor(contents) {
-    super(CODES.OBJ_REQ, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ObjectRequestMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class IsNoneMessage extends Message {
   constructor(contents) {
-    super(CODES.IS_NONE, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.IsNoneMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class GetShapeMessage extends Message {
   constructor(contents) {
-    super(CODES.GET_SHAPE, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.GetShapeMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class ForceObjectDeleteMessage extends Message {
   constructor(contents) {
-    super(CODES.FORCE_OBJ_DEL, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ForceObjectDeleteMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class SearchMessage extends Message {
   constructor(contents) {
-    super(CODES.SEARCH, contents);
+    super(contents);
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.SearchMessage'];
-    return `(${TYPE}, (${this.type}, ${f(this.contents)}))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
 export class PlanCommandMessage extends Message {
   constructor(commandName, message) {
-    super(CODES.PLAN_CMD);
+    super();
 
     this.commandName = commandName;
     this.message = message;
@@ -118,6 +187,6 @@ export class PlanCommandMessage extends Message {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.PlanCommandMessage'];
-    return `(${TYPE}, (${this.type}, (${f(this.commandName)}, ${f(this.message)})))`; // prettier-ignore
+    return `(${TYPE}, (${f(this.commandName)}, ${f(this.message)}))`; // prettier-ignore
   }
 }

@@ -1,9 +1,9 @@
 import { default as proto } from '../../src/proto';
 import { runReplacers, SIMPLIFY_REPLACERS } from '../../src/serde';
+
 import { List, Tuple, Dict } from '../../src/types/native';
 import { Plan, Procedure, State } from '../../src/types/plan';
 import { TorchTensor } from '../../src/types/torch';
-
 import { Operation } from '../../src/types/message';
 import PointerTensor from '../../src/types/pointer-tensor';
 import { TorchSize } from '../../src/types/torch';
@@ -36,11 +36,11 @@ export const detailedSecondOperation = new Operation(
 );
 
 export const simplifiedFirstOperation = runReplacers(
-  `(${proto['syft.messaging.message.Operation']}, (1, ((${proto['tuple']}, ((${proto['str']}, (b'abs')), ${simplifiedFirstOperationPointerTensor}, (${proto['tuple']}, ()), (${proto['dict']}, ()))), (${proto['list']}, (62869536441,)))))`, // prettier-ignore
+  `(${proto['syft.messaging.message.Operation']}, ((${proto['tuple']}, ((${proto['str']}, (b'abs')), ${simplifiedFirstOperationPointerTensor}, (${proto['tuple']}, ()), (${proto['dict']}, ()))), (${proto['list']}, (62869536441,))))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
 export const simplifiedSecondOperation = runReplacers(
-  `(${proto['syft.messaging.message.Operation']}, (1, ((${proto['tuple']}, ((${proto['str']}, (b'__add__')), ${simplifiedSecondOperationPointerTensor}, (${proto['tuple']}, (${simplifiedThirdOperationPointerTensor},)), (${proto['dict']}, ()))), (${proto['list']}, (3263650475,)))))`, // prettier-ignore
+  `(${proto['syft.messaging.message.Operation']}, ((${proto['tuple']}, ((${proto['str']}, (b'__add__')), ${simplifiedSecondOperationPointerTensor}, (${proto['tuple']}, (${simplifiedThirdOperationPointerTensor},)), (${proto['dict']}, ()))), (${proto['list']}, (3263650475,))))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
 
@@ -52,23 +52,30 @@ export const simplifiedOperations = runReplacers(
 
 export const detailedArgIds = new Tuple(51684948173);
 export const detailedResultIds = new Tuple(3263650475);
+export const detailedPromiseOutId = null;
 
-export const detailedProcedure = new Procedure(detailedOperations, detailedArgIds, detailedResultIds); // prettier-ignore
+export const detailedProcedure = new Procedure(detailedOperations, detailedArgIds, detailedResultIds, detailedPromiseOutId); // prettier-ignore
 export const simplifiedProcedure = runReplacers(
-  `(${proto['syft.messaging.plan.procedure.Procedure']}, (${simplifiedOperations}, (${proto['tuple']}, (51684948173,)), (${proto['tuple']}, (3263650475,))))`, // prettier-ignore
+  `(${proto['syft.messaging.plan.procedure.Procedure']}, (${simplifiedOperations}, (${proto['tuple']}, (51684948173,)), (${proto['tuple']}, (3263650475,)), None))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
 
 // ----- STATE ----- //
+export const serializer = 'all';
+export const simplifiedSerializer = `(${proto['str']}, (b'${serializer}'))`;
+export const detailedTorchTensorBin = new Tuple(new Tuple(1), 'float32', new List(4.2)); // prettier-ignore
+export const simplifiedTorchTensorBin = `(6, ((6, (1,)), (5, (b'float32',)), (1, (4.2,))))`; // prettier-ignore
+
 export const detailedStateIds = new List(4863941835);
-export const detailedTensors = new List(new TorchTensor(4863941835, 'somethinghere', null, null, null, null)); // prettier-ignore
+export const detailedTensors = new List(new TorchTensor(4863941835, detailedTorchTensorBin, null, null, null, null, serializer)); // prettier-ignore
 
 export const simplifiedStateIdsList = runReplacers(
   `(${proto['list']}, (${detailedStateIds.join()},))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
+
 export const simplifiedTensorsList = runReplacers(
-  `(${proto['list']}, ((${proto['torch.Tensor']}, (4863941835, (5,(b'somethinghere')), null, null, null, null)),))`, // prettier-ignore
+  `(${proto['list']}, ((${proto['torch.Tensor']}, (4863941835, ${simplifiedTorchTensorBin}, null, null, null, null, ${simplifiedSerializer})),))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );
 
@@ -81,14 +88,17 @@ export const simplifiedState = runReplacers(
 export const id = 57895708650;
 export const includeState = true;
 export const isBuilt = true;
+export const inputShape = new TorchSize([2]);
+export const outputShape = null;
 export const name = 'plan';
 export const tags = null;
 export const description = null;
 
+export const simplifiedInputShape = `(${proto['torch.Size']}, (${inputShape.size}))`;
 export const simplifiedPlanName = `(${proto['str']}, (b'${name}'))`;
 
-export const detailedPlan = new Plan(id, detailedProcedure, detailedState, includeState, isBuilt, name, tags, description); // prettier-ignore
+export const detailedPlan = new Plan(id, detailedProcedure, detailedState, includeState, isBuilt, inputShape, outputShape, name, tags, description); // prettier-ignore
 export const simplifiedPlan = runReplacers(
-  `(${proto['syft.messaging.plan.plan.Plan']}, (${id}, ${simplifiedProcedure}, ${simplifiedState}, ${includeState}, ${isBuilt}, ${simplifiedPlanName}, ${tags}, ${description}))`, // prettier-ignore
+  `(${proto['syft.messaging.plan.plan.Plan']}, (${id}, ${simplifiedProcedure}, ${simplifiedState}, ${includeState}, ${isBuilt}, ${simplifiedInputShape}, None, ${simplifiedPlanName}, ${tags}, ${description}))`, // prettier-ignore
   SIMPLIFY_REPLACERS
 );

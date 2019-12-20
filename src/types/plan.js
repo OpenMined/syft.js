@@ -7,6 +7,8 @@ export class Plan {
     state,
     includeState,
     isBuilt,
+    inputShape,
+    outputShape,
     name,
     tags,
     description
@@ -16,6 +18,8 @@ export class Plan {
     this.state = state;
     this.includeState = includeState;
     this.isBuilt = isBuilt;
+    this.inputShape = inputShape;
+    this.outputShape = outputShape;
     this.name = name;
     this.tags = tags;
     this.description = description;
@@ -23,21 +27,22 @@ export class Plan {
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.plan.plan.Plan'];
-    const args = ['id', 'procedure', 'state', 'includeState', 'isBuilt', 'name', 'tags', 'description']; // prettier-ignore
+    const args = ['id', 'procedure', 'state', 'includeState', 'isBuilt', 'inputShape', 'outputShape', 'name', 'tags', 'description']; // prettier-ignore
     return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
   }
 }
 
 export class Procedure {
-  constructor(operations, argIds, resultIds) {
+  constructor(operations, argIds, resultIds, promiseOutId) {
     this.operations = operations;
     this.argIds = argIds;
     this.resultIds = resultIds;
+    this.promiseOutId = promiseOutId;
   }
 
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.plan.procedure.Procedure'];
-    const args = ['operations', 'argIds', 'resultIds']; // prettier-ignore
+    const args = ['operations', 'argIds', 'resultIds', 'promiseOutId']; // prettier-ignore
     return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
   }
 }
