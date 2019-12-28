@@ -32,7 +32,7 @@ export const SIMPLIFY_REPLACERS = [
 export const DETAIL_REPLACERS = [
   [/\(/g, '['], // Convert all Python tuples into a Javascript Array
   [/\)/g, ']'],
-  [/b'(.*?)'/g, "'$1'"], // Convert all undefined 'b' functions everywhere, remove them
+  [/b'/g, "'"], // Convert all undefined 'b' functions everywhere, remove them
   [/'/g, '"'], // Convert all single quotes to double quotes so JSON can parse correctly
   [/None/g, null], // Convert all Nones to nulls
   [/False/g, false], // Convert all False to false
