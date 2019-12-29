@@ -1,3 +1,15 @@
 node_modules
 coverage
+examples
+src
+test
+tmp
+yarn.lock
 .DS_Store
+.idea
+.babelrc
+.prettierrc
+.travis.yml
+copy-examples.sh
+jest-globals.js
+rollup.config.js
