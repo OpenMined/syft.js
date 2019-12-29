@@ -88,7 +88,7 @@ export const detail = data => {
     [proto['torch.Size']]: d => new TorchSize(d),
     [proto['syft.messaging.plan.plan.Plan']]: d => new Plan(...d.map(i => parse(i))),
     [proto['syft.messaging.plan.state.State']]: d => new State(...d.map(i => parse(i))),
-    [proto['syft.messaging.plan.procedure.Procedure']]: d => new Procedure(d[0].map(i => parse(i)), ...d.slice(1).map(i => parse(i))),
+    [proto['syft.messaging.plan.procedure.Procedure']]: d => new Procedure(...d.map(i => parse(i))),
     [proto['syft.messaging.protocol.Protocol']]: d => new Protocol(...d.map(i => parse(i))),
     [proto['syft.generic.pointers.pointer_tensor.PointerTensor']]: d => new PointerTensor(...d.map(i => parse(i))),
     [proto['syft.messaging.message.Message']]: d => new Message(...d.map(i => parse(i))),

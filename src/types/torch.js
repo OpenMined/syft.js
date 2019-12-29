@@ -1,4 +1,5 @@
 import { default as proto } from '../proto';
+import * as tf from '@tensorflow/tfjs';
 
 export class TorchTensor {
   constructor(id, bin, chain, gradChain, tags, description, serializer) {

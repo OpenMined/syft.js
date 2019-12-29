@@ -1,6 +1,7 @@
 import { TorchTensor } from './types/torch';
 import PointerTensor from './types/pointer-tensor';
 import { CANNOT_FIND_COMMAND } from './_errors';
+import * as tf from '@tensorflow/tfjs';
 
 export const pickTensors = tree => {
   const objects = {};

@@ -39,7 +39,8 @@
 
     <title>syft.js Example</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
+    <!-- NOTE: TFJS version must match with one in package-lock.json -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.5.1/dist/tf.min.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
   </head>
   <body>
@@ -71,7 +72,7 @@
       >.
     </p>
     <input type="text" id="grid-server" value="ws://localhost:3000" />
-    <input type="text" id="protocol" value="5259950754" />
+    <input type="text" id="protocol" value="50801316202" />
     <button id="connect">Connect to grid.js server</button>
     <div id="app">
       <button id="disconnect">Disconnect</button>
