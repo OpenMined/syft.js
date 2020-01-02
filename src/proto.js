@@ -1,4 +1,4 @@
-import { proto_info } from 'pysyft-proto';
+import { proto_info } from 'syft-proto';
 
 const PROTO = {};
 
