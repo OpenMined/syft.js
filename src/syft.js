@@ -14,6 +14,8 @@ import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 import { detail } from './serde';
+import { unserialize } from './protobuf';
+import { protobuf } from './proto';
 import { pickTensors } from './_helpers';
 
 export default class Syft {
@@ -198,8 +200,24 @@ export default class Syft {
         this.participants = data.participants;
 
         // Save the protocol and plan assignment after having Serde detail them
-        const detailedProtocol = detail(data.protocol);
-        const detailedPlan = detail(data.plan);
+        let detailedProtocol;
+        let detailedPlan;
+        try {
+          detailedProtocol = detail(data.protocol);
+          detailedPlan = detail(data.plan);
+        } catch (e) {
+          // fallback to protobuf
+          detailedProtocol = unserialize(
+            null,
+            data.protocol,
+            protobuf.syft_proto.messaging.v1.Protocol
+          );
+          detailedPlan = unserialize(
+            null,
+            data.plan,
+            protobuf.syft_proto.messaging.v1.ObjectMessage
+          );
+        }
 
         this.protocol = detailedProtocol;
         this.plan = detailedPlan;

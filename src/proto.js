@@ -7,3 +7,4 @@ for (let type of Object.keys(proto_info.TYPES)) {
 }
 
 export default PROTO;
+export { protobuf } from 'syft-proto';

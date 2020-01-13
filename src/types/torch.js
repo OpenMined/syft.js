@@ -1,5 +1,6 @@
-import { default as proto } from '../proto';
+import { default as proto, protobuf } from '../proto';
 import * as tf from '@tensorflow/tfjs';
+import { getPbId } from '../protobuf';
 
 export class TorchTensor {
   constructor(id, bin, chain, gradChain, tags, description, serializer) {
@@ -22,6 +23,31 @@ export class TorchTensor {
     const TYPE = proto['torch.Tensor'];
     const args = ['id', 'bin', 'chain', 'gradChain', 'tags', 'description', 'serializer']; // prettier-ignore
     return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
+  }
+
+  static unbufferize(worker, pb) {
+    if (
+      pb.serializer !=
+      protobuf.syft_proto.types.torch.v1.TorchTensor.Serializer.SERIALIZER_ALL
+    ) {
+      throw new Error(
+        `Tensor serializer ${pb.serializer} is not supported in syft.js`
+      );
+    }
+
+    const tensor = pb.contents_data;
+    const dtype = tensor.dtype;
+    const bin = [tensor.shape.dims, dtype, tensor[`contents_${dtype}`]];
+
+    return new TorchTensor(
+      getPbId(pb.id),
+      bin,
+      null,
+      null,
+      pb.tags,
+      pb.description,
+      pb.serializer
+    );
   }
 }
 

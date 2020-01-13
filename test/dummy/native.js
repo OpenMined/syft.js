@@ -2,7 +2,10 @@ import { default as proto } from '../../src/proto';
 import { Dict, List, Range, Slice, Tuple } from '../../src/types/native';
 
 // ----- DICT ----- //
-export const dict = new Dict([[1, 'hello'], ['key2', 999]]);
+export const dict = new Dict([
+  [1, 'hello'],
+  ['key2', 999]
+]);
 export const simplifiedDict = `(${proto['dict']}, ((${proto['list']}, (${proto['str']}, (b'hello',))), ((${proto['str']}, (b'key2',)), 999)))`; // prettier-ignore
 
 // ----- LIST ----- //
