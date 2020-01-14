@@ -63,7 +63,7 @@
   "dependencies": {
     "@tensorflow/tfjs": "^1.5.1",
     "long": "^4.0.0",
-    "syft-proto": "git+https://github.com/OpenMined/syft-proto.git#vvm/protocol-js-stubs",
+    "syft-proto": "git+https://github.com/OpenMined/syft-proto.git",
     "tuple-w": "^1.1.1"
   },
   "peerDependencies": {
