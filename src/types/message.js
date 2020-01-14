@@ -1,4 +1,5 @@
 import { default as proto } from '../proto';
+import { unbufferize } from '../protobuf';
 import PointerTensor from './pointer-tensor';
 
 import { torchToTF } from '../_helpers';
@@ -119,6 +120,11 @@ export class ObjectMessage extends Message {
   serdeSimplify(f) {
     const TYPE = proto['syft.messaging.message.ObjectMessage'];
     return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
+  }
+
+  static unbufferize(worker, pb) {
+    const tensor = unbufferize(worker, pb.tensor);
+    return new ObjectMessage(tensor);
   }
 }
 
