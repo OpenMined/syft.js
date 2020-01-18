@@ -1,7 +1,6 @@
 node_modules
 coverage
 examples
-src
 test
 tmp
 yarn.lock
