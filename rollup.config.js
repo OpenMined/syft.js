@@ -1,5 +1,5 @@
 import babel from 'rollup-plugin-babel';
-import builtins from 'rollup-plugin-node-builtins';
+import builtins from '@joseph184/rollup-plugin-node-builtins';
 import json from 'rollup-plugin-json';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import resolve from 'rollup-plugin-node-resolve';
