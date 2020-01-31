@@ -27,7 +27,7 @@ describe('Data Message', () => {
     expect(info.chunk).toBe(0);
   });
 
-  test('Get info from chunk', (done) => {
+  test('Get info from chunk', () => {
     const buf = new ArrayBuffer(WEBRTC_DATACHANNEL_CHUNK_SIZE + 100);
     randomFillSync(new Uint8Array(buf), 0, buf.byteLength);
     const messageOrig = new Message({data: buf});
@@ -39,7 +39,7 @@ describe('Data Message', () => {
 
     new Uint8Array(chunk1)[0] = 123;
     const infoErr = Message.messageInfoFromBuf(chunk1);
-    expect(infoErr.chunk).toBe(false);
+    expect(infoErr).toBe(false);
   });
 
   test('Assemble from chunks', (done) => {
@@ -64,7 +64,7 @@ describe('Data Message', () => {
     messageAssembled.addChunk(chunk2);
   });
 
-  test('should error on invalid chunks', (done) => {
+  test('should error on invalid chunks', () => {
     const buf = new ArrayBuffer(WEBRTC_DATACHANNEL_CHUNK_SIZE + 100);
     randomFillSync(new Uint8Array(buf), 0, buf.byteLength);
     const messageOrig = new Message({data: buf});
