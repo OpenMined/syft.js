@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.7.7",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
     "@babel/preset-env": "^7.7.7",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
     "auto-changelog": "^1.16.2",
