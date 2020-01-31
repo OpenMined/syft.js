@@ -7,8 +7,8 @@ import {
   WEBRTC_DATACHANNEL_MAX_BUFFER_TIMEOUTS,
   WEBRTC_DATACHANNEL_BUFFER_TIMEOUT
 } from './_constants';
-import Message from './message';
-import MessageQueue from './message_queue';
+import DataChannelMessage from './data_channel_message';
+import DataChannelMessageQueue from './data_channel_message_queue';
 import EventObserver from './events';
 
 export default class WebRTCClient {
@@ -22,7 +22,7 @@ export default class WebRTCClient {
 
     this.workerId = null;
     this.scopeId = null;
-    this.messageQueue = new MessageQueue();
+    this.messageQueue = new DataChannelMessageQueue();
     this.messageQueue.on('message', this.onNewDataMessage.bind(this));
     this.observer = new EventObserver();
   }
@@ -79,7 +79,7 @@ export default class WebRTCClient {
   // Alternatively, you may send a targeted message to one specific peer (specified by the "to" param)
   sendMessage(message, to) {
     this.logger.log('WebRTC: Sending message', message);
-    const msg = new Message({ data: message });
+    const msg = new DataChannelMessage({ data: message });
 
     const send = (channel, msg) => {
       try {
@@ -382,12 +382,12 @@ export default class WebRTCClient {
 
     // When the data channel receives a new message
     channel.onmessage = event => {
-      const messageInfo = Message.messageInfoFromBuf(event.data);
+      const messageInfo = DataChannelMessage.messageInfoFromBuf(event.data);
       if (messageInfo) {
         if (this.messageQueue.isRegistered(messageInfo.id)) {
           this.messageQueue.getById(messageInfo.id).addChunk(event.data);
         } else {
-          const message = new Message({
+          const message = new DataChannelMessage({
             id: messageInfo.id,
             worker_id: channel.owner
           });

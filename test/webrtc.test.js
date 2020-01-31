@@ -8,7 +8,7 @@ import {
 } from '../src/_constants';
 import Logger from '../src/logger';
 import WebRTCClient from '../src/webrtc';
-import Message from '../src/message';
+import DataChannelMessage from '../src/data_channel_message';
 
 // WebRTC mocks.
 import {
@@ -293,13 +293,13 @@ describe('WebRTC', () => {
     // Broadcast.
     await rtc.sendMessage('hello');
     expect(channelSendMock).toHaveBeenCalledTimes(2);
-    expect(channelSendMock).toHaveBeenNthCalledWith(1, 1, new Message('hello').getChunk(0));
-    expect(channelSendMock).toHaveBeenNthCalledWith(2, 2, new Message('hello').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(1, 1, new DataChannelMessage('hello').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(2, 2, new DataChannelMessage('hello').getChunk(0));
 
     // Single peer.
     await rtc.sendMessage('hello there', peer1workerId);
     expect(channelSendMock).toHaveBeenCalledTimes(3);
-    expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, new Message('hello there').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, new DataChannelMessage('hello there').getChunk(0));
 
     // Error handling.
     rtc.peers[peer1workerId] = { channel: channelWithError };
@@ -307,7 +307,7 @@ describe('WebRTC', () => {
       await rtc.sendMessage('hello error');
     }).not.toThrow();
     expect(channelSendMock).toHaveBeenCalledTimes(4);
-    expect(channelSendMock).toHaveBeenNthCalledWith(4, 2, new Message('hello error').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(4, 2, new DataChannelMessage('hello error').getChunk(0));
   });
 
   test('removePeer() should close channel', async () => {

@@ -1,6 +1,6 @@
 import EventObserver from './events';
 
-export default class MessageQueue {
+export default class DataChannelMessageQueue {
   constructor() {
     this.messages = new Map();
     this.observer = new EventObserver();
@@ -8,7 +8,7 @@ export default class MessageQueue {
 
   /**
    * Register new message
-   * @param {Message} message
+   * @param {DataChannelMessage} message
    */
   register(message) {
     if (this.isRegistered(message.id)) {
@@ -40,7 +40,7 @@ export default class MessageQueue {
 
   /**
    *
-   * @param {Message} message
+   * @param {DataChannelMessage} message
    */
   onMessageReady(message) {
     this.unregister(message);

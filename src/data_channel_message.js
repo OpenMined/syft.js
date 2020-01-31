@@ -1,7 +1,7 @@
 import EventObserver from './events';
 import { WEBRTC_DATACHANNEL_CHUNK_SIZE } from './_constants';
 
-export default class Message {
+export default class DataChannelMessage {
   static chunkHeaderSign = 0xff00;
   static chunkHeaderLength = 10;
 
@@ -21,16 +21,22 @@ export default class Message {
     this.id = id || Math.floor(Math.random() * 0xffffffff);
     this.observer = new EventObserver();
     this.chunks = Math.ceil(
-      this.size / (WEBRTC_DATACHANNEL_CHUNK_SIZE - Message.chunkHeaderLength)
+      this.size /
+        (WEBRTC_DATACHANNEL_CHUNK_SIZE - DataChannelMessage.chunkHeaderLength)
     );
     this.makeChunkHeader(0);
   }
 
+  /**
+   * Creates chunk header for given chunk index
+   * @param {number} chunk Chunk index
+   * @returns {ArrayBuffer}
+   */
   makeChunkHeader(chunk) {
     if (this.chunkHeader === undefined) {
-      this.chunkHeader = new ArrayBuffer(Message.chunkHeaderLength);
+      this.chunkHeader = new ArrayBuffer(DataChannelMessage.chunkHeaderLength);
       const view = new DataView(this.chunkHeader);
-      view.setUint16(0, Message.chunkHeaderSign);
+      view.setUint16(0, DataChannelMessage.chunkHeaderSign);
       view.setUint32(2, this.id);
       view.setUint16(6, this.chunks);
       view.setUint16(8, chunk);
@@ -49,14 +55,14 @@ export default class Message {
   }
 
   /**
-   *
+   * Gets chunk info from header
    * @param {ArrayBuffer} buf
    */
   static messageInfoFromBuf(buf) {
     let view;
     try {
       view = new DataView(buf);
-      if (view.getUint16(0) !== Message.chunkHeaderSign) {
+      if (view.getUint16(0) !== DataChannelMessage.chunkHeaderSign) {
         return false;
       }
     } catch (e) {
@@ -71,11 +77,11 @@ export default class Message {
   }
 
   /**
-   *
+   * Adds chunk for further assembly
    * @param {ArrayBuffer} buf
    */
   addChunk(buf) {
-    const info = Message.messageInfoFromBuf(buf);
+    const info = DataChannelMessage.messageInfoFromBuf(buf);
     if (info === false) {
       throw new Error(`Is not a valid chunk`);
     }
@@ -87,7 +93,9 @@ export default class Message {
     if (this.dataChunks[info.chunk] !== undefined) {
       throw new Error(`Duplicated chunk ${info.chunks} in message ${this.id}`);
     }
-    this.dataChunks[info.chunk] = buf.slice(Message.chunkHeaderLength);
+    this.dataChunks[info.chunk] = buf.slice(
+      DataChannelMessage.chunkHeaderLength
+    );
     if (this.dataChunks.length === info.chunks) {
       this.assemble();
     }
@@ -123,17 +131,22 @@ export default class Message {
    */
   getChunk(num) {
     const start =
-      num * (WEBRTC_DATACHANNEL_CHUNK_SIZE - Message.chunkHeaderLength);
+      num *
+      (WEBRTC_DATACHANNEL_CHUNK_SIZE - DataChannelMessage.chunkHeaderLength);
     const end = Math.min(
-      start + WEBRTC_DATACHANNEL_CHUNK_SIZE - Message.chunkHeaderLength,
+      start +
+        WEBRTC_DATACHANNEL_CHUNK_SIZE -
+        DataChannelMessage.chunkHeaderLength,
       this.size
     );
-    const chunk = new Uint8Array(Message.chunkHeaderLength + end - start);
+    const chunk = new Uint8Array(
+      DataChannelMessage.chunkHeaderLength + end - start
+    );
     const header = this.makeChunkHeader(num);
     chunk.set(new Uint8Array(header), 0);
     chunk.set(
       new Uint8Array(this.data.slice(start, end)),
-      Message.chunkHeaderLength
+      DataChannelMessage.chunkHeaderLength
     );
     return chunk.buffer;
   }
