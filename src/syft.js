@@ -269,6 +269,11 @@ export default class Syft {
       logger: this.logger,
       socket: this.socket
     });
+
+    const onDataMessage = data => {
+      this.logger.log(`Data message is received from ${data.worker_id}`, data);
+    };
+    this.rtc.on('message', onDataMessage);
   }
 
   connectToParticipants() {
