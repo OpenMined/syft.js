@@ -9,7 +9,8 @@ export const GET_PROTOCOL = 'get-protocol';
 export const WEBRTC_JOIN_ROOM = 'webrtc: join-room';
 export const WEBRTC_INTERNAL_MESSAGE = 'webrtc: internal-message';
 export const WEBRTC_PEER_LEFT = 'webrtc: peer-left';
-// Date Channel
+
+// WebRTC: Data Channel
 export const WEBRTC_DATACHANNEL_CHUNK_SIZE = 64 * 1024;
 export const WEBRTC_DATACHANNEL_MAX_BUFFER = 4 * 1024 * 1024;
 export const WEBRTC_DATACHANNEL_BUFFER_TIMEOUT = 2000;
@@ -21,10 +22,7 @@ export const WEBRTC_PEER_CONFIG = {
       urls: [
         'stun:stun.l.google.com:19302',
         'stun:stun1.l.google.com:19302',
-        'stun:stun2.l.google.com:19302'
-        // FF says too many stuns are bad
-        // 'stun:stun3.l.google.com:19302',
-        // 'stun:stun4.l.google.com:19302'
+        'stun:stun2.l.google.com:19302' // FF says too many stuns are bad, don't send more than this
       ]
     }
   ]

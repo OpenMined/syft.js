@@ -15,6 +15,7 @@ export default class DataChannelMessage {
     } else {
       throw new Error('Message type is not supported');
     }
+
     this.worker_id = worker_id;
     this.size = this.data.byteLength;
     this.dataChunks = [];
@@ -35,21 +36,26 @@ export default class DataChannelMessage {
   makeChunkHeader(chunk) {
     if (this.chunkHeader === undefined) {
       this.chunkHeader = new ArrayBuffer(DataChannelMessage.chunkHeaderLength);
+
       const view = new DataView(this.chunkHeader);
+
       view.setUint16(0, DataChannelMessage.chunkHeaderSign);
       view.setUint32(2, this.id);
       view.setUint16(6, this.chunks);
       view.setUint16(8, chunk);
     } else {
       const view = new DataView(this.chunkHeader);
+
       view.setUint16(8, chunk);
     }
+
     return this.chunkHeader;
   }
 
   once(event, func) {
     this.observer.subscribe(event, data => {
       this.observer.unsubscribe(event);
+
       func(data);
     });
   }
@@ -60,6 +66,7 @@ export default class DataChannelMessage {
    */
   static messageInfoFromBuf(buf) {
     let view;
+
     try {
       view = new DataView(buf);
       if (view.getUint16(0) !== DataChannelMessage.chunkHeaderSign) {
@@ -82,20 +89,25 @@ export default class DataChannelMessage {
    */
   addChunk(buf) {
     const info = DataChannelMessage.messageInfoFromBuf(buf);
+
     if (info === false) {
       throw new Error(`Is not a valid chunk`);
     }
+
     if (this.id !== info.id) {
       throw new Error(
         `Trying to add chunk from different message: ${this.id} != ${info.id}`
       );
     }
+
     if (this.dataChunks[info.chunk] !== undefined) {
       throw new Error(`Duplicated chunk ${info.chunks} in message ${this.id}`);
     }
+
     this.dataChunks[info.chunk] = buf.slice(
       DataChannelMessage.chunkHeaderLength
     );
+
     if (this.dataChunks.length === info.chunks) {
       this.assemble();
     }
@@ -106,21 +118,27 @@ export default class DataChannelMessage {
    */
   assemble() {
     let size = 0;
+
     for (let chunk of this.dataChunks) {
       size += chunk.byteLength;
     }
+
     const data = new Uint8Array(size);
     let offset = 0;
+
     for (let chunk of this.dataChunks) {
       data.set(new Uint8Array(chunk), offset);
       offset += chunk.byteLength;
     }
+
     this.chunks = this.dataChunks.length;
     this.size = size;
     this.data = data.buffer;
-    // clean up
+
+    // Clean up
     this.dataChunks = [];
-    // emit event when done
+
+    // Emit event when done
     this.observer.broadcast('ready', this);
   }
 
@@ -143,11 +161,13 @@ export default class DataChannelMessage {
       DataChannelMessage.chunkHeaderLength + end - start
     );
     const header = this.makeChunkHeader(num);
+
     chunk.set(new Uint8Array(header), 0);
     chunk.set(
       new Uint8Array(this.data.slice(start, end)),
       DataChannelMessage.chunkHeaderLength
     );
+
     return chunk.buffer;
   }
 }
