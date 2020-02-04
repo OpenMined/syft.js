@@ -1,7 +1,9 @@
 import { protobuf } from 'syft-proto';
 import Protocol from '../types/protocol';
-import { ObjectMessage } from '../types/message';
-import { TorchTensor } from '../types/torch';
+import { Plan, State } from '../types/plan';
+import { Operation, ObjectMessage } from '../types/message';
+import { TorchParameter, TorchTensor } from '../types/torch';
+import Placeholder from '../types/placeholder';
 
 let PB_CLASS_MAP, PB_TO_UNBUFFERIZER;
 
@@ -10,8 +12,16 @@ let PB_CLASS_MAP, PB_TO_UNBUFFERIZER;
 export const initMappings = () => {
   PB_CLASS_MAP = [
     [Protocol, protobuf.syft_proto.messaging.v1.Protocol],
+    [Plan, protobuf.syft_proto.messaging.v1.Plan],
+    [State, protobuf.syft_proto.messaging.v1.State],
+    [Operation, protobuf.syft_proto.types.syft.v1.Operation],
+    [
+      Placeholder,
+      protobuf.syft_proto.frameworks.torch.tensors.interpreters.v1.Placeholder
+    ],
     [ObjectMessage, protobuf.syft_proto.messaging.v1.ObjectMessage],
-    [TorchTensor, protobuf.syft_proto.types.torch.v1.TorchTensor]
+    [TorchTensor, protobuf.syft_proto.types.torch.v1.TorchTensor],
+    [TorchParameter, protobuf.syft_proto.types.torch.v1.Parameter]
   ];
 
   PB_TO_UNBUFFERIZER = PB_CLASS_MAP.reduce((map, item) => {

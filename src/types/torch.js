@@ -1,6 +1,6 @@
 import { default as proto, protobuf } from '../proto';
 import * as tf from '@tensorflow/tfjs';
-import { getPbId } from '../protobuf';
+import { getPbId, unbufferize } from '../protobuf';
 
 export class TorchTensor {
   constructor(id, bin, chain, gradChain, tags, description, serializer) {
@@ -59,5 +59,23 @@ export class TorchSize {
   serdeSimplify(f) {
     const TYPE = proto['torch.Size'];
     return `(${TYPE}, (${this.size}))`; // prettier-ignore
+  }
+}
+
+export class TorchParameter {
+  constructor(id, tensor, requiresGrad, grad) {
+    this.id = id;
+    this.tensor = tensor;
+    this.requiresGrad = requiresGrad;
+    this.grad = grad;
+  }
+
+  static unbufferize(worker, pb) {
+    return new TorchParameter(
+      getPbId(pb.id),
+      unbufferize(pb.tensor),
+      pb.requires_grad,
+      unbufferize(pb.grad)
+    );
   }
 }
