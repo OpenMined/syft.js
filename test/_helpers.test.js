@@ -6,7 +6,7 @@ import { detailedPlan } from './dummy/plan';
 describe('Helpers', () => {
   const logger = new Logger('syft.js', false);
 
-  test('pickTensors(): can correctly pick out all tensors from Plan', () => {
+  test.skip('pickTensors(): can correctly pick out all tensors from Plan', () => {
     const objects = pickTensors(detailedPlan);
 
     expect(Object.keys(objects).length).toBe(4);

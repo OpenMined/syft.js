@@ -2,7 +2,7 @@ import { default as proto } from '../../src/proto';
 import { runReplacers, SIMPLIFY_REPLACERS } from '../../src/serde';
 
 import { List, Tuple, Dict } from '../../src/types/native';
-import { Plan, Procedure, State } from '../../src/types/plan';
+import { Plan, State } from '../../src/types/plan';
 import { TorchTensor } from '../../src/types/torch';
 import { Operation } from '../../src/types/message';
 import PointerTensor from '../../src/types/pointer-tensor';
@@ -54,7 +54,7 @@ export const detailedArgIds = new Tuple(51684948173);
 export const detailedResultIds = new Tuple(3263650475);
 export const detailedPromiseOutId = null;
 
-export const detailedProcedure = new Procedure(detailedOperations, detailedArgIds, detailedResultIds, detailedPromiseOutId); // prettier-ignore
+// export const detailedProcedure = new Procedure(detailedOperations, detailedArgIds, detailedResultIds, detailedPromiseOutId); // prettier-ignore
 export const simplifiedProcedure = runReplacers(
   `(${proto['syft.messaging.plan.procedure.Procedure']}, (${simplifiedOperations}, (${proto['tuple']}, (51684948173,)), (${proto['tuple']}, (3263650475,)), None))`, // prettier-ignore
   SIMPLIFY_REPLACERS
@@ -97,7 +97,7 @@ export const description = null;
 export const simplifiedInputShape = `(${proto['torch.Size']}, (${inputShape.size}))`;
 export const simplifiedPlanName = `(${proto['str']}, (b'${name}'))`;
 
-export const detailedPlan = new Plan(id, detailedProcedure, detailedState, includeState, isBuilt, inputShape, outputShape, name, tags, description); // prettier-ignore
+export const detailedPlan = new Plan(id, null, detailedState, includeState, isBuilt, inputShape, outputShape, name, tags, description); // prettier-ignore
 export const simplifiedPlan = runReplacers(
   `(${proto['syft.messaging.plan.plan.Plan']}, (${id}, ${simplifiedProcedure}, ${simplifiedState}, ${includeState}, ${isBuilt}, ${simplifiedInputShape}, None, ${simplifiedPlanName}, ${tags}, ${description}))`, // prettier-ignore
   SIMPLIFY_REPLACERS

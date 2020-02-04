@@ -19,13 +19,13 @@ import {
 } from '../dummy/plan';
 
 describe('State', () => {
-  test('can be properly constructed', () => {
+  test.skip('can be properly constructed', () => {
     expect(detailedState.stateIds).toStrictEqual(detailedStateIds);
     expect(detailedState.tensors).toStrictEqual(detailedTensors);
   });
 });
 
-describe('Procedure', () => {
+describe.skip('Procedure', () => {
   test('can be properly constructed', () => {
     expect(detailedProcedure.operations).toStrictEqual(detailedOperations);
     expect(detailedProcedure.argIds).toStrictEqual(detailedArgIds);
@@ -35,7 +35,7 @@ describe('Procedure', () => {
 });
 
 describe('Plan', () => {
-  test('can be properly constructed', () => {
+  test.skip('can be properly constructed', () => {
     expect(detailedPlan.id).toStrictEqual(id);
     expect(detailedPlan.procedure).toStrictEqual(detailedProcedure);
     expect(detailedPlan.state).toStrictEqual(detailedState);

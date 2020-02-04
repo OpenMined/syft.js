@@ -3,7 +3,7 @@ import { default as proto } from './proto';
 // Import our types
 import { Dict, List, Range, Slice, Tuple } from './types/native';
 import { TorchTensor, TorchSize } from './types/torch';
-import { Plan, Procedure, State } from './types/plan';
+import { Plan, State } from './types/plan';
 import Protocol from './types/protocol';
 import PointerTensor from './types/pointer-tensor';
 import {

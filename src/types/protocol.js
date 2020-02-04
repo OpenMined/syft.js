@@ -18,15 +18,17 @@ export default class Protocol {
 
   static unbufferize(worker, pb) {
     const planAssignments = [];
-    pb.plan_assignments.forEach(item => {
-      planAssignments.push([getPbId(item.worker_id), getPbId(item.plan_id)]);
-    });
+    if (pb.plan_assignments) {
+      pb.plan_assignments.forEach(item => {
+        planAssignments.push([getPbId(item.worker_id), getPbId(item.plan_id)]);
+      });
+    }
     return new Protocol(
       getPbId(pb.id),
       pb.tags,
       pb.description,
       planAssignments,
-      pb.workersResolved
+      pb.workers_resolved
     );
   }
 }
