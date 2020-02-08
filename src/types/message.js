@@ -1,5 +1,3 @@
-import { default as proto } from '../proto';
-import { Tuple } from '../../src/types/native';
 import { unbufferize } from '../protobuf';
 import PointerTensor from './pointer-tensor';
 import { torchToTF } from '../_helpers';
@@ -13,11 +11,6 @@ export class Message {
       this.contents = contents;
     }
   }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.Message'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
-  }
 }
 
 export class Operation extends Message {
@@ -29,11 +22,6 @@ export class Operation extends Message {
     this.kwArgs = kwArgs;
     this.returnIds = returnIds;
     this.returnPlaceholders = returnPlaceholders;
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.Operation'];
-    return `(${TYPE}, (${f(this.message)}, ${f(this.returnIds)}))`; // prettier-ignore
   }
 
   static unbufferize(worker, pb) {
@@ -140,25 +128,18 @@ export class ObjectMessage extends Message {
     super(contents);
   }
 
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.ObjectMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
-  }
-
   static unbufferize(worker, pb) {
     const tensor = unbufferize(worker, pb.tensor);
     return new ObjectMessage(tensor);
   }
 }
 
+// TODO when types will be availbale in protobuf
+
+/*
 export class ObjectRequestMessage extends Message {
   constructor(contents) {
     super(contents);
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.ObjectRequestMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
@@ -166,21 +147,11 @@ export class IsNoneMessage extends Message {
   constructor(contents) {
     super(contents);
   }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.IsNoneMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
-  }
 }
 
 export class GetShapeMessage extends Message {
   constructor(contents) {
     super(contents);
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.GetShapeMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
@@ -188,21 +159,11 @@ export class ForceObjectDeleteMessage extends Message {
   constructor(contents) {
     super(contents);
   }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.ForceObjectDeleteMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
-  }
 }
 
 export class SearchMessage extends Message {
   constructor(contents) {
     super(contents);
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.SearchMessage'];
-    return `(${TYPE}, (${f(this.contents)}))`; // prettier-ignore
   }
 }
 
@@ -213,9 +174,5 @@ export class PlanCommandMessage extends Message {
     this.commandName = commandName;
     this.message = message;
   }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.message.PlanCommandMessage'];
-    return `(${TYPE}, (${f(this.commandName)}, ${f(this.message)}))`; // prettier-ignore
-  }
 }
+*/

@@ -1,15 +1,17 @@
 import { NO_DETAILER } from '../_errors';
 import { initMappings, PB_TO_UNBUFFERIZER } from './mapping';
-import { protobuf } from '../proto';
+import { protobuf } from 'syft-proto';
+export { protobuf };
 
 export const unbufferize = (worker, pbObj) => {
   if (!PB_TO_UNBUFFERIZER) {
     initMappings();
   }
 
-  if (pbObj === undefined) {
-    return undefined;
+  if (pbObj === undefined || pbObj === null) {
+    return pbObj;
   }
+
   const pbType = pbObj.constructor;
 
   // automatically unbufferize repeated fields

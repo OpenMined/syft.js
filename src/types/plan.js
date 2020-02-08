@@ -1,46 +1,38 @@
-import { default as proto } from '../proto';
 import { getPbId, unbufferize } from '../protobuf';
 
 export class Plan {
   constructor(
-    id = null,
+    id,
+    name,
     operations = [],
     state = null,
-    includeState = false,
-    isBuilt = false,
-    name = null,
+    placeholders = [],
     tags = [],
-    description = null,
-    placeholders = []
+    description = null
   ) {
     this.id = id;
+    this.name = name;
     this.operations = operations;
     this.state = state;
-    this.includeState = includeState;
-    this.isBuilt = isBuilt;
-    this.name = name;
+    this.placeholders = placeholders;
     this.tags = tags;
     this.description = description;
-    this.placeholders = placeholders;
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.plan.plan.Plan'];
-    const args = ['id', 'procedure', 'state', 'includeState', 'isBuilt', 'inputShape', 'outputShape', 'name', 'tags', 'description']; // prettier-ignore
-    return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
   }
 
   static unbufferize(worker, pb) {
+    const id = getPbId(pb.id);
+    if (!pb.is_built) {
+      throw new Error(`Plan #${id} is not built`);
+    }
+
     return new Plan(
-      getPbId(pb.id),
+      id,
+      pb.name,
       unbufferize(worker, pb.operations),
       unbufferize(worker, pb.state),
-      pb.include_state,
-      pb.is_built,
-      pb.name,
+      unbufferize(worker, pb.placeholders),
       pb.tags,
-      pb.description,
-      unbufferize(worker, pb.placeholders)
+      pb.description
     );
   }
 
@@ -68,12 +60,6 @@ export class State {
   constructor(placeholders = null, tensors = null) {
     this.placeholders = placeholders;
     this.tensors = tensors;
-  }
-
-  serdeSimplify(f) {
-    const TYPE = proto['syft.messaging.plan.state.State'];
-    const args = ['placeholders', 'tensors']; // prettier-ignore
-    return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
   }
 
   static unbufferize(worker, pb) {

@@ -13,9 +13,7 @@ import EventObserver from './events';
 import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
-import { detail } from './serde';
-import { unserialize } from './protobuf';
-import { protobuf } from './proto';
+import { protobuf, unserialize } from './protobuf';
 import { pickTensors } from './_helpers';
 
 export default class Syft {

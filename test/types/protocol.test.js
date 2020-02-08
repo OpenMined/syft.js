@@ -1,18 +1,22 @@
-import {
-  id,
-  tags,
-  description,
-  plans,
-  workersResolved,
-  detailedProtocol
-} from '../dummy/protocol';
+import Protocol from '../../src/types/protocol';
 
 describe('Protocol', () => {
   test('can be properly constructed', () => {
-    expect(detailedProtocol.id).toStrictEqual(id);
-    expect(detailedProtocol.tags).toStrictEqual(tags);
-    expect(detailedProtocol.description).toStrictEqual(description);
-    expect(detailedProtocol.plans).toStrictEqual(plans);
-    expect(detailedProtocol.workersResolved).toStrictEqual(workersResolved);
+    const planAssignments = [
+      ['worker1', '1234'],
+      ['worker2', '3456']
+    ];
+    const obj = new Protocol(
+      123,
+      ['tag1', 'tag2'],
+      'desc',
+      planAssignments,
+      true
+    );
+    expect(obj.id).toStrictEqual(123);
+    expect(obj.tags).toStrictEqual(['tag1', 'tag2']);
+    expect(obj.description).toStrictEqual('desc');
+    expect(obj.plans).toStrictEqual(planAssignments);
+    expect(obj.workersResolved).toStrictEqual(true);
   });
 });

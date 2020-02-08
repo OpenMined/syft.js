@@ -1,9 +1,8 @@
 // TODO: We need to start test cover here!!!
 
-import { unbufferize, unserialize } from '../src/protobuf';
-import { protobuf } from '../src/proto';
-import * as tf from '@tensorflow/tfjs-core';
+import { protobuf, unserialize } from '../src/protobuf';
 import Syft from '../src';
+import * as tf from '@tensorflow/tfjs-core';
 
 describe('Syft', () => {
   test('can execute a Plan', done => {
