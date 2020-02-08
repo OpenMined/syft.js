@@ -1,5 +1,4 @@
-import { unserialize, getPbId } from '../src/protobuf';
-import { protobuf } from '../src/proto';
+import { protobuf, unserialize, getPbId } from '../src/protobuf';
 import { ObjectMessage } from '../src/types/message';
 import Protocol from '../src/types/protocol';
 import { Plan } from '../src/types/plan';
