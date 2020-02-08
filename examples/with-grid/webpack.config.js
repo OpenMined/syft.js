@@ -27,13 +27,14 @@ module.exports = (env, argv) => ({
           loader: 'babel-loader',
           options: {
             presets: ['@babel/preset-env'],
-            plugins: [
-              '@babel/plugin-proposal-class-properties'
-            ],
+            plugins: ['@babel/plugin-proposal-class-properties']
           }
         }
       }
     ]
   },
-  plugins: [new HtmlWebpackPlugin({ template: './index.html' })]
+  plugins: [new HtmlWebpackPlugin({ template: './index.html' })],
+  externals: {
+    '@tensorflow/tfjs-core': 'tf'
+  }
 });

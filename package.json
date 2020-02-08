@@ -58,19 +58,19 @@
     }
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.5.1",
     "long": "^4.0.0",
     "syft-proto": "git+https://github.com/OpenMined/syft-proto.git",
     "tuple-w": "^1.1.1"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.2.5"
+    "@tensorflow/tfjs-core": "^1.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.7.7",
     "@babel/plugin-proposal-class-properties": "^7.7.4",
     "@babel/preset-env": "^7.7.7",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
+    "@tensorflow/tfjs-core": "^1.5.1",
     "auto-changelog": "^1.16.2",
     "babel-jest": "^24.9.0",
     "gh-pages": "^2.1.1",

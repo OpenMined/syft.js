@@ -20,13 +20,13 @@ PySyft acts as the parent node, instructing child nodes \(Syft.js clients runnin
 If you're using a package manage like NPM:
 
 ```text
-npm install --save syft.js @tensorflow/tfjs
+npm install --save syft.js @tensorflow/tfjs-core
 ```
 
 Or if Yarn is your cup of tea:
 
 ```text
-yarn add syft.js @tensorflow/tfjs
+yarn add syft.js @tensorflow/tfjs-core
 ```
 
 When using a package manager, [TensorFlow.js](https://www.tensorflow.org/js) will be automatically installed. If you're not using a package manager, you can also include Syft.js within a `<script>` tag (see example below).
@@ -34,7 +34,7 @@ When using a package manager, [TensorFlow.js](https://www.tensorflow.org/js) wil
 **Note:** If you're training or predicting with another syft.js client running somewhere else (or in another browser tab) then it's highly suggested you include the [WebRTC adapter](https://github.com/webrtc/adapter) shim inside of your web application.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.5.1/dist/tf.min.js"></script>
 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 <!-- If using WebRTC -->
 <script src="https://unpkg.com/syft.js@latest"></script>

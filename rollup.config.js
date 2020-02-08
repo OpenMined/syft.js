@@ -13,7 +13,7 @@ const sharedOutput = {
   sourcemap: true,
   exports: 'named',
   globals: {
-    '@tensorflow/tfjs': 'tf'
+    '@tensorflow/tfjs-core': 'tf'
   }
 };
 

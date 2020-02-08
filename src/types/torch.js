@@ -1,5 +1,5 @@
 import { default as proto, protobuf } from '../proto';
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import { getPbId, unbufferize } from '../protobuf';
 
 export class TorchTensor {
