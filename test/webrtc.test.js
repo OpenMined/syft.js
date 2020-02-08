@@ -293,21 +293,63 @@ describe('WebRTC', () => {
     // Broadcast.
     await rtc.sendMessage('hello');
     expect(channelSendMock).toHaveBeenCalledTimes(2);
-    expect(channelSendMock).toHaveBeenNthCalledWith(1, 1, new DataChannelMessage('hello').getChunk(0));
-    expect(channelSendMock).toHaveBeenNthCalledWith(2, 2, new DataChannelMessage('hello').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      1,
+      1,
+      new DataChannelMessage({ data: 'hello' }).getChunk(0)
+    );
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      2,
+      2,
+      new DataChannelMessage({ data: 'hello' }).getChunk(0)
+    );
 
     // Single peer.
     await rtc.sendMessage('hello there', peer1workerId);
     expect(channelSendMock).toHaveBeenCalledTimes(3);
-    expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, new DataChannelMessage('hello there').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      3,
+      1,
+      new DataChannelMessage({ data: 'hello there' }).getChunk(0)
+    );
 
     // Error handling.
     rtc.peers[peer1workerId] = { channel: channelWithError };
-    expect(async () => {
-      await rtc.sendMessage('hello error');
-    }).not.toThrow();
+    expect(rtc.sendMessage('hello error')).rejects.toThrow();
     expect(channelSendMock).toHaveBeenCalledTimes(4);
-    expect(channelSendMock).toHaveBeenNthCalledWith(4, 2, new DataChannelMessage('hello error').getChunk(0));
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      4,
+      2,
+      new DataChannelMessage({ data: 'hello error' }).getChunk(0)
+    );
+  });
+
+  test('sendMessage() can send large messages', async done => {
+    const workerId = 'testId',
+      scopeId = 'testScopeId',
+      peerWorkerId = 'peerWorkerId',
+      channel = {
+        send: function(data) {
+          setTimeout(this.onmessage, 100, { data });
+        },
+        bufferedAmount: 0,
+        addEventListener: () => {}
+      };
+
+    rtc.start(workerId, scopeId);
+    rtc.peers = {};
+    rtc.peers[peerWorkerId] = { channel: channel };
+    // sets channel.onmessage value that's triggered by our fake channel.send()
+    rtc.addDataChannelListeners(channel);
+
+    const bigMessage = 'test'.repeat(1000000); // ~4MB
+    rtc.on('message', message => {
+      expect(message.size).toBe(bigMessage.length);
+      expect(new TextDecoder().decode(message.data)).toStrictEqual(bigMessage);
+      done();
+    });
+
+    rtc.sendMessage(bigMessage);
   });
 
   test('removePeer() should close channel', async () => {

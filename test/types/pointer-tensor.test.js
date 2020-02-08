@@ -1,22 +1,13 @@
-import {
-  id,
-  idAtLocation,
-  locationId,
-  pointToAttr,
-  shape,
-  garbageCollectData,
-  firstPointerTensor
-} from '../dummy/pointer-tensor';
+import PointerTensor from '../../src/types/pointer-tensor';
 
 describe('PointerTensor', () => {
   test('can be properly constructed', () => {
-    expect(firstPointerTensor.id).toStrictEqual(id);
-    expect(firstPointerTensor.idAtLocation).toStrictEqual(idAtLocation);
-    expect(firstPointerTensor.locationId).toStrictEqual(locationId);
-    expect(firstPointerTensor.pointToAttr).toStrictEqual(pointToAttr);
-    expect(firstPointerTensor.shape).toStrictEqual(shape);
-    expect(firstPointerTensor.garbageCollectData).toStrictEqual(
-      garbageCollectData
-    );
+    const obj = new PointerTensor(123, 444, 'worker1', null, [2, 3], true);
+    expect(obj.id).toStrictEqual(123);
+    expect(obj.idAtLocation).toStrictEqual(444);
+    expect(obj.locationId).toStrictEqual('worker1');
+    expect(obj.pointToAttr).toStrictEqual(null);
+    expect(obj.shape).toStrictEqual([2, 3]);
+    expect(obj.garbageCollectData).toStrictEqual(true);
   });
 });
