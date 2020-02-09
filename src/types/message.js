@@ -3,7 +3,7 @@ import PointerTensor from './pointer-tensor';
 import { torchToTF } from '../_helpers';
 import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 export class Message {
   constructor(contents) {

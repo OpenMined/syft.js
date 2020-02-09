@@ -20,13 +20,13 @@ PySyft acts as the parent node, instructing child nodes \(Syft.js clients runnin
 If you're using a package manage like NPM:
 
 ```text
-npm install --save syft.js @tensorflow/tfjs
+npm install --save syft.js @tensorflow/tfjs-core
 ```
 
 Or if Yarn is your cup of tea:
 
 ```text
-yarn add syft.js @tensorflow/tfjs
+yarn add syft.js @tensorflow/tfjs-core
 ```
 
 When using a package manager, [TensorFlow.js](https://www.tensorflow.org/js) will be automatically installed. If you're not using a package manager, you can also include Syft.js within a `<script>` tag (see example below).
