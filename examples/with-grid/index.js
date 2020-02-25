@@ -24,11 +24,13 @@ import {
 } from './_helpers';
 
 // In the real world: import syft from 'syft.js';
-import Syft from '../../src';
+import { Syft, GridAPIClient, SyftWorker } from '../../src';
+import { MnistData } from './mnist';
 
 const gridServer = document.getElementById('grid-server');
 const protocol = document.getElementById('protocol');
 const connectButton = document.getElementById('connect');
+const startButton = document.getElementById('start');
 const disconnectButton = document.getElementById('disconnect');
 const appContainer = document.getElementById('app');
 const textarea = document.getElementById('message');
@@ -43,6 +45,71 @@ connectButton.onclick = () => {
   connectButton.style.display = 'none';
 
   startSyft(gridServer.value, protocol.value);
+};
+
+startButton.onclick = () => {
+  startFL(gridServer.value, 'model-id');
+};
+
+const trainFLModel = async ({ job, model, clientConfig }) => {
+  if (!job.plans.hasOwnProperty('training_plan')) {
+    // no training plan, nothing to do
+    return job.done();
+  }
+
+  // load data
+  console.log('Loading data...');
+  const mnist = new MnistData();
+  await mnist.load();
+  const data = mnist.getTrainData();
+  console.log('Data loaded');
+
+  const batchSize = clientConfig.batch_size;
+  const batches = Math.ceil(data.xs.shape[0] / batchSize);
+  const maxEpochs = clientConfig.max_epochs || 1;
+  const maxUpdates = clientConfig.max_updates || maxEpochs * batches;
+
+  // set the lowest cap
+  const updates = Math.min(maxUpdates, maxEpochs * batches);
+
+  for (let update = 0, batch = 0, epoch = 0; update < updates; update++) {
+    const chunkSize = Math.min(batchSize, data.xs.shape[0] - batch * batchSize);
+    const X_batch = data.xs.slice(batch * batchSize, chunkSize);
+    const y_batch = data.labels.slice(batch * batchSize, chunkSize);
+    console.log(
+      `Epoch: ${epoch}, Batch: ${batch}: execute plan with`,
+      model,
+      X_batch,
+      y_batch,
+      clientConfig
+    );
+    // TODO plan execution
+    // job.plans['training_plan'].execute();
+    if (++batch === batches) {
+      // full epoch
+      batch = 0;
+      epoch++;
+      console.log('Starting new epoch!');
+    }
+  }
+
+  if (job.protocols['secure_aggregation']) {
+    // TODO protocol execution
+    await job.report();
+  } else {
+    await job.report();
+  }
+};
+
+const startFL = async (url, modelId) => {
+  const gridClient = new GridAPIClient({ url });
+  const worker = await SyftWorker.create({ gridClient });
+  const job = worker.newJob({ modelId });
+  job.start();
+  job.on('ready', trainFLModel);
+  job.on('done', () => {
+    console.log('done with the job!');
+  });
 };
 
 const startSyft = (url, protocolId) => {

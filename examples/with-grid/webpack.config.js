@@ -35,6 +35,7 @@ module.exports = (env, argv) => ({
   },
   plugins: [new HtmlWebpackPlugin({ template: './index.html' })],
   externals: {
-    '@tensorflow/tfjs-core': 'tf'
+    '@tensorflow/tfjs-core': 'tf',
+    '@tensorflow/tfjs': 'tf'
   }
 });

@@ -8,7 +8,11 @@ export const unbufferize = (worker, pbObj) => {
     initMappings();
   }
 
-  if (pbObj === undefined || pbObj === null) {
+  if (
+    pbObj === undefined ||
+    pbObj === null ||
+    ['number', 'string', 'boolean'].includes(typeof pbObj)
+  ) {
     return pbObj;
   }
 
