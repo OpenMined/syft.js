@@ -43,8 +43,9 @@ export class Operation extends Message {
       args.forEach(arg => {
         if (
           (arg instanceof PointerTensor &&
-            !objects.hasOwnProperty(arg.idAtLocation)) ||
-          (arg instanceof Placeholder && !objects.hasOwnProperty(arg.id))
+            !Object.hasOwnProperty.call(objects, arg.idAtLocation)) ||
+          (arg instanceof Placeholder &&
+            !Object.hasOwnProperty.call(objects, arg.id))
         ) {
           enoughInfo = false;
         }

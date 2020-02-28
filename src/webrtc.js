@@ -130,7 +130,7 @@ export default class WebRTCClient {
           doneTrigger();
         }
       } else {
-        const onBufferedAmountLow = e => {
+        const onBufferedAmountLow = () => {
           // buffer is low again, continue
           consecutiveTimeouts = 0;
           clearTimeout(th);

@@ -22,7 +22,7 @@ global.RTCIceCandidate = RTCIceCandidate;
 
 // Socket mock.
 class SocketMock {
-  send(type, data) {}
+  send() {}
 }
 
 describe('WebRTC', () => {

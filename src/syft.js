@@ -14,7 +14,6 @@ import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
-import { pickTensors } from './_helpers';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -99,7 +98,7 @@ export default class Syft {
 
       // Add state tensors to objects
       if (this.plan.state && this.plan.state.tensors) {
-        this.plan.state.tensors.forEach((tensor, i) => {
+        this.plan.state.tensors.forEach(tensor => {
           this.objects[tensor.id] = tensor;
         });
       }
