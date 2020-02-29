@@ -14,7 +14,7 @@ export const initMappings = () => {
     [Protocol, protobuf.syft_proto.execution.v1.Protocol],
     [Plan, protobuf.syft_proto.execution.v1.Plan],
     [State, protobuf.syft_proto.execution.v1.State],
-    [Operation, protobuf.syft_proto.types.syft.v1.Operation],
+    [Operation, protobuf.syft_proto.execution.v1.Operation],
     [
       Placeholder,
       protobuf.syft_proto.frameworks.torch.tensors.interpreters.v1.Placeholder
