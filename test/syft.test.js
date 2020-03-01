@@ -17,7 +17,7 @@ describe('Syft', () => {
     const expected = tf.abs(tf.add(input, state));
 
     const syft = new Syft({ verbose: true });
-    syft.plan = unserialize(null, plan, protobuf.syft_proto.messaging.v1.Plan);
+    syft.plan = unserialize(null, plan, protobuf.syft_proto.execution.v1.Plan);
     syft.executePlan(input).then(
       res => {
         expect(res[0].value).toBeInstanceOf(tf.Tensor);

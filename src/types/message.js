@@ -4,12 +4,14 @@ import { torchToTF } from '../_helpers';
 import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
+import Logger from '../logger';
 
 export class Message {
   constructor(contents) {
     if (contents) {
       this.contents = contents;
     }
+    this.logger = new Logger();
   }
 }
 
@@ -35,7 +37,7 @@ export class Operation extends Message {
     );
   }
 
-  execute(objects, logger) {
+  execute(objects) {
     // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
     const haveValuesForAllArgs = args => {
       let enoughInfo = true;
@@ -90,9 +92,11 @@ export class Operation extends Message {
     // TODO: We need to do something with kwargs!
 
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
-    const command = torchToTF(this.command, logger);
+    const command = torchToTF(this.command);
 
-    logger.log(`Given command: ${this.command}, converted command: ${command}`);
+    this.logger.log(
+      `Given command: ${this.command}, converted command: ${command}`
+    );
 
     // If we're executing the command against itself only, let's roll!
     if (!this.owner) {

@@ -2,6 +2,7 @@ import { TorchTensor } from './types/torch';
 import PointerTensor from './types/pointer-tensor';
 import { CANNOT_FIND_COMMAND } from './_errors';
 import * as tf from '@tensorflow/tfjs-core';
+import Logger from './logger';
 
 export const pickTensors = tree => {
   const objects = {};
@@ -24,7 +25,8 @@ export const pickTensors = tree => {
   return objects;
 };
 
-export const torchToTF = (command, logger) => {
+export const torchToTF = command => {
+  const logger = new Logger();
   // In Python, some commands in TensorFlow and PyTorch are submitted with double-underscores to avoid method collision
   // Since we don't need this nonsense in TensorFlow.js... let's strip all the underscores
   command = command.split('_').join('');

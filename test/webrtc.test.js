@@ -35,7 +35,6 @@ describe('WebRTC', () => {
     rtc = new WebRTCClient({
       peerConfig: WEBRTC_PEER_CONFIG,
       peerOptions: WEBRTC_PEER_OPTIONS,
-      logger,
       socket: socketMock
     });
     socketSendMock = jest.spyOn(socketMock, 'send');

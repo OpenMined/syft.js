@@ -25,6 +25,7 @@ import {
 
 // In the real world: import syft from 'syft.js';
 import Syft from '../../src';
+import * as tf from '@tensorflow/tfjs-core';
 
 const gridServer = document.getElementById('grid-server');
 const protocol = document.getElementById('protocol');

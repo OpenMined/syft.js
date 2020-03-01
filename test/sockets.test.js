@@ -21,8 +21,6 @@ const makeEventPromise = (emitter, event) => {
 };
 
 describe('Sockets', () => {
-  const logger = new Logger('syft.js', true);
-
   let mockServer;
 
   beforeEach(() => {
@@ -41,7 +39,7 @@ describe('Sockets', () => {
       expectedTypes = [];
 
     // Creating a socket will open connection and start keep-alive pings.
-    new Socket({ url, logger, keepAliveTimeout });
+    new Socket({ url, keepAliveTimeout });
 
     const serverSocket = await mockServer.connected;
 
@@ -67,7 +65,7 @@ describe('Sockets', () => {
   test('triggers onOpen event', async () => {
     const onOpen = jest.fn();
 
-    new Socket({ url, logger, onOpen });
+    new Socket({ url, onOpen });
 
     await mockServer.connected;
 
@@ -79,7 +77,6 @@ describe('Sockets', () => {
       onClose = jest.fn(),
       mySocket = new Socket({
         url,
-        logger,
         onClose
       });
 
@@ -101,7 +98,6 @@ describe('Sockets', () => {
       mySocket = new Socket({
         workerId: testworkerId,
         url,
-        logger,
         onMessage: data => data
       });
 
@@ -127,7 +123,6 @@ describe('Sockets', () => {
   test('returns error when .send() fails', async () => {
     const mySocket = new Socket({
       url,
-      logger,
       onMessage: data => data
     });
 
@@ -151,8 +146,7 @@ describe('Sockets', () => {
 
   test('disconnects from server after .stop()', async () => {
     const mySocket = new Socket({
-      url,
-      logger
+      url
     });
 
     await mockServer.connected;
@@ -173,7 +167,6 @@ describe('Sockets', () => {
       mySocket = new Socket({
         workerId: testworkerId,
         url,
-        logger,
         onMessage: onMessage
       });
 

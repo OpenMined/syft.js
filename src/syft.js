@@ -14,7 +14,6 @@ import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
-import { pickTensors } from './_helpers';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -99,7 +98,7 @@ export default class Syft {
 
       // Add state tensors to objects
       if (this.plan.state && this.plan.state.tensors) {
-        this.plan.state.tensors.forEach((tensor, i) => {
+        this.plan.state.tensors.forEach(tensor => {
           this.objects[tensor.id] = tensor;
         });
       }
@@ -112,7 +111,7 @@ export default class Syft {
         const currentOp = this.plan.operations[i];
 
         // The result of the current operation
-        const result = currentOp.execute(this.objects, this.logger);
+        const result = currentOp.execute(this.objects);
 
         // Place the result of the current operation into this.objects at the 0th item in returnIds
         if (result) {
@@ -238,7 +237,6 @@ export default class Syft {
 
     this.socket = new Socket({
       url,
-      logger: this.logger,
       workerId: this.workerId,
       onOpen,
       onClose,
@@ -267,7 +265,6 @@ export default class Syft {
     this.rtc = new WebRTCClient({
       peerConfig,
       peerOptions,
-      logger: this.logger,
       socket: this.socket
     });
 

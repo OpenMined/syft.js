@@ -5,6 +5,7 @@ describe('Logger', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    Logger.instance = null;
   });
 
   test('can skip when verbose is false', () => {
