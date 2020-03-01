@@ -11,10 +11,10 @@ let PB_CLASS_MAP, PB_TO_UNBUFFERIZER;
 // Protocol/etc classes are undefined at the moment when this module is imported
 export const initMappings = () => {
   PB_CLASS_MAP = [
-    [Protocol, protobuf.syft_proto.messaging.v1.Protocol],
-    [Plan, protobuf.syft_proto.messaging.v1.Plan],
-    [State, protobuf.syft_proto.messaging.v1.State],
-    [Operation, protobuf.syft_proto.types.syft.v1.Operation],
+    [Protocol, protobuf.syft_proto.execution.v1.Protocol],
+    [Plan, protobuf.syft_proto.execution.v1.Plan],
+    [State, protobuf.syft_proto.execution.v1.State],
+    [Operation, protobuf.syft_proto.execution.v1.Operation],
     [
       Placeholder,
       protobuf.syft_proto.frameworks.torch.tensors.interpreters.v1.Placeholder
