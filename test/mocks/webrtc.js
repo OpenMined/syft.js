@@ -11,15 +11,15 @@ export class RTCPeerConnection {
     this.onicecandidateListener = null;
   }
 
-  createDataChannel(label, options) {
+  createDataChannel() {
     return {};
   }
 
-  async createOffer(options) {
+  async createOffer() {
     return Promise.resolve({ type: 'offer', sdp: 'testOfferSdp' });
   }
 
-  async createAnswer(options) {
+  async createAnswer() {
     return Promise.resolve({ type: 'answer', sdp: 'testAnswerSdp' });
   }
 

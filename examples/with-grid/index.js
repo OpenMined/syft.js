@@ -23,6 +23,8 @@ import {
   writeLinksToDOM
 } from './_helpers';
 
+import * as tf from '@tensorflow/tfjs-core';
+
 // In the real world: import syft from 'syft.js';
 import Syft from '../../src';
 import * as tf from '@tensorflow/tfjs-core';

@@ -35,7 +35,7 @@ export const torchToTF = command => {
   command = command.split('torch.').join('');
 
   // If the command as it's currently named exists in TensorFlow.js already, return the command name
-  if (tf.hasOwnProperty(command)) return command;
+  if (Object.hasOwnProperty.call(tf, command)) return command;
 
   // If not, we will need to do a lookup of the command in question
   logger.log(CANNOT_FIND_COMMAND(command));
