@@ -7,160 +7,79 @@ import {
   WEBRTC_PEER_LEFT,
   WEBRTC_PEER_OPTIONS
 } from './_constants';
-import { NOT_ENOUGH_ARGS, NO_PLAN, PLAN_ALREADY_COMPLETED } from './_errors';
 
 import EventObserver from './events';
 import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
-import { pickTensors } from './_helpers';
+import GridAPIClient from './grid_api_client';
+import Job from './job';
+import SyftModel from './syft_model';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
-  constructor({ url, verbose, workerId, scopeId, protocolId, peerConfig }) {
-    // My worker ID
-    this.workerId = workerId || null;
+  constructor({ url, verbose, authToken, peerConfig }) {
+    // For creating verbose logging should the worker desire
+    this.logger = new Logger('syft.js', verbose);
 
-    // The assigned scope ID
-    this.scopeId = scopeId || null;
+    this.gridClient = new GridAPIClient({ url, logger: this.logger });
 
-    // The chosen protocol we are working on
-    this.protocolId = protocolId || null;
+    // models registry
+    this.models = new Map();
 
-    // Our role in the protocol
-    this.role = null;
-
-    // The participants we will be working with (only for scope creators)
-    this.participants = [];
-
-    // The protocol we will are participating in
-    this.protocol = null;
-
-    // The plan we have been assigned
-    this.plan = null;
-
-    // The index of the last plan operation we weren't able to complete (this defaults to 0 until we've started to execute)
-    this.lastUnfinishedOperation = 0;
-
-    // All the tensors we've either computed ourselves or captured from Grid or other peers
-    this.objects = {};
+    // objects registry
+    this.objects = new Map();
 
     // For creating event listeners
     this.observer = new EventObserver();
 
-    // For creating verbose logging should the worker desire
-    this.logger = new Logger('syft.js', verbose);
-
-    // Create a socket connection at this.socket
-    this.socket = null;
-    this.createSocketConnection(url);
-
-    // The WebRTC client used for P2P communication
-    this.rtc = null;
-    this.createWebRTCClient(peerConfig);
+    this.id = null;
+    this.peerConfig = peerConfig;
+    this.authToken = authToken;
   }
 
-  /* ----- FUNCTIONALITY ----- */
+  async newJob({ modelId, modelVersion }) {
+    const authResponse = await this.gridClient.authenticate(this.authToken);
+    this.id = authResponse.worker_id;
 
-  // Get the protocol and plan assignment from the Grid
-  getProtocol(protocol) {
-    if (!protocol && !this.protocolId) return null;
-    if (protocol && !this.protocolId) this.protocolId = protocol;
-
-    return this.socket.send(GET_PROTOCOL, {
-      scopeId: this.scopeId,
-      protocolId: this.protocolId
+    return new Job({
+      worker: this,
+      modelId,
+      modelVersion,
+      gridClient: this.gridClient,
+      logger: this.logger
     });
   }
 
-  // Execute the current plan given data the worker passes
-  executePlan(...data) {
-    return new Promise((resolve, reject) => {
-      // If we don't have a plan yet, calling this function is premature
-      if (!this.plan) throw new Error(NO_PLAN);
-
-      const inputPlaceholders = this.plan.getInputPlaceholders();
-      const argsLength = inputPlaceholders.length,
-        opsLength = this.plan.operations.length;
-
-      // If the number of arguments supplied does not match the number of arguments required...
-      if (data.length !== argsLength)
-        throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
-
-      // If we have already completed the plan, there's no need to execute
-      if (this.lastUnfinishedOperation === opsLength)
-        throw new Error(PLAN_ALREADY_COMPLETED(this.plan.name, this.plan.id));
-
-      // For each argument supplied, store them in this.objects
-      data.forEach((datum, i) => {
-        this.objects[inputPlaceholders[i].id] = datum;
-      });
-
-      // Add state tensors to objects
-      if (this.plan.state && this.plan.state.tensors) {
-        this.plan.state.tensors.forEach((tensor, i) => {
-          this.objects[tensor.id] = tensor;
-        });
-      }
-
-      let finished = true;
-
-      // Execute the plan
-      for (let i = this.lastUnfinishedOperation; i < opsLength; i++) {
-        // The current operation
-        const currentOp = this.plan.operations[i];
-
-        // The result of the current operation
-        const result = currentOp.execute(this.objects, this.logger);
-
-        // Place the result of the current operation into this.objects at the 0th item in returnIds
-        if (result) {
-          if (currentOp.returnIds.length > 0) {
-            this.objects[currentOp.returnIds[0]] = result;
-          } else if (currentOp.returnPlaceholders.length > 0) {
-            this.objects[currentOp.returnPlaceholders[0].id] = result;
-          }
-        } else {
-          finished = false;
-          this.lastUnfinishedOperation = i;
-
-          break;
-        }
-      }
-
-      if (finished) {
-        // Set the lastUnfinishedOperation as the number of operations (meaning, we've already executed the plan successfully)
-        this.lastUnfinishedOperation = opsLength;
-
-        // Resolve all of the requested resultId's as specific by the plan
-        const resolvedResultingTensors = [];
-        const outputPlaceholders = this.plan.getOutputPlaceholders();
-        outputPlaceholders.forEach(placeholder => {
-          resolvedResultingTensors.push({
-            id: placeholder.id,
-            value: this.objects[placeholder.id]
-          });
-        });
-
-        // Return them to the worker
-        resolve(resolvedResultingTensors);
-      } else {
-        // If the plan wasn't finished, notify the worker that they may try again once they have the appropriate information
-        reject(
-          'There is not enough information to execute this plan, but we have saved your progress!'
-        );
-      }
-    });
+  /**
+   * Load the model into worker's models registry
+   * @param requestKey
+   * @param modelId
+   * @returns {Promise<SyftModel>}
+   */
+  async loadModel({ requestKey, modelId }) {
+    const modelData = await this.gridClient.getModel(
+      this.id,
+      requestKey,
+      modelId
+    );
+    const model = new SyftModel({ worker: this, modelData });
+    this.models.set(modelId, model);
+    return model;
   }
 
-  /* ----- EVENT HANDLERS ----- */
-
-  onSocketStatus(func) {
-    this.observer.subscribe(SOCKET_STATUS, func);
+  getConnectionInfo() {
+    // TODO
+    return Promise.resolve({
+      ping: '8ms',
+      download: '46.3mbps',
+      upload: '23.7mbps'
+    });
   }
 
   /* ----- SOCKET COMMUNICATION ----- */
+  // TODO refactor into grid client class
 
   // To create a socket connection internally and externally
   createSocketConnection(url) {

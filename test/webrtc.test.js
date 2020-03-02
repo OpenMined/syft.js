@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import {
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_OPTIONS,

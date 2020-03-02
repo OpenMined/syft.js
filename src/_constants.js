@@ -4,6 +4,8 @@ export const SOCKET_PING = 'socket-ping';
 
 // Grid
 export const GET_PROTOCOL = 'get-protocol';
+export const CYCLE_STATUS_ACCEPTED = 'accepted';
+export const CYCLE_STATUS_REJECTED = 'rejected';
 
 // WebRTC
 export const WEBRTC_JOIN_ROOM = 'webrtc: join-room';

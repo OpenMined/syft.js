@@ -1,12 +1,12 @@
 import { unserialize, protobuf } from './protobuf';
 
 export default class SyftModel {
-  constructor({ worker, data }) {
+  constructor({ worker, modelData }) {
     const state = unserialize(
       worker,
-      data,
+      modelData,
       protobuf.syft_proto.messaging.v1.State
     );
-    this.params = state.tensors;
+    this.params = state.getTfTensors();
   }
 }

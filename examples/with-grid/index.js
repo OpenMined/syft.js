@@ -24,7 +24,7 @@ import {
 } from './_helpers';
 
 // In the real world: import syft from 'syft.js';
-import { Syft, GridAPIClient, SyftWorker } from '../../src';
+import { Syft } from '../../src';
 import { MnistData } from './mnist';
 
 const gridServer = document.getElementById('grid-server');
@@ -38,6 +38,7 @@ const submitButton = document.getElementById('message-send');
 
 appContainer.style.display = 'none';
 
+/*
 connectButton.onclick = () => {
   appContainer.style.display = 'block';
   gridServer.style.display = 'none';
@@ -46,70 +47,168 @@ connectButton.onclick = () => {
 
   startSyft(gridServer.value, protocol.value);
 };
+*/
 
 startButton.onclick = () => {
+  setFLUI();
   startFL(gridServer.value, 'model-id');
 };
 
-const trainFLModel = async ({ job, model, clientConfig }) => {
-  if (!job.plans.hasOwnProperty('training_plan')) {
-    // no training plan, nothing to do
-    return job.done();
+const executeFLTrainingJob = async ({
+  data,
+  targets,
+  job,
+  model,
+  clientConfig,
+  callbacks
+}) => {
+  const batchSize = clientConfig.batch_size;
+  const lr = clientConfig.lr;
+  const numBatches = Math.ceil(data.shape[0] / batchSize);
+  const maxEpochs = clientConfig.max_epochs || 1;
+  const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
+  // set the lowest cap
+  const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
+
+  // Copy original model params.
+  let modelParams = [];
+  for (let param of model.params) {
+    modelParams.push(param.clone());
   }
 
-  // load data
-  console.log('Loading data...');
-  const mnist = new MnistData();
-  await mnist.load();
-  const data = mnist.getTrainData();
-  console.log('Data loaded');
+  for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
+    const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
+    const dataBatch = data.slice(batch * batchSize, chunkSize);
+    const targetBatch = targets.slice(batch * batchSize, chunkSize);
 
-  const batchSize = clientConfig.batch_size;
-  const batches = Math.ceil(data.xs.shape[0] / batchSize);
-  const maxEpochs = clientConfig.max_epochs || 1;
-  const maxUpdates = clientConfig.max_updates || maxEpochs * batches;
-
-  // set the lowest cap
-  const updates = Math.min(maxUpdates, maxEpochs * batches);
-
-  for (let update = 0, batch = 0, epoch = 0; update < updates; update++) {
-    const chunkSize = Math.min(batchSize, data.xs.shape[0] - batch * batchSize);
-    const X_batch = data.xs.slice(batch * batchSize, chunkSize);
-    const y_batch = data.labels.slice(batch * batchSize, chunkSize);
-    console.log(
-      `Epoch: ${epoch}, Batch: ${batch}: execute plan with`,
-      model,
-      X_batch,
-      y_batch,
-      clientConfig
+    let [loss, acc, ...newModelParams] = await job.plans[
+      'training_plan'
+    ].execute(
+      job.worker,
+      dataBatch,
+      targetBatch,
+      chunkSize,
+      lr,
+      ...modelParams
     );
-    // TODO plan execution
-    // job.plans['training_plan'].execute();
-    if (++batch === batches) {
-      // full epoch
+
+    // Use updated model params in the next cycle.
+    for (let i = 0; i < modelParams.length; i++) {
+      modelParams[i].dispose();
+      modelParams[i] = newModelParams[i];
+    }
+
+    if (typeof callbacks.onBatchEnd === 'function') {
+      callbacks.onBatchEnd({
+        update,
+        batch,
+        epoch,
+        accuracy: (await acc.data())[0],
+        loss: (await loss.data())[0]
+      });
+    }
+
+    batch++;
+    // check if we're out of batches (end of epoch)
+    if (batch === numBatches) {
+      if (typeof callbacks.onEpochEnd === 'function') {
+        callbacks.onEpochEnd({ update, batch, epoch, model });
+      }
       batch = 0;
       epoch++;
-      console.log('Starting new epoch!');
     }
+
+    // free GPU memory
+    acc.dispose();
+    loss.dispose();
+    dataBatch.dispose();
+    targetBatch.dispose();
   }
 
-  if (job.protocols['secure_aggregation']) {
-    // TODO protocol execution
-    await job.report();
-  } else {
-    await job.report();
+  // TODO protocol execution
+  // job.protocols['secure_aggregation'].execute();
+
+  // Calc model diffs
+  const modelDiff = [];
+  for (let i = 0; i < modelParams.length; i++) {
+    modelDiff.push(model.params[i].sub(modelParams[i]));
+  }
+
+  // report
+  await job.report(modelDiff);
+
+  if (typeof callbacks.onDone === 'function') {
+    callbacks.onDone();
   }
 };
 
 const startFL = async (url, modelId) => {
-  const gridClient = new GridAPIClient({ url });
-  const worker = await SyftWorker.create({ gridClient });
-  const job = worker.newJob({ modelId });
+  const worker = new Syft({ url, verbose: true });
+  const job = await worker.newJob({ modelId });
   job.start();
-  job.on('ready', trainFLModel);
-  job.on('done', () => {
-    console.log('done with the job!');
+  job.on('ready', async ({ model, clientConfig }) => {
+    // load data
+    console.log('Loading data...');
+    const mnist = new MnistData();
+    await mnist.load();
+    const data = mnist.getTrainData();
+    console.log('Data loaded');
+
+    // train
+    executeFLTrainingJob({
+      model,
+      data: data.xs,
+      targets: data.labels,
+      job,
+      clientConfig,
+      callbacks: {
+        onBatchEnd: async ({ epoch, batch, accuracy, loss }) => {
+          console.log(
+            `Epoch: ${epoch}, Batch: ${batch}, Accuracy: ${accuracy}, Loss: ${loss}`
+          );
+          Plotly.extendTraces('loss_graph', { y: [[loss]] }, [0]);
+          Plotly.extendTraces('acc_graph', { y: [[accuracy]] }, [0]);
+          await tf.nextFrame();
+        },
+        onEpochEnd: ({ epoch }) => {
+          console.log(`Epoch ${epoch} ended!`);
+        },
+        onDone: () => {
+          console.log(`Job is done!`);
+        }
+      }
+    });
   });
+};
+
+const setFLUI = () => {
+  Plotly.newPlot(
+    'loss_graph',
+    [
+      {
+        y: [],
+        mode: 'lines',
+        line: { color: '#80CAF6' }
+      }
+    ],
+    { title: 'Train Loss', showlegend: false },
+    { staticPlot: true }
+  );
+
+  Plotly.newPlot(
+    'acc_graph',
+    [
+      {
+        y: [],
+        mode: 'lines',
+        line: { color: '#80CAF6' }
+      }
+    ],
+    { title: 'Train Accuracy', showlegend: false },
+    { staticPlot: true }
+  );
+
+  document.getElementById('fl-training').style.display = 'table';
 };
 
 const startSyft = (url, protocolId) => {

@@ -11,3 +11,6 @@ export const PLAN_ALREADY_COMPLETED = (name, id) =>
 
 export const CANNOT_FIND_COMMAND = command =>
   `We cannot find function ${command} in TensorFlow.js, performing a manual lookup.`;
+
+export const GRID_UNKNOWN_CYCLE_STATUS = status =>
+  `Unknown cycle status: ${status}`;

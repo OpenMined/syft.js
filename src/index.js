@@ -9,9 +9,6 @@ export { unserialize, protobuf } from './protobuf';
 export { default as Protocol } from './types/protocol';
 export * from './types/message';
 
-export { default as GridAPIClient } from './grid_client';
-export { default as SyftWorker } from './syft_worker';
-
 // Export as default AND as named
 export { default as Syft } from './syft';
 export { default } from './syft';

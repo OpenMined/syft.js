@@ -1,5 +1,7 @@
 import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
+import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
+import { GRID_UNKNOWN_CYCLE_STATUS } from './_errors';
 
 export default class Job {
   constructor({ worker, modelId, modelVersion, gridClient, logger }) {
@@ -9,7 +11,8 @@ export default class Job {
     this.grid = gridClient;
     this.plans = {};
     this.protocols = {};
-    this.cycleConfig = {};
+    // holds request_key
+    this.cycleParams = {};
     this.clientConfig = {};
     this.logger = logger;
     this.observer = new EventObserver();
@@ -19,71 +22,60 @@ export default class Job {
     this.observer.subscribe(event, handler);
   }
 
-  initCycle(cycleConfig) {
+  async initCycle(cycleParams) {
     this.logger.log(
-      `Cycle initialization with params: ${JSON.stringify(cycleConfig)}`
+      `Cycle initialization with params: ${JSON.stringify(cycleParams)}`
     );
-    this.cycleConfig = cycleConfig;
-    this.clientConfig = cycleConfig.client_config;
+    this.cycleParams = cycleParams;
+    this.clientConfig = cycleParams.client_config;
 
     // load all plans
-    const plans = [];
-    for (let planName of Object.keys(cycleConfig.plans)) {
-      const planId = cycleConfig.plans[planName];
-      const plan = this.grid
-        .getPlan(this.worker.id, cycleConfig.request_key, planId)
-        .then(data => ({
-          name: planName,
-          value: unserialize(
-            this.worker,
-            data,
-            protobuf.syft_proto.messaging.v1.Plan
-          )
-        }));
-      plans.push(plan);
+    for (let planName of Object.keys(cycleParams.plans)) {
+      const planId = cycleParams.plans[planName];
+      const planBinary = await this.grid.getPlan(
+        this.worker.id,
+        cycleParams.request_key,
+        planId
+      );
+      this.plans[planName] = unserialize(
+        this.worker,
+        planBinary,
+        protobuf.syft_proto.messaging.v1.Plan
+      );
     }
 
     // load all protocols
-    const protocols = [];
-    for (let protocolName of Object.keys(cycleConfig.protocols)) {
-      const protocolId = cycleConfig.protocols[protocolName];
-      const protocol = this.grid
-        .getProtocol(this.worker.id, cycleConfig.request_key, protocolId)
-        .then(data => ({
-          name: protocolName,
-          value: unserialize(
-            this.worker,
-            data,
-            protobuf.syft_proto.messaging.v1.Protocol
-          )
-        }));
-      protocols.push(protocol);
+    for (let protocolName of Object.keys(cycleParams.protocols)) {
+      const protocolId = cycleParams.protocols[protocolName];
+      const protocolBinary = await this.grid.getProtocol(
+        this.worker.id,
+        cycleParams.request_key,
+        protocolId
+      );
+      this.protocols[protocolName] = unserialize(
+        this.worker,
+        protocolBinary,
+        protobuf.syft_proto.messaging.v1.Protocol
+      );
     }
-
-    // return model, plans, protocols
-    const result = [
-      this.worker.loadModel({
-        requestKey: cycleConfig.request_key,
-        modelId: cycleConfig.model_id
-      }),
-      Promise.all(plans),
-      Promise.all(protocols)
-    ];
-
-    return Promise.all(result);
   }
 
-  start() {
-    this.grid
-      .requestCycle(this.worker.id, this.modelId)
-      .then(this.initCycle.bind(this))
-      .then(result => {
-        const [model, plans, protocols] = result;
-        plans.forEach(item => {
-          this.plans[item.name] = item.value;
-        });
-        protocols.forEach(item => {
-          this.protocols[item.name] = item.value;
+  async start() {
+    // request cycle
+    const cycleParams = await this.grid.requestCycle(
+      this.worker.id,
+      this.modelId
+    );
+
+    switch (cycleParams.status) {
+      case CYCLE_STATUS_ACCEPTED:
+        // load plans, protocols, etc.
+        this.initCycle(cycleParams);
+
+        // load model
+        const model = await this.worker.loadModel({
+          requestKey: cycleParams.request_key,
+          modelId: cycleParams.model_id
         });
 
         this.observer.broadcast('ready', {
@@ -91,22 +83,27 @@ export default class Job {
           model,
           clientConfig: this.clientConfig
         });
-      });
+        break;
+
+      case CYCLE_STATUS_REJECTED:
+        this.logger.log(
+          `Rejected from cycle with timeout: ${cycleParams.timeout}`
+        );
+        // wait
+        await new Promise(resolve => setTimeout(resolve, cycleParams.timeout));
+        await this.start();
+        break;
+
+      default:
+        throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
+    }
   }
 
-  report() {
-    return this.grid
-      .submitReport(
-        this.worker.id,
-        this.cycleConfig.request_key,
-        {} // TODO
-      )
-      .then(this.done.bind(this));
-  }
-
-  done() {
-    this.observer.broadcast('done', {
-      job: this
-    });
+  async report(data) {
+    await this.grid.submitReport(
+      this.worker.id,
+      this.cycleParams.request_key,
+      data
+    );
   }
 }

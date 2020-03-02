@@ -1,4 +1,3 @@
-import { PLAN, MODEL, PROTOCOL } from '../test/data/dummy';
 import Logger from './logger';
 
 export default class GridAPIClient {
@@ -7,8 +6,8 @@ export default class GridAPIClient {
     this.logger = logger || new Logger('GridClient', true);
   }
 
-  authenticate() {
-    this.logger.log(`Authenticating...`);
+  authenticate(authToken) {
+    this.logger.log(`Authenticating with ${authToken}...`);
     return Promise.resolve({
       worker_id: '12345'
     });
@@ -26,40 +25,47 @@ export default class GridAPIClient {
         another_plan: 'another_plan_id'
       },
       client_config: {
-        lr: 0.01,
-        batch_size: 32,
-        max_updates: 5
+        lr: 0.05,
+        batch_size: 64,
+        max_updates: 400
       },
       protocols: { secure_agg_protocol: 'sec_agg_protocol_id' },
       model_id: 'model_id'
     });
   }
 
-  getModel(workerId, requestKey, modelId) {
+  async getModel(workerId, requestKey, modelId) {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting model ${modelId}...`
     );
-    return Promise.resolve(MODEL);
+    const response = await fetch('/data/model_params.pb');
+    return response.arrayBuffer();
   }
 
-  getPlan(workerId, requestKey, planId) {
+  async getPlan(workerId, requestKey, planId) {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting plan ${planId}...`
     );
-    return Promise.resolve(PLAN);
+    const response = await fetch('/data/tp_ops.pb');
+    return response.arrayBuffer();
   }
 
   getProtocol(workerId, requestKey, protocolId) {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting protocol ${protocolId}...`
     );
-    return Promise.resolve(PROTOCOL);
+    return Promise.resolve(
+      'CgYIjcivoCUqEwoGCIHIr6AlEgkSB3dvcmtlcjEqEwoGCIXIr6AlEgkSB3dvcmtlcjIqEwoGCInIr6AlEgkSB3dvcmtlcjM='
+    );
   }
 
   submitReport(workerId, requestKey, data) {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Submitting report...`
     );
+    for (let param of data) {
+      param.print();
+    }
     return Promise.resolve({
       status: 'success'
     });

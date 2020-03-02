@@ -44,8 +44,20 @@ export const unbufferize = (worker, pbObj) => {
   return unbufferizer(worker, pbObj);
 };
 
+/**
+ * Converts binary in the form of ArrayBuffer or base64 string to syft class
+ * @param worker
+ * @param bin
+ * @param pbType
+ * @returns {{}}
+ */
 export const unserialize = (worker, bin, pbType) => {
-  const buff = Buffer.from(bin, 'base64');
+  const buff =
+    typeof bin === 'string'
+      ? Buffer.from(bin, 'base64')
+      : bin instanceof ArrayBuffer
+      ? new Uint8Array(bin)
+      : bin;
   const pbObj = pbType.decode(buff);
   return unbufferize(worker, pbObj);
 };
