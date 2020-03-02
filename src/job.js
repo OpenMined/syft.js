@@ -67,13 +67,14 @@ export default class Job {
       this.modelId
     );
 
+    let model;
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
         // load plans, protocols, etc.
         this.initCycle(cycleParams);
 
         // load model
-        const model = await this.worker.loadModel({
+        model = await this.worker.loadModel({
           requestKey: cycleParams.request_key,
           modelId: cycleParams.model_id
         });

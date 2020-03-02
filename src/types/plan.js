@@ -64,8 +64,7 @@ export class Plan {
    */
   async execute(worker, ...data) {
     const inputPlaceholders = this.getInputPlaceholders(),
-      argsLength = inputPlaceholders.length,
-      opsLength = this.operations.length;
+      argsLength = inputPlaceholders.length;
 
     // If the number of arguments supplied does not match the number of arguments required...
     if (data.length !== argsLength)
@@ -78,7 +77,7 @@ export class Plan {
 
     // load state tensors to worker
     if (this.state && this.state.tensors) {
-      this.state.tensors.forEach((tensor, i) => {
+      this.state.tensors.forEach(tensor => {
         worker.objects.set(tensor.id, tensor);
       });
     }

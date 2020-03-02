@@ -43,7 +43,7 @@ export class Operation extends Message {
       args.forEach(arg => {
         if (
           (arg instanceof PointerTensor &&
-            !objects.hasOwnProperty(arg.idAtLocation)) ||
+            !worker.objects.has(arg.idAtLocation)) ||
           (arg instanceof Placeholder && !worker.objects.has(arg.id))
         ) {
           enoughInfo = false;

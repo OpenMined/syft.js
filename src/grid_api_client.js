@@ -15,7 +15,7 @@ export default class GridAPIClient {
 
   requestCycle(workerId, modelId, versionId = null) {
     this.logger.log(
-      `[WID: ${workerId}] Requesting cycle for model ${modelId}...`
+      `[WID: ${workerId}] Requesting cycle for model ${modelId} v.${versionId}...`
     );
     return Promise.resolve({
       status: 'accepted',

@@ -49,7 +49,6 @@ describe('Data Channel Message', () => {
     const chunk1 = messageOrig.getChunk(0);
     const chunk2 = messageOrig.getChunk(1);
     const info1 = DataChannelMessage.messageInfoFromBuf(chunk1);
-    const info2 = DataChannelMessage.messageInfoFromBuf(chunk2);
 
     const messageAssembled = new DataChannelMessage({ id: info1.id });
     messageAssembled.once('ready', message => {
@@ -69,7 +68,6 @@ describe('Data Channel Message', () => {
     randomFillSync(new Uint8Array(buf), 0, buf.byteLength);
     const messageOrig = new DataChannelMessage({ data: buf });
     const chunk1 = messageOrig.getChunk(0);
-    const chunk2 = messageOrig.getChunk(1);
 
     // id doesn't match
     const messageAssembled = new DataChannelMessage({ id: 123 });

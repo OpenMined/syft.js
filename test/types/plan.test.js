@@ -69,7 +69,7 @@ describe('Plan', () => {
     const plan = unserialize(
       null,
       serializedPlan,
-      protobuf.syft_proto.messaging.v1.Plan
+      protobuf.syft_proto.execution.v1.Plan
     );
     const worker = new Syft({ url: 'dummy' });
     const result = await plan.execute(worker, input);

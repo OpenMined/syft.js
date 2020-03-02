@@ -41,7 +41,6 @@ describe('Data Channel Message Queue', () => {
     const chunk1 = messageOrig.getChunk(0);
     const chunk2 = messageOrig.getChunk(1);
     const info1 = DataChannelMessage.messageInfoFromBuf(chunk1);
-    const info2 = DataChannelMessage.messageInfoFromBuf(chunk2);
 
     const messageAssembled = new DataChannelMessage({ id: info1.id });
     const queue = new DataChannelMessageQueue();
