@@ -20,6 +20,38 @@ describe('Logger', () => {
     expect(console.log.mock.calls.length).toBe(0);
   });
 
+  test('singleton instance should be used with verbose false', () => {
+    const testLogger = new Logger('syft.js', false);
+    const testLogger_1 = new Logger('syft.js', true);
+
+    expect(testLogger).toEqual(testLogger_1);
+
+    expect(testLogger.verbose).toBe(false);
+    expect(testLogger_1.verbose).toBe(false);
+    expect(console.log.mock.calls.length).toBe(0);
+
+    testLogger.log('hello singleton!!');
+    testLogger_1.log('hello singleton!!');
+
+    expect(console.log.mock.calls.length).toBe(0);
+  });
+
+  test('singleton instance should be used with verbose true', () => {
+    const testLogger = new Logger('syft.js', true);
+    const testLogger_1 = new Logger('syft.js', false);
+
+    expect(testLogger).toEqual(testLogger_1);
+
+    expect(testLogger.verbose).toBe(true);
+    expect(testLogger_1.verbose).toBe(true);
+    expect(console.log.mock.calls.length).toBe(0);
+
+    testLogger.log('hello singleton!!');
+    testLogger_1.log('hello singleton!!');
+
+    expect(console.log.mock.calls.length).toBe(2);
+  });
+
   test('can log under verbose mode', () => {
     const testLogger = new Logger('syft.js', true),
       message = 'hello';
