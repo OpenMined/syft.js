@@ -8,6 +8,7 @@ import {
 } from '../src/_constants';
 import Logger from '../src/logger';
 import WebRTCClient from '../src/webrtc';
+import DataChannelMessage from '../src/data_channel_message';
 
 // WebRTC mocks.
 import {
@@ -21,7 +22,7 @@ global.RTCIceCandidate = RTCIceCandidate;
 
 // Socket mock.
 class SocketMock {
-  send(type, data) {}
+  send() {}
 }
 
 describe('WebRTC', () => {
@@ -265,17 +266,23 @@ describe('WebRTC', () => {
       channel1 = {
         send: data => {
           channelSendMock(1, data);
-        }
+        },
+        bufferedAmount: 0,
+        addEventListener: () => {}
       },
       channel2 = {
         send: data => {
           channelSendMock(2, data);
-        }
+        },
+        bufferedAmount: 0,
+        addEventListener: () => {}
       },
       channelWithError = {
         send: () => {
           throw new Error();
-        }
+        },
+        bufferedAmount: 0,
+        addEventListener: () => {}
       };
 
     rtc.start(workerId, scopeId);
@@ -284,29 +291,65 @@ describe('WebRTC', () => {
     rtc.peers[peer2workerId] = { channel: channel2 };
 
     // Broadcast.
-    rtc.sendMessage({ dummy: 'hello' });
-
+    await rtc.sendMessage('hello');
     expect(channelSendMock).toHaveBeenCalledTimes(2);
-    expect(channelSendMock).toHaveBeenNthCalledWith(1, 1, { dummy: 'hello' });
-    expect(channelSendMock).toHaveBeenNthCalledWith(2, 2, { dummy: 'hello' });
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      1,
+      1,
+      new DataChannelMessage({ data: 'hello' }).getChunk(0)
+    );
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      2,
+      2,
+      new DataChannelMessage({ data: 'hello' }).getChunk(0)
+    );
 
     // Single peer.
-    rtc.sendMessage({ dummy: 'hello there' }, peer1workerId);
+    await rtc.sendMessage('hello there', peer1workerId);
     expect(channelSendMock).toHaveBeenCalledTimes(3);
-    expect(channelSendMock).toHaveBeenNthCalledWith(3, 1, {
-      dummy: 'hello there'
-    });
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      3,
+      1,
+      new DataChannelMessage({ data: 'hello there' }).getChunk(0)
+    );
 
     // Error handling.
     rtc.peers[peer1workerId] = { channel: channelWithError };
-    expect(() => {
-      rtc.sendMessage({ dummy: 'hello error' });
-    }).not.toThrow();
-
+    expect(rtc.sendMessage('hello error')).rejects.toThrow();
     expect(channelSendMock).toHaveBeenCalledTimes(4);
-    expect(channelSendMock).toHaveBeenNthCalledWith(4, 2, {
-      dummy: 'hello error'
+    expect(channelSendMock).toHaveBeenNthCalledWith(
+      4,
+      2,
+      new DataChannelMessage({ data: 'hello error' }).getChunk(0)
+    );
+  });
+
+  test('sendMessage() can send large messages', async done => {
+    const workerId = 'testId',
+      scopeId = 'testScopeId',
+      peerWorkerId = 'peerWorkerId',
+      channel = {
+        send: function(data) {
+          setTimeout(this.onmessage, 100, { data });
+        },
+        bufferedAmount: 0,
+        addEventListener: () => {}
+      };
+
+    rtc.start(workerId, scopeId);
+    rtc.peers = {};
+    rtc.peers[peerWorkerId] = { channel: channel };
+    // sets channel.onmessage value that's triggered by our fake channel.send()
+    rtc.addDataChannelListeners(channel);
+
+    const bigMessage = 'test'.repeat(1000000); // ~4MB
+    rtc.on('message', message => {
+      expect(message.size).toBe(bigMessage.length);
+      expect(new TextDecoder().decode(message.data)).toStrictEqual(bigMessage);
+      done();
     });
+
+    rtc.sendMessage(bigMessage);
   });
 
   test('removePeer() should close channel', async () => {

@@ -1,5 +1,15 @@
 // NOTE: Adding async/await in this file requires regenerator-runtime/runtime which adds an unnecessary 2kb on the minified bundled - no thanks!
-import { WEBRTC_JOIN_ROOM, WEBRTC_INTERNAL_MESSAGE } from './_constants';
+import {
+  WEBRTC_JOIN_ROOM,
+  WEBRTC_INTERNAL_MESSAGE,
+  WEBRTC_DATACHANNEL_CHUNK_SIZE,
+  WEBRTC_DATACHANNEL_MAX_BUFFER,
+  WEBRTC_DATACHANNEL_MAX_BUFFER_TIMEOUTS,
+  WEBRTC_DATACHANNEL_BUFFER_TIMEOUT
+} from './_constants';
+import DataChannelMessage from './data_channel_message';
+import DataChannelMessageQueue from './data_channel_message_queue';
+import EventObserver from './events';
 
 export default class WebRTCClient {
   constructor({ peerConfig, peerOptions, logger, socket }) {
@@ -12,6 +22,9 @@ export default class WebRTCClient {
 
     this.workerId = null;
     this.scopeId = null;
+    this.messageQueue = new DataChannelMessageQueue();
+    this.messageQueue.on('message', this.onNewDataMessage.bind(this));
+    this.observer = new EventObserver();
   }
 
   // The main start command for WebRTC
@@ -38,6 +51,14 @@ export default class WebRTCClient {
     }, true);
   }
 
+  on(event, func) {
+    this.observer.subscribe(event, func);
+  }
+
+  onNewDataMessage(message) {
+    this.observer.broadcast('message', message);
+  }
+
   // Remove a peer when the signaling server has notified us they've left or when stop() is run
   removePeer(workerId) {
     // If this peer doesn't exist, forget about it
@@ -58,10 +79,11 @@ export default class WebRTCClient {
   // Alternatively, you may send a targeted message to one specific peer (specified by the "to" param)
   sendMessage(message, to) {
     this.logger.log('WebRTC: Sending message', message);
+    const msg = new DataChannelMessage({ data: message });
 
     const send = (channel, msg) => {
       try {
-        channel.send(msg);
+        return this.sendChunkedMessage(channel, msg);
       } catch (e) {
         this.logger.log('WebRTC: Error sending message', e);
       }
@@ -74,17 +96,71 @@ export default class WebRTCClient {
       this.peers[to] &&
       this.peers[to].channel
     ) {
-      send(this.peers[to].channel, message);
+      return send(this.peers[to].channel, msg);
     }
 
     // Otherwise, send to each worker specified
     else {
+      const sendPromises = [];
       this._forEachPeer(peer => {
         if (peer.channel) {
-          send(peer.channel, message);
+          sendPromises.push(send(peer.channel, msg));
         }
       });
+      return Promise.all(sendPromises);
     }
+  }
+
+  // Send message via Data Channel, splitting it into chunks
+  sendChunkedMessage(channel, message) {
+    channel.bufferedAmountLowThreshold = WEBRTC_DATACHANNEL_CHUNK_SIZE;
+    let doneTrigger;
+    let errorTrigger;
+    let chunk = 0;
+    let consecutiveTimeouts = 0;
+
+    const processNextChunk = () => {
+      if (channel.bufferedAmount < WEBRTC_DATACHANNEL_MAX_BUFFER) {
+        consecutiveTimeouts = 0;
+        channel.send(message.getChunk(chunk));
+        chunk++;
+        if (chunk < message.chunks) {
+          setTimeout(processNextChunk, 0);
+        } else {
+          doneTrigger();
+        }
+      } else {
+        const onBufferedAmountLow = () => {
+          // buffer is low again, continue
+          consecutiveTimeouts = 0;
+          clearTimeout(th);
+          channel.removeEventListener('bufferedamountlow', onBufferedAmountLow);
+          setTimeout(processNextChunk, 0);
+        };
+        const onTimeout = () => {
+          // if the bufferlow event does not occur within timeout, retry
+          consecutiveTimeouts++;
+          channel.removeEventListener('bufferedamountlow', onBufferedAmountLow);
+          if (consecutiveTimeouts < WEBRTC_DATACHANNEL_MAX_BUFFER_TIMEOUTS) {
+            setTimeout(processNextChunk, 0);
+          } else {
+            errorTrigger(
+              new Error(
+                `Data Channel buffer is stuck: ${channel.bufferedAmount}`
+              )
+            );
+          }
+        };
+        channel.addEventListener('bufferedamountlow', onBufferedAmountLow);
+        let th = setTimeout(onTimeout, WEBRTC_DATACHANNEL_BUFFER_TIMEOUT);
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      doneTrigger = resolve;
+      errorTrigger = reject;
+      processNextChunk();
+    });
   }
 
   // Create an RTCPeerConnection on our end for each offer or answer we receive
@@ -164,6 +240,8 @@ export default class WebRTCClient {
     // Designate who owns that channel and push it onto the peers list
     const channel = pc.createDataChannel('dataChannel');
     channel.owner = workerId;
+    channel.binaryType = 'arraybuffer';
+    channel.connection = pc;
     this.peers[workerId].channel = channel;
 
     // Set up all our event listeners for this channel so we can hook into them
@@ -304,7 +382,24 @@ export default class WebRTCClient {
 
     // When the data channel receives a new message
     channel.onmessage = event => {
-      this.logger.log('WebRTC: Data channel message', event);
+      const messageInfo = DataChannelMessage.messageInfoFromBuf(event.data);
+      if (messageInfo) {
+        if (this.messageQueue.isRegistered(messageInfo.id)) {
+          this.messageQueue.getById(messageInfo.id).addChunk(event.data);
+        } else {
+          const message = new DataChannelMessage({
+            id: messageInfo.id,
+            worker_id: channel.owner
+          });
+          this.messageQueue.register(message);
+          message.addChunk(event.data);
+        }
+      } else {
+        this.logger.log(
+          'WebRTC: Data channel message is not recognized',
+          event
+        );
+      }
     };
 
     // When the data channel errors

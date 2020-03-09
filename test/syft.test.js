@@ -1,6 +1,37 @@
 // TODO: We need to start test cover here!!!
+
+import { protobuf, unserialize } from '../src/protobuf';
+import Syft from '../src';
+import * as tf from '@tensorflow/tfjs-core';
+
 describe('Syft', () => {
-  test('can do something', () => {});
+  test('can execute a Plan', done => {
+    const plan =
+      'CgYIgcivoCUSRwoHX19hZGRfXxoWCgYIgsivoCUSCCNpbnB1dC0wEgIjMioWShQKBgiAyK+gJRICIzESBiNzdGF0ZUIMCgYIhMivoCUSAiMzEjQKCXRvcmNoLmFicyoOSgwKBgiEyK+gJRICIzNCFwoGCIPIr6AlEgIjNBIJI291dHB1dC0wGj8KFAoGCIDIr6AlEgIjMRIGI3N0YXRlEicKJQoGCIDIr6AlEhkKAwoBAhIHZmxvYXQzMrIBCGZmhkCamelAQAQgASgBMgdib2JQbGFuShQKBgiAyK+gJRICIzESBiNzdGF0ZUoWCgYIgsivoCUSCCNpbnB1dC0wEgIjMkoMCgYIhMivoCUSAiMzShcKBgiDyK+gJRICIzQSCSNvdXRwdXQtMA==';
+    const input = tf.tensor([
+      [1, 2],
+      [-30, -40]
+    ]);
+    // this is what plan contains
+    const state = tf.tensor([4.2, 7.3]);
+    const expected = tf.abs(tf.add(input, state));
+
+    const syft = new Syft({ verbose: true });
+    syft.plan = unserialize(null, plan, protobuf.syft_proto.execution.v1.Plan);
+    syft.executePlan(input).then(
+      res => {
+        expect(res[0].value).toBeInstanceOf(tf.Tensor);
+        expect(
+          tf
+            .equal(res[0].value, expected)
+            .all()
+            .dataSync()[0]
+        ).toBe(1);
+        done();
+      },
+      err => done.fail('Plan failed to execute: ' + err)
+    );
+  });
 });
 
 // import 'regenerator-runtime/runtime';

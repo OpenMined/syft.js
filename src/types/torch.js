@@ -1,27 +1,56 @@
-import { default as proto } from '../proto';
-import * as tf from '@tensorflow/tfjs';
+import { getPbId, unbufferize, protobuf } from '../protobuf';
+import * as tf from '@tensorflow/tfjs-core';
 
 export class TorchTensor {
-  constructor(id, bin, chain, gradChain, tags, description, serializer) {
+  constructor(
+    id,
+    contents,
+    shape,
+    dtype,
+    chain = null,
+    gradChain = null,
+    tags = [],
+    description = null
+  ) {
     this.id = id;
-    this.bin = bin;
+    this.shape = shape;
+    this.dtype = dtype;
+    this.contents = contents;
     this.chain = chain;
     this.gradChain = gradChain;
     this.tags = tags;
     this.description = description;
-    this.serializer = serializer;
 
     // We need a TensorFlow.js tensor to interact with, but we'll still save all the info above
-    this._shape = Array.from(bin[0]);
-    this._type = bin[1];
-    this._value = bin[2];
-    this._tfTensor = tf.tensor(this._value, this._shape, this._type);
+    this._tfTensor = tf.tensor(this.contents, this.shape, this.dtype);
   }
 
-  serdeSimplify(f) {
-    const TYPE = proto['torch.Tensor'];
-    const args = ['id', 'bin', 'chain', 'gradChain', 'tags', 'description', 'serializer']; // prettier-ignore
-    return `(${TYPE}, (${args.map(i => f(this[i])).join()}))`; // prettier-ignore
+  static unbufferize(worker, pb) {
+    if (
+      pb.serializer !==
+      protobuf.syft_proto.types.torch.v1.TorchTensor.Serializer.SERIALIZER_ALL
+    ) {
+      throw new Error(
+        `Tensor serializer ${pb.serializer} is not supported in syft.js`
+      );
+    }
+
+    // unwrap TensorData
+    const tensorData = pb.contents_data;
+    const dtype = tensorData.dtype;
+    const shape = tensorData.shape.dims;
+    const contents = tensorData[`contents_${dtype}`];
+
+    return new TorchTensor(
+      getPbId(pb.id),
+      contents,
+      shape,
+      dtype,
+      unbufferize(worker, pb.chain),
+      unbufferize(worker, pb.grad_chain),
+      pb.tags,
+      pb.description
+    );
   }
 }
 
@@ -29,9 +58,22 @@ export class TorchSize {
   constructor(size) {
     this.size = size;
   }
+}
 
-  serdeSimplify(f) {
-    const TYPE = proto['torch.Size'];
-    return `(${TYPE}, (${this.size}))`; // prettier-ignore
+export class TorchParameter {
+  constructor(id, tensor, requiresGrad, grad) {
+    this.id = id;
+    this.tensor = tensor;
+    this.requiresGrad = requiresGrad;
+    this.grad = grad;
+  }
+
+  static unbufferize(worker, pb) {
+    return new TorchParameter(
+      getPbId(pb.id),
+      unbufferize(worker, pb.tensor),
+      pb.requires_grad,
+      unbufferize(worker, pb.grad)
+    );
   }
 }

@@ -13,8 +13,7 @@ import EventObserver from './events';
 import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
-import { detail } from './serde';
-import { pickTensors } from './_helpers';
+import { protobuf, unserialize } from './protobuf';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -80,8 +79,9 @@ export default class Syft {
       // If we don't have a plan yet, calling this function is premature
       if (!this.plan) throw new Error(NO_PLAN);
 
-      const argsLength = this.plan.procedure.argIds.length,
-        opsLength = this.plan.procedure.operations.length;
+      const inputPlaceholders = this.plan.getInputPlaceholders();
+      const argsLength = inputPlaceholders.length,
+        opsLength = this.plan.operations.length;
 
       // If the number of arguments supplied does not match the number of arguments required...
       if (data.length !== argsLength)
@@ -93,22 +93,33 @@ export default class Syft {
 
       // For each argument supplied, store them in this.objects
       data.forEach((datum, i) => {
-        this.objects[this.plan.procedure.argIds[i]] = datum;
+        this.objects[inputPlaceholders[i].id] = datum;
       });
+
+      // Add state tensors to objects
+      if (this.plan.state && this.plan.state.tensors) {
+        this.plan.state.tensors.forEach(tensor => {
+          this.objects[tensor.id] = tensor;
+        });
+      }
 
       let finished = true;
 
       // Execute the plan
       for (let i = this.lastUnfinishedOperation; i < opsLength; i++) {
         // The current operation
-        const currentOp = this.plan.procedure.operations[i];
+        const currentOp = this.plan.operations[i];
 
         // The result of the current operation
         const result = currentOp.execute(this.objects, this.logger);
 
         // Place the result of the current operation into this.objects at the 0th item in returnIds
         if (result) {
-          this.objects[currentOp.returnIds[0]] = result;
+          if (currentOp.returnIds.length > 0) {
+            this.objects[currentOp.returnIds[0]] = result;
+          } else if (currentOp.returnPlaceholders.length > 0) {
+            this.objects[currentOp.returnPlaceholders[0].id] = result;
+          }
         } else {
           finished = false;
           this.lastUnfinishedOperation = i;
@@ -123,11 +134,11 @@ export default class Syft {
 
         // Resolve all of the requested resultId's as specific by the plan
         const resolvedResultingTensors = [];
-
-        this.plan.procedure.resultIds.forEach(resultId => {
+        const outputPlaceholders = this.plan.getOutputPlaceholders();
+        outputPlaceholders.forEach(placeholder => {
           resolvedResultingTensors.push({
-            id: resultId,
-            value: this.objects[resultId]
+            id: placeholder.id,
+            value: this.objects[placeholder.id]
           });
         });
 
@@ -198,14 +209,21 @@ export default class Syft {
         this.participants = data.participants;
 
         // Save the protocol and plan assignment after having Serde detail them
-        const detailedProtocol = detail(data.protocol);
-        const detailedPlan = detail(data.plan);
+        let detailedProtocol;
+        let detailedPlan;
+        detailedProtocol = unserialize(
+          null,
+          data.protocol,
+          protobuf.syft_proto.messaging.v1.Protocol
+        );
+        detailedPlan = unserialize(
+          null,
+          data.plan,
+          protobuf.syft_proto.messaging.v1.Plan
+        );
 
         this.protocol = detailedProtocol;
         this.plan = detailedPlan;
-
-        // Pick all the tensors from the plan we just received
-        this.objects = { ...this.objects, ...pickTensors(detailedPlan) };
 
         return this.plan;
       } else if (type === WEBRTC_INTERNAL_MESSAGE) {
@@ -251,6 +269,11 @@ export default class Syft {
       logger: this.logger,
       socket: this.socket
     });
+
+    const onDataMessage = data => {
+      this.logger.log(`Data message is received from ${data.worker_id}`, data);
+    };
+    this.rtc.on('message', onDataMessage);
   }
 
   connectToParticipants() {
