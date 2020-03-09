@@ -5,7 +5,7 @@ export default class SyftModel {
     const state = unserialize(
       worker,
       modelData,
-      protobuf.syft_proto.messaging.v1.State
+      protobuf.syft_proto.execution.v1.State
     );
     this.params = state.getTfTensors();
   }

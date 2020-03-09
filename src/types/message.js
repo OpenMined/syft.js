@@ -43,8 +43,9 @@ export class Operation extends Message {
       args.forEach(arg => {
         if (
           (arg instanceof PointerTensor &&
-            !worker.objects.has(arg.idAtLocation)) ||
-          (arg instanceof Placeholder && !worker.objects.has(arg.id))
+            !Object.hasOwnProperty.call(worker.objects, arg.idAtLocation)) ||
+          (arg instanceof Placeholder &&
+            !Object.hasOwnProperty.call(worker.objects, arg.id))
         ) {
           enoughInfo = false;
         }
@@ -67,9 +68,9 @@ export class Operation extends Message {
     const getTensorByRef = reference => {
       let tensor = null;
       if (reference instanceof Placeholder) {
-        tensor = worker.objects.get(reference.id);
+        tensor = worker.objects[reference.id];
       } else if (reference instanceof PointerTensor) {
-        tensor = worker.objects.get(reference.idAtLocation);
+        tensor = worker.objects[reference.idAtLocation];
       }
       tensor = toTFTensor(tensor);
       return tensor;
@@ -90,8 +91,6 @@ export class Operation extends Message {
 
       return resolvedArgs;
     };
-
-    // TODO: We need to do something with kwargs!
 
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
     let command = torchToTF(this.command, this.kwArgs, worker.logger);

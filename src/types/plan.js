@@ -72,28 +72,27 @@ export class Plan {
 
     // For each argument supplied, store them in worker's objects
     data.forEach((datum, i) => {
-      worker.objects.set(inputPlaceholders[i].id, datum);
+      worker.objects[inputPlaceholders[i].id] = datum;
     });
 
     // load state tensors to worker
     if (this.state && this.state.tensors) {
       this.state.tensors.forEach(tensor => {
-        worker.objects.set(tensor.id, tensor);
+        worker.objects[tensor.id] = tensor;
       });
     }
 
     // Execute the plan
     for (const currentOp of this.operations) {
       // The result of the current operation
-      //console.log(currentOp);
       const result = await currentOp.execute(worker);
 
       // Place the result of the current operation into this.objects at the 0th item in returnIds
       if (result) {
         if (currentOp.returnIds.length > 0) {
-          worker.objects.set(currentOp.returnIds[0], result);
+          worker.objects[currentOp.returnIds[0]] = result;
         } else if (currentOp.returnPlaceholders.length > 0) {
-          worker.objects.set(currentOp.returnPlaceholders[0].id, result);
+          worker.objects[currentOp.returnPlaceholders[0].id] = result;
         }
       }
     }
@@ -102,7 +101,7 @@ export class Plan {
     const resolvedResultingTensors = [];
     const outputPlaceholders = this.getOutputPlaceholders();
     outputPlaceholders.forEach(placeholder => {
-      resolvedResultingTensors.push(worker.objects.get(placeholder.id));
+      resolvedResultingTensors.push(worker.objects[placeholder.id]);
     });
 
     // Return them to the worker

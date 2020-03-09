@@ -15,7 +15,6 @@ import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
 import GridAPIClient from './grid_api_client';
 import Job from './job';
-import SyftModel from './syft_model';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -23,58 +22,31 @@ export default class Syft {
     // For creating verbose logging should the worker desire
     this.logger = new Logger('syft.js', verbose);
 
-    this.gridClient = new GridAPIClient({ url, logger: this.logger });
-
-    // models registry
-    this.models = new Map();
+    this.gridClient = new GridAPIClient({ url });
 
     // objects registry
-    this.objects = new Map();
+    this.objects = {};
 
     // For creating event listeners
     this.observer = new EventObserver();
 
-    this.id = null;
+    this.worker_id = null;
     this.peerConfig = peerConfig;
     this.authToken = authToken;
   }
 
-  async newJob({ modelId, modelVersion }) {
-    const authResponse = await this.gridClient.authenticate(this.authToken);
-    this.id = authResponse.worker_id;
+  async newJob({ modelName, modelVersion }) {
+    if (!this.worker_id) {
+      // authenticate
+      const authResponse = await this.gridClient.authenticate(this.authToken);
+      this.worker_id = authResponse.worker_id;
+    }
 
     return new Job({
       worker: this,
-      modelId,
+      modelName,
       modelVersion,
-      gridClient: this.gridClient,
-      logger: this.logger
-    });
-  }
-
-  /**
-   * Load the model into worker's models registry
-   * @param requestKey
-   * @param modelId
-   * @returns {Promise<SyftModel>}
-   */
-  async loadModel({ requestKey, modelId }) {
-    const modelData = await this.gridClient.getModel(
-      this.id,
-      requestKey,
-      modelId
-    );
-    const model = new SyftModel({ worker: this, modelData });
-    this.models.set(modelId, model);
-    return model;
-  }
-
-  getConnectionInfo() {
-    // TODO
-    return Promise.resolve({
-      ping: '8ms',
-      download: '46.3mbps',
-      upload: '23.7mbps'
+      gridClient: this.gridClient
     });
   }
 
@@ -134,12 +106,12 @@ export default class Syft {
         detailedProtocol = unserialize(
           null,
           data.protocol,
-          protobuf.syft_proto.messaging.v1.Protocol
+          protobuf.syft_proto.execution.v1.Protocol
         );
         detailedPlan = unserialize(
           null,
           data.plan,
-          protobuf.syft_proto.messaging.v1.Plan
+          protobuf.syft_proto.execution.v1.Plan
         );
 
         this.protocol = detailedProtocol;

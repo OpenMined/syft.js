@@ -56,162 +56,142 @@ startButton.onclick = () => {
   startFL(gridServer.value, 'model-id');
 };
 
-const executeFLTrainingJob = async ({
-  data,
-  targets,
-  job,
-  model,
-  clientConfig,
-  callbacks
-}) => {
-  const batchSize = clientConfig.batch_size;
-  const lr = clientConfig.lr;
-  const numBatches = Math.ceil(data.shape[0] / batchSize);
-  const maxEpochs = clientConfig.max_epochs || 1;
-  const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
-  // set the lowest cap
-  const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
-
-  // Copy original model params.
-  let modelParams = [];
-  for (let param of model.params) {
-    modelParams.push(param.clone());
-  }
-
-  for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
-    const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
-    const dataBatch = data.slice(batch * batchSize, chunkSize);
-    const targetBatch = targets.slice(batch * batchSize, chunkSize);
-
-    let [loss, acc, ...newModelParams] = await job.plans[
-      'training_plan'
-    ].execute(
-      job.worker,
-      dataBatch,
-      targetBatch,
-      chunkSize,
-      lr,
-      ...modelParams
-    );
-
-    // Use updated model params in the next cycle.
-    for (let i = 0; i < modelParams.length; i++) {
-      modelParams[i].dispose();
-      modelParams[i] = newModelParams[i];
-    }
-
-    if (typeof callbacks.onBatchEnd === 'function') {
-      callbacks.onBatchEnd({
-        update,
-        batch,
-        epoch,
-        accuracy: (await acc.data())[0],
-        loss: (await loss.data())[0]
-      });
-    }
-
-    batch++;
-    // check if we're out of batches (end of epoch)
-    if (batch === numBatches) {
-      if (typeof callbacks.onEpochEnd === 'function') {
-        callbacks.onEpochEnd({ update, batch, epoch, model });
-      }
-      batch = 0;
-      epoch++;
-    }
-
-    // free GPU memory
-    acc.dispose();
-    loss.dispose();
-    dataBatch.dispose();
-    targetBatch.dispose();
-  }
-
-  // TODO protocol execution
-  // job.protocols['secure_aggregation'].execute();
-
-  // Calc model diffs
-  const modelDiff = [];
-  for (let i = 0; i < modelParams.length; i++) {
-    modelDiff.push(model.params[i].sub(modelParams[i]));
-  }
-
-  // report
-  await job.report(modelDiff);
-
-  if (typeof callbacks.onDone === 'function') {
-    callbacks.onDone();
-  }
-};
-
-const startFL = async (url, modelId) => {
+const startFL = async (url, modelName) => {
   const worker = new Syft({ url, verbose: true });
-  const job = await worker.newJob({ modelId });
+  const job = await worker.newJob({ modelName });
+
   job.start();
-  job.on('ready', async ({ model, clientConfig }) => {
-    // load data
+
+  job.on('accepted', async ({ model, clientConfig }) => {
+    // Load data
     console.log('Loading data...');
     const mnist = new MnistData();
     await mnist.load();
-    const data = mnist.getTrainData();
+    const trainDataset = mnist.getTrainData();
+    const data = trainDataset.xs;
+    const targets = trainDataset.labels;
     console.log('Data loaded');
 
-    // train
-    executeFLTrainingJob({
-      model,
-      data: data.xs,
-      targets: data.labels,
-      job,
-      clientConfig,
-      callbacks: {
-        onBatchEnd: async ({ epoch, batch, accuracy, loss }) => {
-          console.log(
-            `Epoch: ${epoch}, Batch: ${batch}, Accuracy: ${accuracy}, Loss: ${loss}`
-          );
-          Plotly.extendTraces('loss_graph', { y: [[loss]] }, [0]);
-          Plotly.extendTraces('acc_graph', { y: [[accuracy]] }, [0]);
-          await tf.nextFrame();
-        },
-        onEpochEnd: ({ epoch }) => {
-          console.log(`Epoch ${epoch} ended!`);
-        },
-        onDone: () => {
-          console.log(`Job is done!`);
-        }
+    // Prepare train parameters.
+    const batchSize = clientConfig.batch_size;
+    const lr = clientConfig.lr;
+    const numBatches = Math.ceil(data.shape[0] / batchSize);
+
+    // Calculate total number of model updates
+    // in case none of these options specified, we fallback to one loop
+    // though all batches.
+    const maxEpochs = clientConfig.max_epochs || 1;
+    const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
+    const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
+
+    // Make copies of model params.
+    let modelParams = [];
+    for (let param of model.params) {
+      modelParams.push(param.clone());
+    }
+
+    // Main training loop.
+    for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
+      // Slice a batch.
+      const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
+      const dataBatch = data.slice(batch * batchSize, chunkSize);
+      const targetBatch = targets.slice(batch * batchSize, chunkSize);
+
+      // Execute the plan and get updated model params back.
+      let [loss, acc, ...updatedModelParams] = await job.plans[
+        'training_plan'
+      ].execute(
+        job.worker,
+        dataBatch,
+        targetBatch,
+        chunkSize,
+        lr,
+        ...modelParams
+      );
+
+      // Use updated model params in the next cycle.
+      for (let i = 0; i < modelParams.length; i++) {
+        modelParams[i].dispose();
+        modelParams[i] = updatedModelParams[i];
       }
-    });
+
+      await updateUIAfterBatch({
+        epoch,
+        batch,
+        accuracy: (await acc.data())[0],
+        loss: (await loss.data())[0]
+      });
+
+      batch++;
+
+      // Check if we're out of batches (end of epoch).
+      if (batch === numBatches) {
+        batch = 0;
+        epoch++;
+      }
+
+      // Free GPU memory.
+      acc.dispose();
+      loss.dispose();
+      dataBatch.dispose();
+      targetBatch.dispose();
+    }
+
+    // TODO protocol execution
+    // job.protocols['secure_aggregation'].execute();
+
+    // Calc model diff.
+    const modelDiff = [];
+    for (let i = 0; i < modelParams.length; i++) {
+      modelDiff.push(model.params[i].sub(modelParams[i]));
+    }
+
+    // Report diff.
+    await job.report(modelDiff);
+    console.log('Done!');
+  });
+
+  job.on('rejected', ({ timeout }) => {
+    // Handle the job rejection
+    console.log('We have been rejected by PyGrid to participate in the job.');
+    const msUntilRetry = timeout * 1000;
+    // Try to join the job again in "msUntilRetry" milliseconds
+    setTimeout(job.start.bind(job), msUntilRetry);
+  });
+
+  job.on('error', err => {
+    console.log('Error', err);
   });
 };
 
 const setFLUI = () => {
   Plotly.newPlot(
     'loss_graph',
-    [
-      {
-        y: [],
-        mode: 'lines',
-        line: { color: '#80CAF6' }
-      }
-    ],
+    [{ y: [], mode: 'lines', line: { color: '#80CAF6' } }],
     { title: 'Train Loss', showlegend: false },
     { staticPlot: true }
   );
 
   Plotly.newPlot(
     'acc_graph',
-    [
-      {
-        y: [],
-        mode: 'lines',
-        line: { color: '#80CAF6' }
-      }
-    ],
+    [{ y: [], mode: 'lines', line: { color: '#80CAF6' } }],
     { title: 'Train Accuracy', showlegend: false },
     { staticPlot: true }
   );
 
   document.getElementById('fl-training').style.display = 'table';
 };
+
+const updateUIAfterBatch = async ({ epoch, batch, accuracy, loss }) => {
+  console.log(
+    `Epoch: ${epoch}, Batch: ${batch}, Accuracy: ${accuracy}, Loss: ${loss}`
+  );
+  Plotly.extendTraces('loss_graph', { y: [[loss]] }, [0]);
+  Plotly.extendTraces('acc_graph', { y: [[accuracy]] }, [0]);
+  await tf.nextFrame();
+};
+
+// ---------------------------- OLD -------------------------------
 
 const startSyft = (url, protocolId) => {
   const workerId = getQueryVariable('worker_id');

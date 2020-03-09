@@ -2,24 +2,31 @@ import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
 import { GRID_UNKNOWN_CYCLE_STATUS } from './_errors';
+import SyftModel from './syft_model';
+import Logger from './logger';
 
 export default class Job {
-  constructor({ worker, modelId, modelVersion, gridClient, logger }) {
+  constructor({ worker, modelName, modelVersion, gridClient }) {
     this.worker = worker;
-    this.modelId = modelId;
+    this.modelName = modelName;
     this.modelVersion = modelVersion;
     this.grid = gridClient;
+    this.logger = new Logger();
+    this.observer = new EventObserver();
+
+    // parameters loaded from grid
+    this.model = null;
     this.plans = {};
     this.protocols = {};
     // holds request_key
     this.cycleParams = {};
     this.clientConfig = {};
-    this.logger = logger;
-    this.observer = new EventObserver();
   }
 
   on(event, handler) {
-    this.observer.subscribe(event, handler);
+    if (['accepted', 'rejected', 'error'].includes(event)) {
+      this.observer.subscribe(event, handler.bind(this));
+    }
   }
 
   async initCycle(cycleParams) {
@@ -28,6 +35,17 @@ export default class Job {
     );
     this.cycleParams = cycleParams;
     this.clientConfig = cycleParams.client_config;
+
+    // load the model
+    const modelData = await this.grid.getModel(
+      this.worker.id,
+      cycleParams.request_key,
+      cycleParams.model_id
+    );
+    this.model = new SyftModel({
+      worker: this.worker,
+      modelData
+    });
 
     // load all plans
     for (let planName of Object.keys(cycleParams.plans)) {
@@ -40,7 +58,7 @@ export default class Job {
       this.plans[planName] = unserialize(
         this.worker,
         planBinary,
-        protobuf.syft_proto.messaging.v1.Plan
+        protobuf.syft_proto.execution.v1.Plan
       );
     }
 
@@ -55,33 +73,32 @@ export default class Job {
       this.protocols[protocolName] = unserialize(
         this.worker,
         protocolBinary,
-        protobuf.syft_proto.messaging.v1.Protocol
+        protobuf.syft_proto.execution.v1.Protocol
       );
     }
   }
 
   async start() {
+    // speed test
+    const { ping, download, upload } = await this.grid.getConnectionSpeed();
+
     // request cycle
     const cycleParams = await this.grid.requestCycle(
       this.worker.id,
-      this.modelId
+      this.modelName,
+      this.modelVersion,
+      ping,
+      download,
+      upload
     );
 
-    let model;
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
-        // load plans, protocols, etc.
-        this.initCycle(cycleParams);
+        // load model, plans, protocols, etc.
+        await this.initCycle(cycleParams);
 
-        // load model
-        model = await this.worker.loadModel({
-          requestKey: cycleParams.request_key,
-          modelId: cycleParams.model_id
-        });
-
-        this.observer.broadcast('ready', {
-          job: this,
-          model,
+        this.observer.broadcast('accepted', {
+          model: this.model,
           clientConfig: this.clientConfig
         });
         break;
@@ -90,9 +107,9 @@ export default class Job {
         this.logger.log(
           `Rejected from cycle with timeout: ${cycleParams.timeout}`
         );
-        // wait
-        await new Promise(resolve => setTimeout(resolve, cycleParams.timeout));
-        await this.start();
+        this.observer.broadcast('rejected', {
+          timeout: cycleParams.timeout
+        });
         break;
 
       default:

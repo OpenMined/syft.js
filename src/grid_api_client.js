@@ -1,9 +1,9 @@
 import Logger from './logger';
 
 export default class GridAPIClient {
-  constructor({ url, logger }) {
+  constructor({ url }) {
     this.url = url;
-    this.logger = logger || new Logger('GridClient', true);
+    this.logger = new Logger();
   }
 
   authenticate(authToken) {
@@ -13,9 +13,9 @@ export default class GridAPIClient {
     });
   }
 
-  requestCycle(workerId, modelId, versionId = null) {
+  requestCycle(workerId, modelName, modelVersion, ping, download, upload) {
     this.logger.log(
-      `[WID: ${workerId}] Requesting cycle for model ${modelId} v.${versionId}...`
+      `[WID: ${workerId}] Requesting cycle for model ${modelName} v.${modelVersion} [${ping}, ${download}, ${upload}]...`
     );
     return Promise.resolve({
       status: 'accepted',
@@ -68,6 +68,15 @@ export default class GridAPIClient {
     }
     return Promise.resolve({
       status: 'success'
+    });
+  }
+
+  getConnectionSpeed() {
+    // TODO meter speed using /federated/speed-test
+    return Promise.resolve({
+      ping: '8ms',
+      download: '46.3mbps',
+      upload: '23.7mbps'
     });
   }
 }
