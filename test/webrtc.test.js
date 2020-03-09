@@ -6,7 +6,7 @@ import {
 } from '../src/_constants';
 import Logger from '../src/logger';
 import WebRTCClient from '../src/webrtc';
-import DataChannelMessage from '../src/data_channel_message';
+import DataChannelMessage from '../src/data-channel-message';
 
 // WebRTC mocks.
 import {

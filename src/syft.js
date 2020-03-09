@@ -13,7 +13,7 @@ import Logger from './logger';
 import Socket from './sockets';
 import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
-import GridAPIClient from './grid_api_client';
+import GridAPIClient from './grid-api-client';
 import Job from './job';
 
 export default class Syft {

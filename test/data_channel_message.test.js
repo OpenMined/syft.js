@@ -1,4 +1,4 @@
-import DataChannelMessage from '../src/data_channel_message';
+import DataChannelMessage from '../src/data-channel-message';
 import { WEBRTC_DATACHANNEL_CHUNK_SIZE } from '../src';
 import { randomFillSync } from 'crypto';
 
