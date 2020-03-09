@@ -58,6 +58,9 @@ export default class Syft {
     // The WebRTC client used for P2P communication
     this.rtc = null;
     this.createWebRTCClient(peerConfig);
+
+    // Forcing connection to be secure if verbose value is false.
+    this.verbose = verbose;
   }
 
   /* ----- FUNCTIONALITY ----- */
@@ -164,7 +167,9 @@ export default class Syft {
   // To create a socket connection internally and externally
   createSocketConnection(url) {
     if (!url) return;
-
+    if (!this.verbose) {
+      url = url.replace('ws://', 'wss://');
+    }
     // When a socket connection is opened...
     const onOpen = event => {
       this.observer.broadcast(SOCKET_STATUS, {
