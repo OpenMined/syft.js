@@ -42,6 +42,7 @@
     <!-- NOTE: TFJS version must match with one in package-lock.json -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   </head>
   <body>
     <img
@@ -72,8 +73,22 @@
       >.
     </p>
     <input type="text" id="grid-server" value="ws://localhost:3000" />
-    <input type="text" id="protocol" value="10000000013" />
-    <button id="connect">Connect to grid.js server</button>
+    <!--    <input type="text" id="protocol" value="10000000013" />-->
+    <!--    <button id="connect">Connect to grid.js server</button>-->
+    <button id="start">Start FL Worker</button>
+
+    <div id="fl-training" style="display: none">
+      <div style="display: table-row">
+        <div style="display: table-cell">
+          <div id="loss_graph"></div>
+        </div>
+
+        <div style="display: table-cell">
+          <div id="acc_graph"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="app">
       <button id="disconnect">Disconnect</button>
       <p id="identity"></p>
