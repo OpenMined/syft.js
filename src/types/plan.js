@@ -1,4 +1,5 @@
 import { getPbId, unbufferize } from '../protobuf';
+import { NOT_ENOUGH_ARGS } from '../_errors';
 
 export class Plan {
   constructor(
@@ -54,12 +55,68 @@ export class Plan {
       (a, b) => a.getOrderFromTags('#output') - b.getOrderFromTags('#output')
     );
   }
+
+  /**
+   * Execute the plan with given worker
+   * @param {Syft} worker
+   * @param data
+   * @returns {Promise<Array>}
+   */
+  async execute(worker, ...data) {
+    const inputPlaceholders = this.getInputPlaceholders(),
+      argsLength = inputPlaceholders.length;
+
+    // If the number of arguments supplied does not match the number of arguments required...
+    if (data.length !== argsLength)
+      throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
+
+    // For each argument supplied, store them in worker's objects
+    data.forEach((datum, i) => {
+      worker.objects[inputPlaceholders[i].id] = datum;
+    });
+
+    // load state tensors to worker
+    if (this.state && this.state.tensors) {
+      this.state.tensors.forEach(tensor => {
+        worker.objects[tensor.id] = tensor;
+      });
+    }
+
+    // Execute the plan
+    for (const currentOp of this.operations) {
+      // The result of the current operation
+      const result = await currentOp.execute(worker);
+
+      // Place the result of the current operation into this.objects at the 0th item in returnIds
+      if (result) {
+        if (currentOp.returnIds.length > 0) {
+          worker.objects[currentOp.returnIds[0]] = result;
+        } else if (currentOp.returnPlaceholders.length > 0) {
+          worker.objects[currentOp.returnPlaceholders[0].id] = result;
+        }
+      }
+    }
+
+    // Resolve all of the requested resultId's as specific by the plan
+    const resolvedResultingTensors = [];
+    const outputPlaceholders = this.getOutputPlaceholders();
+    outputPlaceholders.forEach(placeholder => {
+      resolvedResultingTensors.push(worker.objects[placeholder.id]);
+    });
+
+    // Return them to the worker
+    return resolvedResultingTensors;
+  }
 }
 
 export class State {
   constructor(placeholders = null, tensors = null) {
     this.placeholders = placeholders;
     this.tensors = tensors;
+  }
+
+  getTfTensors() {
+    return this.tensors.map(t => t._tfTensor);
   }
 
   static unbufferize(worker, pb) {

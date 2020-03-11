@@ -23,14 +23,14 @@ describe('Helpers', () => {
   });
 
   test('torchToTF(): can convert underscore function', () => {
-    expect(torchToTF('__add__', logger)).toBe('add');
+    expect(torchToTF('__add__', {}, logger)).toBe('add');
   });
 
   test('torchToTF(): can convert torch function', () => {
-    expect(torchToTF('torch.abs', logger)).toBe('abs');
+    expect(torchToTF('torch.abs', {}, logger)).toBe('abs');
   });
 
   test('torchToTF(): returns null for unknown command', () => {
-    expect(torchToTF('nonexistentFunction', logger)).toBe(null);
+    expect(torchToTF('nonexistentFunction', {}, logger)).toBe(null);
   });
 });
