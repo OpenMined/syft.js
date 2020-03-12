@@ -58,7 +58,7 @@ export class Operation extends Message {
       if (tensor instanceof tf.Tensor) {
         return tensor;
       } else if (tensor instanceof TorchTensor) {
-        return tensor._tfTensor;
+        return tensor.toTfTensor();
       } else if (typeof tensor === 'number') {
         return tensor;
       }

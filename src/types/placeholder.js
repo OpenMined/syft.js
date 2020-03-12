@@ -1,4 +1,4 @@
-import { getPbId } from '../protobuf';
+import { protobuf, getPbId, pbId } from '../protobuf';
 
 export default class Placeholder {
   constructor(id, tags = [], description = null) {
@@ -9,6 +9,16 @@ export default class Placeholder {
 
   static unbufferize(worker, pb) {
     return new Placeholder(getPbId(pb.id), pb.tags || [], pb.description);
+  }
+
+  bufferize(/* worker */) {
+    return protobuf.syft_proto.frameworks.torch.tensors.interpreters.v1.Placeholder.create(
+      {
+        id: pbId(this.id),
+        tags: this.tags,
+        description: this.description
+      }
+    );
   }
 
   getOrderFromTags(prefix) {
