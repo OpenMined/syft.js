@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import { SOCKET_PING } from '../src/_constants';
 import { WebSocket, Server } from 'mock-socket';
 

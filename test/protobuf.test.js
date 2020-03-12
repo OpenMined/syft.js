@@ -1,7 +1,8 @@
 import { protobuf, unserialize, getPbId } from '../src/protobuf';
 import { ObjectMessage } from '../src/types/message';
 import Protocol from '../src/types/protocol';
-import { Plan } from '../src/types/plan';
+import { Plan, State } from '../src/types/plan';
+import { PLAN, MODEL, PROTOCOL } from './data/dummy';
 
 describe('Protobuf', () => {
   test('can unserialize an ObjectMessage', () => {
@@ -16,19 +17,24 @@ describe('Protobuf', () => {
   test('can unserialize a Protocol', () => {
     const protocol = unserialize(
       null,
-      'CgcI5Ii/nbYBKhQKBwi3ucnu3gESCRIHd29ya2VyMSoUCgcI6cyxl/IBEgkSB3dvcmtlcjIqFAoHCP/QmdOjAhIJEgd3b3JrZXIz',
+      PROTOCOL,
       protobuf.syft_proto.execution.v1.Protocol
     );
     expect(protocol).toBeInstanceOf(Protocol);
   });
 
   test('can unserialize a Plan', () => {
+    const plan = unserialize(null, PLAN, protobuf.syft_proto.execution.v1.Plan);
+    expect(plan).toBeInstanceOf(Plan);
+  });
+
+  test('can unserialize a State', () => {
     const plan = unserialize(
       null,
-      'CgcIt7nJ7t4BEkkKB19fYWRkX18aFwoHCPbiu97nARICIzISCCNpbnB1dC0wKhdKFQoHCLurk5KoARICIzESBiNzdGF0ZUIMCgYIzcymkA4SAiMzEjQKCXRvcmNoLmFicyoOSgwKBgjNzKaQDhICIzNCFwoGCMnx1YZ6EgIjNBIJI291dHB1dC0wGkEKFQoHCLurk5KoARICIzESBiNzdGF0ZRIoCiYKBwi7q5OSqAESGQoDCgECEgdmbG9hdDMysgEIZmaGQJqZ6UBABCABKAEyB2JvYlBsYW5KFQoHCLurk5KoARICIzESBiNzdGF0ZUoXCgcI9uK73ucBEgIjMhIII2lucHV0LTBKDAoGCM3MppAOEgIjM0oXCgYIyfHVhnoSAiM0Egkjb3V0cHV0LTA=',
-      protobuf.syft_proto.execution.v1.Plan
+      MODEL,
+      protobuf.syft_proto.execution.v1.State
     );
-    expect(plan).toBeInstanceOf(Plan);
+    expect(plan).toBeInstanceOf(State);
   });
 
   test('gets id from types.syft.Id', () => {

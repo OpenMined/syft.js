@@ -7,8 +7,8 @@ import {
   WEBRTC_DATACHANNEL_MAX_BUFFER_TIMEOUTS,
   WEBRTC_DATACHANNEL_BUFFER_TIMEOUT
 } from './_constants';
-import DataChannelMessage from './data_channel_message';
-import DataChannelMessageQueue from './data_channel_message_queue';
+import DataChannelMessage from './data-channel-message';
+import DataChannelMessageQueue from './data-channel-message-queue';
 import EventObserver from './events';
 import Logger from './logger';
 

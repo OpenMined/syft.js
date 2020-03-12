@@ -37,7 +37,7 @@ export class Operation extends Message {
     );
   }
 
-  execute(objects) {
+  execute(worker) {
     // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
     const haveValuesForAllArgs = args => {
       let enoughInfo = true;
@@ -45,9 +45,9 @@ export class Operation extends Message {
       args.forEach(arg => {
         if (
           (arg instanceof PointerTensor &&
-            !Object.hasOwnProperty.call(objects, arg.idAtLocation)) ||
+            !Object.hasOwnProperty.call(worker.objects, arg.idAtLocation)) ||
           (arg instanceof Placeholder &&
-            !Object.hasOwnProperty.call(objects, arg.id))
+            !Object.hasOwnProperty.call(worker.objects, arg.id))
         ) {
           enoughInfo = false;
         }
@@ -61,17 +61,21 @@ export class Operation extends Message {
         return tensor;
       } else if (tensor instanceof TorchTensor) {
         return tensor._tfTensor;
+      } else if (typeof tensor === 'number') {
+        return tensor;
       }
       return null;
     };
 
     const getTensorByRef = reference => {
+      let tensor = null;
       if (reference instanceof Placeholder) {
-        return objects[reference.id];
+        tensor = worker.objects[reference.id];
       } else if (reference instanceof PointerTensor) {
-        return objects[reference.idAtLocation];
+        tensor = worker.objects[reference.idAtLocation];
       }
-      return null;
+      tensor = toTFTensor(tensor);
+      return tensor;
     };
 
     // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
@@ -90,26 +94,28 @@ export class Operation extends Message {
       return resolvedArgs;
     };
 
-    // TODO: We need to do something with kwargs!
-
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
-    const command = torchToTF(this.command);
 
-    this.logger.log(
-      `Given command: ${this.command}, converted command: ${command}`
-    );
+    let command = torchToTF(this.command, this.kwArgs);
+    let preArgs = [];
+    let postArgs = [];
+    if (Array.isArray(command)) {
+      preArgs = command[1] || [];
+      postArgs = command[2] || [];
+      command = command[0];
+    }
+
+    //worker.logger.log(`Given command: ${this.command}, converted command: ${command} + ${JSON.stringify(preArgs)} + ${JSON.stringify(postArgs)}`);
 
     // If we're executing the command against itself only, let's roll!
+    let result = null;
     if (!this.owner) {
       if (haveValuesForAllArgs(this.args)) {
         // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
         const args = pullTensorsFromArgs(this.args);
 
-        return tf[command](...args);
+        result = tf[command](...preArgs, ...args, ...postArgs);
       }
-
-      // Otherwise, we don't have enough information, return null
-      return null;
     } else {
       if (haveValuesForAllArgs(this.args)) {
         // Get the actual tensor inside the PointerTensor/Placeholder "this.owner"
@@ -119,12 +125,12 @@ export class Operation extends Message {
         const args = pullTensorsFromArgs(this.args);
 
         // Now we can execute a multi-argument method
-        return tf[command](self, ...args);
+        result = tf[command](self, ...preArgs, ...args, ...postArgs);
       }
-
-      // Otherwise, we don't have enough information, return null
-      return null;
     }
+
+    // Otherwise, we don't have enough information, return null
+    return result;
   }
 }
 
