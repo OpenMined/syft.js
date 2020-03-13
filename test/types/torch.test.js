@@ -35,7 +35,7 @@ describe('TorchTensor', () => {
     // resulting TF tensors are equal
     expect(
       tf
-        .equal(obj._tfTensor, tfTensor)
+        .equal(obj.toTfTensor(), tfTensor)
         .all()
         .dataSync()[0]
     ).toBe(1);

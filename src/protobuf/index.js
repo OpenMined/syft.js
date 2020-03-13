@@ -62,7 +62,32 @@ export const unserialize = (worker, bin, pbType) => {
   return unbufferize(worker, pbObj);
 };
 
+/**
+ * Converts syft class to protobuf-serialized binary
+ * @param worker
+ * @param obj
+ * @returns {ArrayBuffer}
+ */
+export const serialize = (worker, obj) => {
+  const pbObj = obj.bufferize(worker);
+  const pbType = pbObj.constructor;
+  const err = pbType.verify(pbObj);
+  if (err) {
+    throw new Error(err);
+  }
+  const bin = pbType.encode(pbObj).finish();
+  return new Uint8Array(bin).buffer;
+};
+
 export const getPbId = field => {
   // convert int64 to string
   return field[field.id].toString();
+};
+
+export const pbId = value => {
+  if (typeof value === 'number') {
+    return protobuf.syft_proto.types.syft.v1.Id.create({ id_int: value });
+  } else if (typeof value === 'string') {
+    return protobuf.syft_proto.types.syft.v1.Id.create({ id_str: value });
+  }
 };
