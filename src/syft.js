@@ -30,6 +30,9 @@ export default class Syft {
     // For creating event listeners
     this.observer = new EventObserver();
 
+    // Forcing connection to be secure if verbose value is false.
+    this.verbose = verbose;
+
     this.worker_id = null;
     this.peerConfig = peerConfig;
     this.authToken = authToken;
@@ -56,7 +59,9 @@ export default class Syft {
   // To create a socket connection internally and externally
   createSocketConnection(url) {
     if (!url) return;
-
+    if (!this.verbose) {
+      url = url.replace('ws://', 'wss://');
+    }
     // When a socket connection is opened...
     const onOpen = event => {
       this.observer.broadcast(SOCKET_STATUS, {
