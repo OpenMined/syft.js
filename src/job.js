@@ -38,7 +38,7 @@ export default class Job {
 
     // load the model
     const modelData = await this.grid.getModel(
-      this.worker.id,
+      this.worker.worker_id,
       cycleParams.request_key,
       cycleParams.model_id
     );
@@ -51,7 +51,7 @@ export default class Job {
     for (let planName of Object.keys(cycleParams.plans)) {
       const planId = cycleParams.plans[planName];
       const planBinary = await this.grid.getPlan(
-        this.worker.id,
+        this.worker.worker_id,
         cycleParams.request_key,
         planId
       );
@@ -66,7 +66,7 @@ export default class Job {
     for (let protocolName of Object.keys(cycleParams.protocols)) {
       const protocolId = cycleParams.protocols[protocolName];
       const protocolBinary = await this.grid.getProtocol(
-        this.worker.id,
+        this.worker.worker_id,
         cycleParams.request_key,
         protocolId
       );
@@ -84,7 +84,7 @@ export default class Job {
 
     // request cycle
     const cycleParams = await this.grid.requestCycle(
-      this.worker.id,
+      this.worker.worker_id,
       this.modelName,
       this.modelVersion,
       ping,
@@ -95,6 +95,13 @@ export default class Job {
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
         // load model, plans, protocols, etc.
+        this.logger.log(
+          `Accepted into cycle with params: ${JSON.stringify(
+            cycleParams,
+            null,
+            2
+          )}`
+        );
         await this.initCycle(cycleParams);
 
         this.observer.broadcast('accepted', {
@@ -117,11 +124,16 @@ export default class Job {
     }
   }
 
-  async report(data) {
+  /**
+   * Sends diff to pygrid
+   * @param {ArrayBuffer} diff
+   * @returns {Promise<void>}
+   */
+  async report(diff) {
     await this.grid.submitReport(
-      this.worker.id,
+      this.worker.worker_id,
       this.cycleParams.request_key,
-      data
+      Buffer.from(diff).toString('base64')
     );
   }
 }

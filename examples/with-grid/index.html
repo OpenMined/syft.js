@@ -35,6 +35,19 @@
       #participant-links li {
         padding: 5px 0px;
       }
+
+      form {
+        display: table;
+      }
+
+      form p {
+        display: table-row;
+      }
+
+      form label {
+        display: table-cell;
+        padding: 5px;
+      }
     </style>
 
     <title>syft.js Example</title>
@@ -72,10 +85,31 @@
         >)</i
       >.
     </p>
-    <input type="text" id="grid-server" value="ws://localhost:3000" />
+
+    <form action="#">
+      <p>
+        <label for="grid-server">Grid URL:</label>
+        <input type="text" id="grid-server" value="ws://localhost:5000" />
+      </p>
+
+      <p>
+        <label for="model-id">FL Model Name:</label>
+        <input type="text" id="model-id" value="mnist" />
+      </p>
+
+      <p>
+        <label for="model-id">FL Model Version:</label>
+        <input type="text" id="model-version" value="1.0.0" />
+      </p>
+
+      <p>
+        <button id="start">Start FL Worker</button>
+      </p>
+    </form>
+
+
     <!--    <input type="text" id="protocol" value="10000000013" />-->
     <!--    <button id="connect">Connect to grid.js server</button>-->
-    <button id="start">Start FL Worker</button>
 
     <div id="fl-training" style="display: none">
       <div style="display: table-row">
