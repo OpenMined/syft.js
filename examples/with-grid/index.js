@@ -53,12 +53,14 @@ connectButton.onclick = () => {
 
 startButton.onclick = () => {
   setFLUI();
-  startFL(gridServer.value, 'model-id');
+  const modelName = document.getElementById('model-id').value;
+  const modelVersion = document.getElementById('model-version').value;
+  startFL(gridServer.value, modelName, modelVersion);
 };
 
-const startFL = async (url, modelName) => {
+const startFL = async (url, modelName, modelVersion) => {
   const worker = new Syft({ url, verbose: true });
-  const job = await worker.newJob({ modelName });
+  const job = await worker.newJob({ modelName, modelVersion });
 
   job.start();
 
@@ -141,10 +143,7 @@ const startFL = async (url, modelName) => {
     // job.protocols['secure_aggregation'].execute();
 
     // Calc model diff.
-    const modelDiff = [];
-    for (let i = 0; i < modelParams.length; i++) {
-      modelDiff.push(model.params[i].sub(modelParams[i]));
-    }
+    const modelDiff = await model.createSerializedDiff(modelParams);
 
     // Report diff.
     await job.report(modelDiff);

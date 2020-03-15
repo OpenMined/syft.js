@@ -1,4 +1,4 @@
-import { getPbId, unbufferize } from '../protobuf';
+import { getPbId, protobuf, unbufferize } from '../protobuf';
 import { NOT_ENOUGH_ARGS } from '../_errors';
 
 export class Plan {
@@ -116,7 +116,7 @@ export class State {
   }
 
   getTfTensors() {
-    return this.tensors.map(t => t._tfTensor);
+    return this.tensors.map(t => t.toTfTensor());
   }
 
   static unbufferize(worker, pb) {
@@ -126,5 +126,18 @@ export class State {
     });
 
     return new State(unbufferize(worker, pb.placeholders), tensors);
+  }
+
+  bufferize(worker) {
+    const tensorsPb = this.tensors.map(tensor =>
+      protobuf.syft_proto.execution.v1.StateTensor.create({
+        torch_tensor: tensor.bufferize(worker)
+      })
+    );
+    const placeholdersPb = this.placeholders.map(ph => ph.bufferize());
+    return protobuf.syft_proto.execution.v1.State.create({
+      placeholders: placeholdersPb,
+      tensors: tensorsPb
+    });
   }
 }
