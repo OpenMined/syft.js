@@ -2,7 +2,7 @@ import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
 import { GRID_UNKNOWN_CYCLE_STATUS } from './_errors';
-import SyftModel from './syft_model';
+import SyftModel from './syft-model';
 import Logger from './logger';
 
 export default class Job {
@@ -79,48 +79,53 @@ export default class Job {
   }
 
   async start() {
-    // speed test
-    const { ping, download, upload } = await this.grid.getConnectionSpeed();
+    try {
+      // speed test
+      const { ping, download, upload } = await this.grid.getConnectionSpeed();
 
-    // request cycle
-    const cycleParams = await this.grid.requestCycle(
-      this.worker.worker_id,
-      this.modelName,
-      this.modelVersion,
-      ping,
-      download,
-      upload
-    );
+      // request cycle
+      const cycleParams = await this.grid.requestCycle(
+        this.worker.worker_id,
+        this.modelName,
+        this.modelVersion,
+        ping,
+        download,
+        upload
+      );
 
-    switch (cycleParams.status) {
-      case CYCLE_STATUS_ACCEPTED:
-        // load model, plans, protocols, etc.
-        this.logger.log(
-          `Accepted into cycle with params: ${JSON.stringify(
-            cycleParams,
-            null,
-            2
-          )}`
-        );
-        await this.initCycle(cycleParams);
+      switch (cycleParams.status) {
+        case CYCLE_STATUS_ACCEPTED:
+          // load model, plans, protocols, etc.
+          this.logger.log(
+            `Accepted into cycle with params: ${JSON.stringify(
+              cycleParams,
+              null,
+              2
+            )}`
+          );
+          await this.initCycle(cycleParams);
 
-        this.observer.broadcast('accepted', {
-          model: this.model,
-          clientConfig: this.clientConfig
-        });
-        break;
+          this.observer.broadcast('accepted', {
+            model: this.model,
+            clientConfig: this.clientConfig
+          });
+          break;
 
-      case CYCLE_STATUS_REJECTED:
-        this.logger.log(
-          `Rejected from cycle with timeout: ${cycleParams.timeout}`
-        );
-        this.observer.broadcast('rejected', {
-          timeout: cycleParams.timeout
-        });
-        break;
+        case CYCLE_STATUS_REJECTED:
+          this.logger.log(
+            `Rejected from cycle with timeout: ${cycleParams.timeout}`
+          );
+          this.observer.broadcast('rejected', {
+            timeout: cycleParams.timeout
+          });
+          break;
 
-      default:
-        throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
+        default:
+          throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
+      }
+
+    } catch (error) {
+      this.observer.broadcast('error', error);
     }
   }
 

@@ -2,6 +2,7 @@ import { TorchTensor } from './types/torch';
 import PointerTensor from './types/pointer-tensor';
 import { CANNOT_FIND_COMMAND } from './_errors';
 import * as tf from '@tensorflow/tfjs-core';
+import Logger from './logger';
 
 export const pickTensors = tree => {
   const objects = {};
@@ -24,7 +25,9 @@ export const pickTensors = tree => {
   return objects;
 };
 
-export const torchToTF = (command, kwargs, logger) => {
+export const torchToTF = (command, kwargs) => {
+  const logger = new Logger();
+
   const cmd_map = {
     t: 'transpose',
     __matmul__: 'matMul',
