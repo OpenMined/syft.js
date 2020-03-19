@@ -4,12 +4,14 @@ import { torchToTF } from '../_helpers';
 import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
+import Logger from '../logger';
 
 export class Message {
   constructor(contents) {
     if (contents) {
       this.contents = contents;
     }
+    this.logger = new Logger();
   }
 }
 
@@ -93,7 +95,8 @@ export class Operation extends Message {
     };
 
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
-    let command = torchToTF(this.command, this.kwArgs, worker.logger);
+
+    let command = torchToTF(this.command, this.kwArgs);
     let preArgs = [];
     let postArgs = [];
     if (Array.isArray(command)) {

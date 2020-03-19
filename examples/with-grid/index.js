@@ -23,11 +23,11 @@ import {
   writeLinksToDOM
 } from './_helpers';
 
-import * as tf from '@tensorflow/tfjs-core';
-
 // In the real world: import syft from 'syft.js';
+import * as tf from '@tensorflow/tfjs-core';
 import { Syft } from '../../src';
 import { MnistData } from './mnist';
+
 
 const gridServer = document.getElementById('grid-server');
 const protocol = document.getElementById('protocol');

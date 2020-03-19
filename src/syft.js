@@ -134,7 +134,6 @@ export default class Syft {
 
     this.socket = new Socket({
       url,
-      logger: this.logger,
       workerId: this.workerId,
       onOpen,
       onClose,
@@ -163,7 +162,6 @@ export default class Syft {
     this.rtc = new WebRTCClient({
       peerConfig,
       peerOptions,
-      logger: this.logger,
       socket: this.socket
     });
 
