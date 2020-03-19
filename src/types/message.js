@@ -4,12 +4,14 @@ import { torchToTF } from '../_helpers';
 import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
+import Logger from '../logger';
 
 export class Message {
   constructor(contents) {
     if (contents) {
       this.contents = contents;
     }
+    this.logger = new Logger();
   }
 }
 

@@ -9,7 +9,7 @@ const HTTP_PATH_VERB = {
 };
 
 export default class GridAPIClient {
-  constructor({ url }) {
+  constructor({ url, allowInsecureUrl = false }) {
     this.transport = url.match(/^ws/i) ? 'ws' : 'http';
     if (this.transport === 'ws') {
       this.wsUrl = url;
@@ -17,6 +17,10 @@ export default class GridAPIClient {
     } else {
       this.httpUrl = url;
       this.wsUrl = url.replace(/^http(s)?/i, 'ws$1');
+    }
+    if (!allowInsecureUrl) {
+      this.wsUrl = this.wsUrl.replace('ws', 'wss');
+      this.httpUrl = this.httpUrl.replace('http', 'https');
     }
     this.ws = null;
     this.logger = new Logger('grid', true);

@@ -10,12 +10,13 @@ import {
 import DataChannelMessage from './data-channel-message';
 import DataChannelMessageQueue from './data-channel-message-queue';
 import EventObserver from './events';
+import Logger from './logger';
 
 export default class WebRTCClient {
-  constructor({ peerConfig, peerOptions, logger, socket }) {
+  constructor({ peerConfig, peerOptions, socket }) {
     this.peerConfig = peerConfig;
     this.peerOptions = peerOptions;
-    this.logger = logger;
+    this.logger = new Logger();
     this.socket = socket;
 
     this.peers = {};

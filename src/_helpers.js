@@ -27,7 +27,6 @@ export const pickTensors = tree => {
 
 export const torchToTF = (command, kwargs) => {
   const logger = new Logger();
-
   const cmd_map = {
     t: 'transpose',
     __matmul__: 'matMul',
@@ -43,6 +42,7 @@ export const torchToTF = (command, kwargs) => {
   if (command in cmd_map) {
     return cmd_map[command];
   }
+
 
   // In Python, some commands in TensorFlow and PyTorch are submitted with double-underscores to avoid method collision
   // Since we don't need this nonsense in TensorFlow.js... let's strip all the underscores

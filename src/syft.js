@@ -23,16 +23,16 @@ export default class Syft {
     // For creating verbose logging should the worker desire
     this.logger = new Logger('syft.js', verbose);
 
-    this.gridClient = new GridAPIClient({ url });
+    // Forcing connection to be secure if verbose value is false.
+    this.verbose = verbose;
+
+    this.gridClient = new GridAPIClient({ url, allowInsecureUrl: verbose });
 
     // objects registry
     this.objects = new ObjectRegistry();
 
     // For creating event listeners
     this.observer = new EventObserver();
-
-    // Forcing connection to be secure if verbose value is false.
-    this.verbose = verbose;
 
     this.worker_id = null;
     this.peerConfig = peerConfig;
@@ -135,7 +135,6 @@ export default class Syft {
 
     this.socket = new Socket({
       url,
-      logger: this.logger,
       workerId: this.workerId,
       onOpen,
       onClose,
@@ -164,7 +163,6 @@ export default class Syft {
     this.rtc = new WebRTCClient({
       peerConfig,
       peerOptions,
-      logger: this.logger,
       socket: this.socket
     });
 
