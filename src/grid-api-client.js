@@ -7,7 +7,10 @@ const HTTP_PATH_VERB = {
 };
 
 export default class GridAPIClient {
-  constructor({ url }) {
+  constructor({ url, allowInsecureUrl = false }) {
+    if (!allowInsecureUrl) {
+      url = url.replace('ws://', 'wss://');
+    }
     this.transport = url.match(/^ws/i) ? 'ws' : 'http';
     if (this.transport === 'ws') {
       this.wsUrl = url;
