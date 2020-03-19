@@ -213,7 +213,12 @@ export default class GridAPIClient {
 
         const data = JSON.parse(event.data);
         this.logger.log('Received message', data);
-        resolve(data);
+        if (data.type !== message.type) {
+          // TODO do it differently
+          this.logger.log('Received invalid response type, ignoring');
+        } else {
+          resolve(data.data);
+        }
       };
 
       this.ws.onerror = event => {
