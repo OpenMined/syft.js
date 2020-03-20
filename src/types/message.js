@@ -102,10 +102,10 @@ export class Operation extends Message {
     const functionName = this.command.split('.').pop();
     if (!this.owner) {
       if (haveValuesForAllArgs(this.args)) {
-        // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
         const translation = torchToTF(
           new Command(functionName, this.args, this.kwargs)
         );
+        // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
         translation.args = pullTensorsFromArgs(translation.args);
         result = translation.executeRoutine();
       }
@@ -114,7 +114,7 @@ export class Operation extends Message {
         // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
         let args = pullTensorsFromArgs(this.args);
 
-        // Get the actual tensor inside the PointerTensor/Placeholder "this.owner"
+        // Get the actual tensor inside the PointerTensor/Placeholder "this.owner" and place it in front of args
         args.unshift(getTensorByRef(this.owner));
 
         const translation = torchToTF(
