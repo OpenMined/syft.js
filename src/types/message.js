@@ -1,11 +1,12 @@
 import { unbufferize } from '../protobuf';
 import PointerTensor from './pointer-tensor';
-import { torchToTF } from '../_helpers';
 import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import Logger from '../logger';
-import { Command } from '@openmined/threepio';
+import { Threepio, Command } from '@openmined/threepio';
+
+const threepio = new Threepio('torch', 'tfjs', tf);
 
 export class Message {
   constructor(contents) {
@@ -45,10 +46,8 @@ export class Operation extends Message {
 
       args.forEach(arg => {
         if (
-          (arg instanceof PointerTensor &&
-            !scope.has(arg.idAtLocation)) ||
-          (arg instanceof Placeholder &&
-            !scope.has(arg.id))
+          (arg instanceof PointerTensor && !scope.has(arg.idAtLocation)) ||
+          (arg instanceof Placeholder && !scope.has(arg.id))
         ) {
           enoughInfo = false;
         }
@@ -102,7 +101,7 @@ export class Operation extends Message {
     const functionName = this.command.split('.').pop();
     if (!this.owner) {
       if (haveValuesForAllArgs(this.args)) {
-        const translation = torchToTF(
+        const translation = threepio.translate(
           new Command(functionName, this.args, this.kwargs)
         );
         // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
@@ -117,11 +116,10 @@ export class Operation extends Message {
         // Get the actual tensor inside the PointerTensor/Placeholder "this.owner" and place it in front of args
         args.unshift(getTensorByRef(this.owner));
 
-        const translation = torchToTF(
+        const translation = threepio.translate(
           new Command(functionName, args, this.kwargs)
         );
         translation.args = pullTensorsFromArgs(translation.args);
-        console.log(translation);
         result = translation.executeRoutine();
       }
     }

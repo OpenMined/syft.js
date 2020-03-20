@@ -19,9 +19,4 @@ describe('Helpers', () => {
 
     expect(Object.keys(objects).length).toBe(2);
   });
-
-  test('torchToTF(): can convert torch function', () => {
-    const eq = new Command('eq', [], {});
-    expect(torchToTF(eq).functionName).toBe('equal');
-  });
 });

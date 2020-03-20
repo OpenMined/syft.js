@@ -23,8 +23,3 @@ export const pickTensors = tree => {
 
   return objects;
 };
-
-export const torchToTF = command => {
-  const threepio = new Threepio('torch', 'tfjs', tf);
-  return threepio.translate(command);
-};
