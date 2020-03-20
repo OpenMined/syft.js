@@ -1,9 +1,8 @@
-import { torchToTF, pickTensors } from '../src/_helpers';
+import { pickTensors } from '../src/_helpers';
 import { TorchTensor } from '../src/types/torch';
 import Placeholder from '../src/types/placeholder';
 import { Plan, State } from '../src/types/plan';
 import { Operation } from '../src';
-import { Command } from '@openmined/threepio';
 
 describe('Helpers', () => {
   test('pickTensors(): can correctly pick out all tensors from Plan', () => {

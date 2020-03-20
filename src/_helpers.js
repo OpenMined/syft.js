@@ -1,7 +1,5 @@
 import { TorchTensor } from './types/torch';
 import PointerTensor from './types/pointer-tensor';
-import * as tf from '@tensorflow/tfjs-core';
-import { Threepio } from '@openmined/threepio';
 
 export const pickTensors = tree => {
   const objects = {};
