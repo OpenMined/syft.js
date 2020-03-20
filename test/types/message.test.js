@@ -19,7 +19,7 @@ describe('Operation', () => {
     expect(obj.command).toStrictEqual('add');
     expect(obj.owner).toStrictEqual(ph1);
     expect(obj.args).toStrictEqual([ph2]);
-    expect(obj.kwArgs).toStrictEqual(null);
+    expect(obj.kwargs).toStrictEqual(null);
     expect(obj.returnIds).toStrictEqual([]);
     expect(obj.returnPlaceholders).toStrictEqual([ph3]);
   });
