@@ -37,7 +37,7 @@ export class Operation extends Message {
     );
   }
 
-  execute(worker) {
+  execute(scope) {
     // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
     const haveValuesForAllArgs = args => {
       let enoughInfo = true;
@@ -45,9 +45,9 @@ export class Operation extends Message {
       args.forEach(arg => {
         if (
           (arg instanceof PointerTensor &&
-            !Object.hasOwnProperty.call(worker.objects, arg.idAtLocation)) ||
+            !scope.has(arg.idAtLocation)) ||
           (arg instanceof Placeholder &&
-            !Object.hasOwnProperty.call(worker.objects, arg.id))
+            !scope.has(arg.id))
         ) {
           enoughInfo = false;
         }
@@ -70,9 +70,9 @@ export class Operation extends Message {
     const getTensorByRef = reference => {
       let tensor = null;
       if (reference instanceof Placeholder) {
-        tensor = worker.objects[reference.id];
+        tensor = scope.get(reference.id);
       } else if (reference instanceof PointerTensor) {
-        tensor = worker.objects[reference.idAtLocation];
+        tensor = scope.get(reference.idAtLocation);
       }
       tensor = toTFTensor(tensor);
       return tensor;
@@ -95,7 +95,6 @@ export class Operation extends Message {
     };
 
     // Make sure to convert the command name that was given into a valid TensorFlow.js command
-
     let command = torchToTF(this.command, this.kwArgs);
     let preArgs = [];
     let postArgs = [];

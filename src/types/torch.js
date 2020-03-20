@@ -20,6 +20,7 @@ export class TorchTensor {
     this.gradChain = gradChain;
     this.tags = tags;
     this.description = description;
+    this._tfTensor = null;
   }
 
   toTfTensor() {
@@ -80,9 +81,12 @@ export class TorchTensor {
   }
 
   static async fromTfTensor(tensor) {
+    const flat = tensor.flatten();
+    const array = await flat.array();
+    flat.dispose();
     const t = new TorchTensor(
       tensor.id,
-      await tensor.flatten().array(),
+      array,
       tensor.shape,
       tensor.dtype
     );

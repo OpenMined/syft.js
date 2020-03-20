@@ -25,7 +25,6 @@ export const pickTensors = tree => {
   return objects;
 };
 
-
 export const torchToTF = (command, kwargs) => {
   const logger = new Logger();
   const cmd_map = {

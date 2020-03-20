@@ -15,6 +15,7 @@ import WebRTCClient from './webrtc';
 import { protobuf, unserialize } from './protobuf';
 import GridAPIClient from './grid-api-client';
 import Job from './job';
+import ObjectRegistry from './object-registry';
 
 export default class Syft {
   /* ----- CONSTRUCTOR ----- */
@@ -28,7 +29,7 @@ export default class Syft {
     this.gridClient = new GridAPIClient({ url, allowInsecureUrl: verbose });
 
     // objects registry
-    this.objects = {};
+    this.objects = new ObjectRegistry();
 
     // For creating event listeners
     this.observer = new EventObserver();

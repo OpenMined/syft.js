@@ -3,7 +3,9 @@ import Logger from './logger';
 const HTTP_PATH_VERB = {
   'federated/get-plan': 'GET',
   'federated/get-model': 'GET',
-  'federated/cycle-request': 'POST'
+  'federated/get-protocol': 'GET',
+  'federated/cycle-request': 'POST',
+  'federated/report': 'POST'
 };
 
 export default class GridAPIClient {
@@ -23,6 +25,9 @@ export default class GridAPIClient {
     this.ws = null;
     this.logger = new Logger('grid', true);
     this.responseTimeout = 10000;
+
+    this._handleWsError = this._handleWsError.bind(this);
+    this._handleWsClose = this._handleWsClose.bind(this);
   }
 
   async authenticate(authToken) {
@@ -212,7 +217,12 @@ export default class GridAPIClient {
 
         const data = JSON.parse(event.data);
         this.logger.log('Received message', data);
-        resolve(data);
+        if (data.type !== message.type) {
+          // TODO do it differently
+          this.logger.log('Received invalid response type, ignoring');
+        } else {
+          resolve(data.data);
+        }
       };
 
       this.ws.onerror = event => {

@@ -58,6 +58,11 @@ startButton.onclick = () => {
   startFL(gridServer.value, modelName, modelVersion);
 };
 
+const updateStatus = (message) => {
+  const cont = document.getElementById('status');
+  cont.innerHTML = message + '<br>' + cont.innerHTML;
+};
+
 const startFL = async (url, modelName, modelVersion) => {
   const worker = new Syft({ url, verbose: true });
   const job = await worker.newJob({ modelName, modelVersion });
@@ -65,14 +70,20 @@ const startFL = async (url, modelName, modelVersion) => {
   job.start();
 
   job.on('accepted', async ({ model, clientConfig }) => {
+    updateStatus("Accepted into cycle!");
+
     // Load data
-    console.log('Loading data...');
+    updateStatus("Loading data...");
     const mnist = new MnistData();
     await mnist.load();
     const trainDataset = mnist.getTrainData();
     const data = trainDataset.xs;
     const targets = trainDataset.labels;
-    console.log('Data loaded');
+    updateStatus("Data loaded.");
+
+    // Prepare randomized indices for data batching.
+    const indices = Array.from({length: data.shape[0]}, (v, i) => i);
+    tf.util.shuffle(indices);
 
     // Prepare train parameters.
     const batchSize = clientConfig.batch_size;
@@ -96,8 +107,9 @@ const startFL = async (url, modelName, modelVersion) => {
     for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
       // Slice a batch.
       const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
-      const dataBatch = data.slice(batch * batchSize, chunkSize);
-      const targetBatch = targets.slice(batch * batchSize, chunkSize);
+      const indicesBatch = indices.slice(batch * batchSize, batch * batchSize + chunkSize);
+      const dataBatch = data.gather(indicesBatch);
+      const targetBatch = targets.gather(indicesBatch);
 
       // Execute the plan and get updated model params back.
       let [loss, acc, ...updatedModelParams] = await job.plans[
@@ -139,6 +151,10 @@ const startFL = async (url, modelName, modelVersion) => {
       targetBatch.dispose();
     }
 
+    // Free GPU memory.
+    data.dispose();
+    targets.dispose();
+
     // TODO protocol execution
     // job.protocols['secure_aggregation'].execute();
 
@@ -147,19 +163,26 @@ const startFL = async (url, modelName, modelVersion) => {
 
     // Report diff.
     await job.report(modelDiff);
-    console.log('Done!');
+    updateStatus('Cycle is done!');
+
+    // Try again.
+    setTimeout(startFL, 1000, url, modelName, modelVersion);
   });
 
   job.on('rejected', ({ timeout }) => {
     // Handle the job rejection
-    console.log('We have been rejected by PyGrid to participate in the job.');
-    const msUntilRetry = timeout * 1000;
-    // Try to join the job again in "msUntilRetry" milliseconds
-    setTimeout(job.start.bind(job), msUntilRetry);
+    if (timeout) {
+      const msUntilRetry = timeout * 1000;
+      // Try to join the job again in "msUntilRetry" milliseconds
+      updateStatus(`Rejected from cycle, retry in ${timeout}`);
+      setTimeout(job.start.bind(job), msUntilRetry);
+    } else {
+      updateStatus(`Rejected from cycle with no timeout, assuming Model training is complete.`);
+    }
   });
 
   job.on('error', err => {
-    console.log('Error', err);
+    updateStatus(`Error: ${err.message}`);
   });
 };
 

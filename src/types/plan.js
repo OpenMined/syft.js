@@ -1,5 +1,6 @@
 import { getPbId, protobuf, unbufferize } from '../protobuf';
 import { NOT_ENOUGH_ARGS } from '../_errors';
+import ObjectRegistry from '../object-registry';
 
 export class Plan {
   constructor(
@@ -63,46 +64,57 @@ export class Plan {
    * @returns {Promise<Array>}
    */
   async execute(worker, ...data) {
-    const inputPlaceholders = this.getInputPlaceholders(),
+    // Create local scope.
+    const planScope = new ObjectRegistry();
+    planScope.load(worker.objects);
+
+    const
+      inputPlaceholders = this.getInputPlaceholders(),
+      outputPlaceholders = this.getOutputPlaceholders(),
       argsLength = inputPlaceholders.length;
 
     // If the number of arguments supplied does not match the number of arguments required...
     if (data.length !== argsLength)
       throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
 
-    // For each argument supplied, store them in worker's objects
+    // For each argument supplied, add them in scope
     data.forEach((datum, i) => {
-      worker.objects[inputPlaceholders[i].id] = datum;
+      planScope.set(inputPlaceholders[i].id, datum);
     });
 
     // load state tensors to worker
     if (this.state && this.state.tensors) {
       this.state.tensors.forEach(tensor => {
-        worker.objects[tensor.id] = tensor;
+        planScope.set(tensor.id, tensor);
       });
     }
 
     // Execute the plan
     for (const currentOp of this.operations) {
       // The result of the current operation
-      const result = await currentOp.execute(worker);
+      const result = await currentOp.execute(planScope);
 
       // Place the result of the current operation into this.objects at the 0th item in returnIds
+      // All intermediate tensors will be garbage collected by default
       if (result) {
         if (currentOp.returnIds.length > 0) {
-          worker.objects[currentOp.returnIds[0]] = result;
+          planScope.set(currentOp.returnIds[0], result, true);
         } else if (currentOp.returnPlaceholders.length > 0) {
-          worker.objects[currentOp.returnPlaceholders[0].id] = result;
+          planScope.set(currentOp.returnPlaceholders[0].id, result, true);
         }
       }
     }
 
     // Resolve all of the requested resultId's as specific by the plan
     const resolvedResultingTensors = [];
-    const outputPlaceholders = this.getOutputPlaceholders();
     outputPlaceholders.forEach(placeholder => {
-      resolvedResultingTensors.push(worker.objects[placeholder.id]);
+      resolvedResultingTensors.push(planScope.get(placeholder.id));
+      // Do not gc output tensors
+      planScope.setGc(placeholder.id, false);
     });
+
+    // Cleanup intermediate plan variables.
+    planScope.clear();
 
     // Return them to the worker
     return resolvedResultingTensors;
