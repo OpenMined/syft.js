@@ -5,6 +5,7 @@ import { TorchTensor } from './torch';
 import Placeholder from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import Logger from '../logger';
+import { Command } from '@openmined/threepio';
 
 export class Message {
   constructor(contents) {
@@ -16,12 +17,12 @@ export class Message {
 }
 
 export class Operation extends Message {
-  constructor(command, owner, args, kwArgs, returnIds, returnPlaceholders) {
+  constructor(command, owner, args, kwargs, returnIds, returnPlaceholders) {
     super();
     this.command = command;
     this.owner = owner;
     this.args = args;
-    this.kwArgs = kwArgs;
+    this.kwargs = kwargs;
     this.returnIds = returnIds;
     this.returnPlaceholders = returnPlaceholders;
   }
@@ -94,37 +95,34 @@ export class Operation extends Message {
       return resolvedArgs;
     };
 
-    // Make sure to convert the command name that was given into a valid TensorFlow.js command
-    let command = torchToTF(this.command, this.kwArgs);
-    let preArgs = [];
-    let postArgs = [];
-    if (Array.isArray(command)) {
-      preArgs = command[1] || [];
-      postArgs = command[2] || [];
-      command = command[0];
-    }
-
     //worker.logger.log(`Given command: ${this.command}, converted command: ${command} + ${JSON.stringify(preArgs)} + ${JSON.stringify(postArgs)}`);
 
     // If we're executing the command against itself only, let's roll!
     let result = null;
+    const functionName = this.command.split('.').pop();
     if (!this.owner) {
       if (haveValuesForAllArgs(this.args)) {
         // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
-        const args = pullTensorsFromArgs(this.args);
-
-        result = tf[command](...preArgs, ...args, ...postArgs);
+        const translation = torchToTF(
+          new Command(functionName, this.args, this.kwargs)
+        );
+        translation.args = pullTensorsFromArgs(translation.args);
+        result = translation.executeRoutine();
       }
     } else {
       if (haveValuesForAllArgs(this.args)) {
-        // Get the actual tensor inside the PointerTensor/Placeholder "this.owner"
-        const self = getTensorByRef(this.owner);
-
         // Resolve all PointerTensors/Placeholders in our arguments to operable tensors
-        const args = pullTensorsFromArgs(this.args);
+        let args = pullTensorsFromArgs(this.args);
 
-        // Now we can execute a multi-argument method
-        result = tf[command](self, ...preArgs, ...args, ...postArgs);
+        // Get the actual tensor inside the PointerTensor/Placeholder "this.owner"
+        args.unshift(getTensorByRef(this.owner));
+
+        const translation = torchToTF(
+          new Command(functionName, args, this.kwargs)
+        );
+        translation.args = pullTensorsFromArgs(translation.args);
+        console.log(translation);
+        result = translation.executeRoutine();
       }
     }
 
