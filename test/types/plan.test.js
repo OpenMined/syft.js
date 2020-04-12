@@ -1,10 +1,13 @@
-import { Plan, State } from '../../src/types/plan';
+import { Plan } from '../../src/types/plan';
+import { State } from '../../src/types/state';
 import { TorchTensor } from '../../src/types/torch';
-import { Operation } from '../../src/types/message';
-import Placeholder from '../../src/types/placeholder';
+import { Placeholder, PlaceholderId } from '../../src/types/placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import { protobuf, unserialize } from '../../src/protobuf';
 import Syft from '../../src/syft';
+import { MODEL_MNIST, PLAN_MNIST, PLAN_WITH_STATE } from '../data/dummy';
+import { ComputationAction } from '../../src/types/computation-action';
+import { Role } from '../../src/types/role';
 
 describe('State', () => {
   test('can be properly constructed', () => {
@@ -23,42 +26,32 @@ describe('State', () => {
 
 describe('Plan', () => {
   test('can be properly constructed', () => {
+    const phId1 = new PlaceholderId(555);
+    const phId2 = new PlaceholderId(666);
     const ph1 = new Placeholder(555);
     const ph2 = new Placeholder(666);
-    const op = new Operation('torch.abs', null, [ph1], null, [][ph2]);
+    const action = new ComputationAction('torch.abs', null, [phId1], null, null, [phId2]);
     const state = new State([], []);
+    const role = new Role(777, [action], state, [ph1, ph2], [phId1], [phId2]);
     const obj = new Plan(
       123,
       'plan',
-      [op],
-      state,
-      [ph1, ph2],
+      role,
       ['tag1', 'tag2'],
       'desc'
     );
     expect(obj.id).toBe(123);
     expect(obj.name).toBe('plan');
-    expect(obj.operations).toStrictEqual([op]);
-    expect(obj.state).toBe(state);
-    expect(obj.placeholders).toStrictEqual([ph1, ph2]);
+    expect(obj.role.actions).toStrictEqual([action]);
+    expect(obj.role.state).toBe(state);
+    expect(obj.role.placeholders).toStrictEqual([ph1, ph2]);
+    expect(obj.role.input_placeholder_ids).toStrictEqual([phId1]);
+    expect(obj.role.output_placeholder_ids).toStrictEqual([phId2]);
     expect(obj.tags).toStrictEqual(['tag1', 'tag2']);
     expect(obj.description).toStrictEqual('desc');
   });
 
-  test('gets input/output placeholders in proper order', () => {
-    const ph1 = new Placeholder(555, ['#input-100']);
-    const ph2 = new Placeholder(666, ['#input-2']);
-    const ph3 = new Placeholder(777, ['#output-15']);
-    const ph4 = new Placeholder(888, ['#output-002']);
-    const plan = new Plan(123, 'plan', null, null, [ph1, ph2, ph3, ph4]);
-
-    expect(plan.getInputPlaceholders()).toStrictEqual([ph2, ph1]);
-    expect(plan.getOutputPlaceholders()).toStrictEqual([ph4, ph3]);
-  });
-
-  test('can be executed', async () => {
-    const serializedPlan =
-      'CgYIgcivoCUSRwoHX19hZGRfXxoWCgYIgsivoCUSCCNpbnB1dC0wEgIjMioWShQKBgiAyK+gJRICIzESBiNzdGF0ZUIMCgYIhMivoCUSAiMzEjQKCXRvcmNoLmFicyoOSgwKBgiEyK+gJRICIzNCFwoGCIPIr6AlEgIjNBIJI291dHB1dC0wGj8KFAoGCIDIr6AlEgIjMRIGI3N0YXRlEicKJQoGCIDIr6AlEhkKAwoBAhIHZmxvYXQzMrIBCGZmhkCamelAQAQgASgBMgdib2JQbGFuShQKBgiAyK+gJRICIzESBiNzdGF0ZUoWCgYIgsivoCUSCCNpbnB1dC0wEgIjMkoMCgYIhMivoCUSAiMzShcKBgiDyK+gJRICIzQSCSNvdXRwdXQtMA==';
+  test('can be executed (with state)', async () => {
     const input = tf.tensor([
       [1, 2],
       [-30, -40]
@@ -68,7 +61,7 @@ describe('Plan', () => {
     const expected = tf.abs(tf.add(input, state));
     const plan = unserialize(
       null,
-      serializedPlan,
+      PLAN_WITH_STATE,
       protobuf.syft_proto.execution.v1.Plan
     );
     const worker = new Syft({ url: 'dummy' });
@@ -80,5 +73,30 @@ describe('Plan', () => {
         .all()
         .dataSync()[0]
     ).toBe(1);
+  });
+
+  test('can be executed (MNIST example)', async () => {
+    const plan = unserialize(
+      null,
+      PLAN_MNIST,
+      protobuf.syft_proto.execution.v1.Plan
+    );
+    const worker = new Syft({ url: 'dummy' });
+    const lr = tf.tensor(0.01);
+    const batchSize = tf.tensor(1);
+    const dataBatch = tf.zeros([1, 784]);
+    const labelsBatch = tf.oneHot(tf.tensor1d([8], 'int32'), 10);
+    const modelState = unserialize(
+      null,
+      MODEL_MNIST,
+      protobuf.syft_proto.execution.v1.State
+    );
+    const modelParams = modelState.tensors;
+    const [loss, acc, ...newParams] = await plan.execute(worker, dataBatch, labelsBatch, batchSize, lr, ...modelParams);
+    expect(loss).toBeInstanceOf(tf.Tensor);
+    expect(acc).toBeInstanceOf(tf.Tensor);
+    expect(newParams).toHaveLength(4);
+    expect(loss.arraySync().toFixed(5)).toBe("0.23026");
+    expect(acc.arraySync().toFixed(5)).toBe("0.00000");
   });
 });

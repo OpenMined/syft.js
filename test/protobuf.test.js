@@ -1,11 +1,12 @@
 import { protobuf, unserialize, getPbId, serialize } from '../src/protobuf';
 import { ObjectMessage } from '../src/types/message';
 import Protocol from '../src/types/protocol';
-import { Plan, State } from '../src/types/plan';
-import { PLAN, MODEL, PROTOCOL } from './data/dummy';
+import { Plan } from '../src/types/plan';
+import { State } from '../src/types/state';
+import { PLAN_MNIST, MODEL_MNIST, PROTOCOL } from './data/dummy';
 import { TorchTensor } from '../src/types/torch';
 import * as tf from '@tensorflow/tfjs-core';
-import Placeholder from '../src/types/placeholder';
+import { Placeholder } from '../src/types/placeholder';
 
 describe('Protobuf', () => {
   test('can unserialize an ObjectMessage', () => {
@@ -27,14 +28,14 @@ describe('Protobuf', () => {
   });
 
   test('can unserialize a Plan', () => {
-    const plan = unserialize(null, PLAN, protobuf.syft_proto.execution.v1.Plan);
+    const plan = unserialize(null, PLAN_MNIST, protobuf.syft_proto.execution.v1.Plan);
     expect(plan).toBeInstanceOf(Plan);
   });
 
   test('can unserialize a State', () => {
     const state = unserialize(
       null,
-      MODEL,
+      MODEL_MNIST,
       protobuf.syft_proto.execution.v1.State
     );
     expect(state).toBeInstanceOf(State);
