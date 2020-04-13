@@ -5,13 +5,11 @@ import * as tf from '@tensorflow/tfjs-core';
 import { TorchTensor } from './torch';
 import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
 
-/*
-import Logger from '../logger';
-const logger = new Logger();
+// import Logger from '../logger';
+// const logger = new Logger();
 
 import { Threepio, Command } from '@openmined/threepio';
 const threepio = new Threepio('torch', 'tfjs', tf);
-*/
 
 export class ComputationAction {
   constructor(command, target, args, kwargs, returnIds, returnPlaceholderIds) {
@@ -111,24 +109,17 @@ export class ComputationAction {
 
     const resolvedArgs = pullTensorsFromArgs(args);
 
-    /*
-    try {
-      // Threepio
-      const functionName = this.command.split('.').pop();
-      if (self) {
-        resolvedArgs.unshift(self);
-      }
-      const cmd = new Command(functionName, resolvedArgs, this.kwargs);
-      const translation = threepio.translate(cmd);
-      return translation.executeRoutine();
-    } catch (e) {
-      // fallback
-      logger.log(`Failed to translate ${this.command} using Threepio fallback to legacy translation`);
-      return legacyTorchToTF(this.command, self, resolvedArgs, this.kwargs);
+    // Threepio
+    const functionName = this.command.split('.').pop();
+    if (self) {
+      resolvedArgs.unshift(self);
     }
-    */
+    const cmd = new Command(functionName, resolvedArgs, this.kwargs);
+    const translation = threepio.translate(cmd);
+    return translation.executeRoutine();
 
-    return legacyTorchToTF(this.command, self, resolvedArgs, this.kwargs);
+
+    // return legacyTorchToTF(this.command, self, resolvedArgs, this.kwargs);
   }
 
 }

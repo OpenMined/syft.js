@@ -59,7 +59,7 @@
     }
   },
   "dependencies": {
-    "@openmined/threepio": "github:openmined/threepio",
+    "@openmined/threepio": "github:openmined/threepio#feat/manual-translations",
     "long": "^4.0.0",
     "syft-proto": "git+https://github.com/OpenMined/syft-proto.git#v0.2.9.a2"
   },
