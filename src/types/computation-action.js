@@ -3,7 +3,7 @@ import PointerTensor from './pointer-tensor';
 import { Placeholder, PlaceholderId } from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import { TorchTensor } from './torch';
-import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
+import { /* CANNOT_FIND_COMMAND,*/ MISSING_VARIABLE } from '../_errors';
 
 // import Logger from '../logger';
 // const logger = new Logger();
@@ -124,6 +124,7 @@ export class ComputationAction {
 
 }
 
+/*
 const legacyTorchToTF = (torchCmd, self, args, kwargs) => {
   const cmd_map = {
     t: 'transpose',
@@ -164,3 +165,4 @@ const legacyTorchToTF = (torchCmd, self, args, kwargs) => {
   const selfArg = self ? [self] : [];
   return tf[command](...selfArg, ...preArgs, ...args, ...postArgs);
 };
+*/
