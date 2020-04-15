@@ -1,7 +1,7 @@
 import { unserialize, protobuf, serialize } from './protobuf';
-import { State } from './types/plan';
+import { State } from './types/state';
 import { TorchTensor } from './types/torch';
-import Placeholder from './types/placeholder';
+import { Placeholder } from './types/placeholder';
 
 export default class SyftModel {
   constructor({ worker, modelData }) {

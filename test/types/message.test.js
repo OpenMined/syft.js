@@ -1,5 +1,4 @@
-import { Message, Operation, ObjectMessage } from '../../src/types/message';
-import Placeholder from '../../src/types/placeholder';
+import { Message, ObjectMessage } from '../../src/types/message';
 import { TorchTensor } from '../../src/types/torch';
 
 describe('Message', () => {
@@ -7,21 +6,6 @@ describe('Message', () => {
     const content = 'abc';
     const obj = new Message(content);
     expect(obj.contents).toBe(content);
-  });
-});
-
-describe('Operation', () => {
-  test('can be properly constructed', () => {
-    const ph1 = new Placeholder(123);
-    const ph2 = new Placeholder(321);
-    const ph3 = new Placeholder(555);
-    const obj = new Operation('add', ph1, [ph2], null, [], [ph3]);
-    expect(obj.command).toStrictEqual('add');
-    expect(obj.owner).toStrictEqual(ph1);
-    expect(obj.args).toStrictEqual([ph2]);
-    expect(obj.kwargs).toStrictEqual(null);
-    expect(obj.returnIds).toStrictEqual([]);
-    expect(obj.returnPlaceholders).toStrictEqual([ph3]);
   });
 });
 

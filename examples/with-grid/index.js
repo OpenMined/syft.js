@@ -132,8 +132,8 @@ const startFL = async (url, modelName, modelVersion) => {
       await updateUIAfterBatch({
         epoch,
         batch,
-        accuracy: (await acc.data())[0],
-        loss: (await loss.data())[0]
+        accuracy: await acc.array(),
+        loss: await loss.array()
       });
 
       batch++;
