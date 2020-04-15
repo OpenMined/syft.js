@@ -3,10 +3,7 @@ import PointerTensor from './pointer-tensor';
 import { Placeholder, PlaceholderId } from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import { TorchTensor } from './torch';
-import { /* CANNOT_FIND_COMMAND,*/ MISSING_VARIABLE } from '../_errors';
-
-// import Logger from '../logger';
-// const logger = new Logger();
+import { MISSING_VARIABLE } from '../_errors';
 
 import { Threepio, Command } from '@openmined/threepio';
 const threepio = new Threepio('torch', 'tfjs', tf);
@@ -117,52 +114,6 @@ export class ComputationAction {
     const cmd = new Command(functionName, resolvedArgs, this.kwargs);
     const translation = threepio.translate(cmd);
     return translation.executeRoutine();
-
-
-    // return legacyTorchToTF(this.command, self, resolvedArgs, this.kwargs);
   }
 
 }
-
-/*
-const legacyTorchToTF = (torchCmd, self, args, kwargs) => {
-  const cmd_map = {
-    t: 'transpose',
-    __matmul__: 'matMul',
-    __truediv__: 'div',
-    __gt__: 'greater',
-    eq: 'equal',
-    'torch.argmax': ['argMax', [], [kwargs['dim']]],
-    float: ['cast', ['float32']],
-    'torch.nn.functional.relu': 'relu',
-    'torch.nn.functional.softmax': ['softmax', [], [kwargs['dim']]]
-  };
-
-  let preArgs = [];
-  let postArgs = [];
-  let command = null;
-
-  if (torchCmd in cmd_map) {
-    command = cmd_map[torchCmd];
-    if (Array.isArray(command)) {
-      preArgs = command[1] || [];
-      postArgs = command[2] || [];
-      command = command[0];
-    }
-  } else {
-    // In Python, some commands in TensorFlow and PyTorch are submitted with double-underscores to avoid method collision
-    // Since we don't need this nonsense in TensorFlow.js... let's strip all the underscores
-    command = torchCmd.split('_').join('');
-    // Sometimes PyTorch commands come with "torch." on the beginning, strip that out
-    command = command.split('torch.').join('');
-  }
-
-  // If the command as it's currently named exists in TensorFlow.js already, return the command name
-  if (!Object.hasOwnProperty.call(tf, command)) {
-    throw new Error(CANNOT_FIND_COMMAND(command));
-  }
-
-  const selfArg = self ? [self] : [];
-  return tf[command](...selfArg, ...preArgs, ...args, ...postArgs);
-};
-*/
