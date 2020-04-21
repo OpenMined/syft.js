@@ -81,11 +81,9 @@ export default class Job {
   async start() {
     try {
       // speed test
-      const {
-        ping,
-        download,
-        upload
-      } = await this.grid.getConnectionSpeed(this.worker.worker_id);
+      const { ping, download, upload } = await this.grid.getConnectionSpeed(
+        this.worker.worker_id
+      );
 
       // request cycle
       const cycleParams = await this.grid.requestCycle(
@@ -127,7 +125,6 @@ export default class Job {
         default:
           throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
       }
-
     } catch (error) {
       this.observer.broadcast('error', error);
     }

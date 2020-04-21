@@ -142,15 +142,24 @@ export default class GridAPIClient {
 
   async getConnectionSpeed(workerId) {
     const speedTest = new SpeedTest({
-      downloadUrl: this.httpUrl + '/federated/speed-test?worker_id='
-        + encodeURIComponent(workerId)
-        + '&random=' + Math.random(),
-      uploadUrl: this.httpUrl + '/federated/speed-test?worker_id='
-        + encodeURIComponent(workerId)
-        + '&random=' + Math.random(),
-      pingUrl: this.httpUrl + '/federated/speed-test?is_ping=1&worker_id='
-        + encodeURIComponent(workerId)
-        + '&random=' + Math.random(),
+      downloadUrl:
+        this.httpUrl +
+        '/federated/speed-test?worker_id=' +
+        encodeURIComponent(workerId) +
+        '&random=' +
+        Math.random(),
+      uploadUrl:
+        this.httpUrl +
+        '/federated/speed-test?worker_id=' +
+        encodeURIComponent(workerId) +
+        '&random=' +
+        Math.random(),
+      pingUrl:
+        this.httpUrl +
+        '/federated/speed-test?is_ping=1&worker_id=' +
+        encodeURIComponent(workerId) +
+        '&random=' +
+        Math.random()
     });
 
     const ping = await speedTest.getPing();

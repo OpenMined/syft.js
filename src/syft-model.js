@@ -15,8 +15,7 @@ export default class SyftModel {
   }
 
   async createSerializedDiff(updatedModelParams) {
-    const
-      placeholders = [],
+    const placeholders = [],
       tensors = [];
 
     for (let i = 0; i < updatedModelParams.length; i++) {

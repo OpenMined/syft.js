@@ -1,7 +1,13 @@
 import { randomFillSync } from 'crypto';
 
 export class SpeedTest {
-  constructor({ downloadUrl, uploadUrl, pingUrl, maxUploadSizeMb = 64, maxTestTimeSec = 10 }) {
+  constructor({
+    downloadUrl,
+    uploadUrl,
+    pingUrl,
+    maxUploadSizeMb = 64,
+    maxTestTimeSec = 10
+  }) {
     this.downloadUrl = downloadUrl;
     this.uploadUrl = uploadUrl;
     this.pingUrl = pingUrl;
@@ -16,14 +22,14 @@ export class SpeedTest {
 
   async meterXhr(xhr, isUpload = false) {
     return new Promise((resolve, reject) => {
-      let
-        timeoutHandler = null,
+      let timeoutHandler = null,
         prevTime = 0,
         prevSize = 0,
         avgCollector = new AvgCollector({
           avgWindow: this.bwAvgWindow,
           lowJitterThreshold: this.bwLowJitterThreshold,
-          maxLowJitterConsecutiveMeasures: this.bwMaxLowJitterConsecutiveMeasures,
+          maxLowJitterConsecutiveMeasures: this
+            .bwMaxLowJitterConsecutiveMeasures
         });
 
       const req = isUpload ? xhr.upload : xhr;
@@ -46,7 +52,7 @@ export class SpeedTest {
         }
       };
 
-      req.onreadystatechange = e => {
+      req.onreadystatechange = () => {
         if (xhr.readyState === 1) {
           // set speed test timeout
           timeoutHandler = setTimeout(finish, this.maxTestTimeSec * 1000);
@@ -54,9 +60,8 @@ export class SpeedTest {
       };
 
       req.onprogress = e => {
-        const
-          // mbit
-          size = 8 * e.loaded / 1048576,
+        const // mbit
+          size = (8 * e.loaded) / 1048576,
           // seconds
           time = Date.now() / 1000;
 
@@ -66,25 +71,29 @@ export class SpeedTest {
           return;
         }
 
-        let
-          deltaSize = size - prevSize,
+        let deltaSize = size - prevSize,
           deltaTime = time - prevTime,
           speed = deltaSize / deltaTime;
 
         const canStop = avgCollector.collect(speed);
-        if (canStop) { finish(); }
+        if (canStop) {
+          finish();
+        }
 
         prevSize = size;
         prevTime = time;
       };
 
-      req.onload = e => { finish(); };
-      req.onerror = e => { finish(e); };
+      req.onload = () => {
+        finish();
+      };
+      req.onerror = e => {
+        finish(e);
+      };
     });
   }
 
-  async getDownloadSpeed()
-  {
+  async getDownloadSpeed() {
     let xhr = new XMLHttpRequest();
     const result = this.meterXhr(xhr);
 
@@ -94,8 +103,7 @@ export class SpeedTest {
     return result;
   }
 
-  async getUploadSpeed()
-  {
+  async getUploadSpeed() {
     const xhr = new XMLHttpRequest();
     const result = this.meterXhr(xhr, true);
 
@@ -103,8 +111,16 @@ export class SpeedTest {
     const buff = new Uint8Array(this.maxUploadSizeMb * 1024 * 1024);
     const maxRandomChunkSize = 65536;
     const chunkNum = Math.ceil(buff.byteLength / maxRandomChunkSize);
-    for (let chunk = 0, offset = 0; chunk < chunkNum; chunk++, offset += maxRandomChunkSize) {
-      randomFillSync(buff, offset, Math.min(maxRandomChunkSize, buff.byteLength - offset));
+    for (
+      let chunk = 0, offset = 0;
+      chunk < chunkNum;
+      chunk++, offset += maxRandomChunkSize
+    ) {
+      randomFillSync(
+        buff,
+        offset,
+        Math.min(maxRandomChunkSize, buff.byteLength - offset)
+      );
     }
 
     xhr.open('POST', this.uploadUrl, true);
@@ -113,10 +129,8 @@ export class SpeedTest {
     return result;
   }
 
-  async getPing()
-  {
+  async getPing() {
     return new Promise((resolve, reject) => {
-
       const avgCollector = new AvgCollector({});
       let currXhr;
       let timeoutHandler;
@@ -144,7 +158,7 @@ export class SpeedTest {
         currXhr = xhr;
         let startTime = Date.now();
 
-        xhr.onload = e => {
+        xhr.onload = () => {
           const ping = Date.now() - startTime;
           const canStop = avgCollector.collect(ping);
           if (canStop) {
@@ -160,7 +174,7 @@ export class SpeedTest {
 
         xhr.open('GET', this.pingUrl + '?' + Math.random(), true);
         xhr.send();
-      }
+      };
 
       timeoutHandler = setTimeout(() => {
         finish(currXhr);
@@ -174,7 +188,11 @@ export class SpeedTest {
  * Helper to average series of values
  */
 class AvgCollector {
-  constructor({avgWindow = 5, lowJitterThreshold = 0.05, maxLowJitterConsecutiveMeasures = 5}) {
+  constructor({
+    avgWindow = 5,
+    lowJitterThreshold = 0.05,
+    maxLowJitterConsecutiveMeasures = 5
+  }) {
     this.measuresCount = 0;
     this.prevAvg = 0;
     this.avg = 0;
@@ -186,8 +204,7 @@ class AvgCollector {
     this.name = name;
   }
 
-  collect(value)
-  {
+  collect(value) {
     this.prevAvg = this.avg;
     const avgWindow = Math.min(this.measuresCount, this.avgWindow);
     this.avg = (this.avg * avgWindow + value) / (avgWindow + 1);
@@ -195,24 +212,25 @@ class AvgCollector {
 
     // Return true if measurements are stable.
     if (
-      this.prevAvg > 0
-      && this.avg < this.prevAvg * (1 + this.lowJitterThreshold)
-      && this.avg > this.prevAvg * (1 - this.lowJitterThreshold)
+      this.prevAvg > 0 &&
+      this.avg < this.prevAvg * (1 + this.lowJitterThreshold) &&
+      this.avg > this.prevAvg * (1 - this.lowJitterThreshold)
     ) {
       this.lowJitterConsecutiveMeasures++;
     } else {
       this.lowJitterConsecutiveMeasures = 0;
     }
 
-    if (this.lowJitterConsecutiveMeasures >= this.maxLowJitterConsecutiveMeasures) {
+    if (
+      this.lowJitterConsecutiveMeasures >= this.maxLowJitterConsecutiveMeasures
+    ) {
       return true;
     }
 
     return false;
   }
 
-  getAvg()
-  {
+  getAvg() {
     return this.avg;
   }
 }
