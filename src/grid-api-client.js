@@ -1,4 +1,5 @@
 import Logger from './logger';
+import { SpeedTest } from './speed-test';
 
 const HTTP_PATH_VERB = {
   'federated/get-plan': 'GET',
@@ -139,13 +140,31 @@ export default class GridAPIClient {
     return response;
   }
 
-  getConnectionSpeed() {
-    // TODO meter speed using /federated/speed-test
-    return Promise.resolve({
-      ping: '8',
-      download: '46.3',
-      upload: '23.7'
+  async getConnectionSpeed(workerId) {
+    const speedTest = new SpeedTest({
+      downloadUrl: this.httpUrl + '/federated/speed-test?worker_id='
+        + encodeURIComponent(workerId)
+        + '&random=' + Math.random(),
+      uploadUrl: this.httpUrl + '/federated/speed-test?worker_id='
+        + encodeURIComponent(workerId)
+        + '&random=' + Math.random(),
+      pingUrl: this.httpUrl + '/federated/speed-test?is_ping=1&worker_id='
+        + encodeURIComponent(workerId)
+        + '&random=' + Math.random(),
     });
+
+    const ping = await speedTest.getPing();
+    // start tests altogether
+    const [download, upload] = await Promise.all([
+      speedTest.getDownloadSpeed(),
+      speedTest.getUploadSpeed()
+    ]);
+
+    return {
+      ping,
+      download,
+      upload
+    };
   }
 
   async _send(path, data) {
