@@ -37,7 +37,7 @@ export default {
     }
   ],
   plugins: [
-    builtins(),
+    builtins({crypto: true}),
     json(),
     peerDepsExternal(),
     babel({ exclude: 'node_modules/**' }),
