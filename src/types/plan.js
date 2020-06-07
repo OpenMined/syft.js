@@ -1,13 +1,13 @@
 import { getPbId, unbufferize } from '../protobuf';
 
+/**
+ * PySyft Plan.
+ */
 export class Plan {
-  constructor(
-    id,
-    name,
-    role = [],
-    tags = [],
-    description = null
-  ) {
+  /**
+   * @hideconstructor
+   */
+  constructor(id, name, role = [], tags = [], description = null) {
     this.id = id;
     this.name = name;
     this.role = role;
@@ -15,6 +15,10 @@ export class Plan {
     this.description = description;
   }
 
+  /**
+   * @private
+   * @returns {Plan}
+   */
   static unbufferize(worker, pb) {
     const id = getPbId(pb.id);
     if (!pb.is_built) {
@@ -30,6 +34,15 @@ export class Plan {
     );
   }
 
+  /**
+   * Executes the Plan and returns its output.
+   *
+   * The order, type and number of arguments must match to arguments defined in the PySyft Plan.
+   *
+   * @param {Syft} worker
+   * @param {...(tf.Tensor|number)} data
+   * @returns {Promise<Array.<tf.Tensor>>}
+   */
   async execute(worker, ...data) {
     return this.role.execute(worker, ...data);
   }

@@ -44,6 +44,10 @@ For integration into your client-side application, [please check out our guide](
 
 For further API documentation, [please check that out here](https://docs.openmined.org/syft-js/api-documentation).
 
+### Usage
+
+See [API Documentation](API-REFERENCE.md).
+
 ### Local Development
 
 1. Fork and clone
