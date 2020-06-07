@@ -2,8 +2,8 @@ import { unbufferize } from '../protobuf';
 import PointerTensor from './pointer-tensor';
 import { Placeholder, PlaceholderId } from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
-import { TorchTensor } from './torch';
-import { MISSING_VARIABLE } from '../_errors';
+import { TorchParameter, TorchTensor } from './torch';
+import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
 
 import { Threepio, Command } from '@openmined/threepio';
 const threepio = new Threepio('torch', 'tfjs', tf);
@@ -52,6 +52,8 @@ export class ComputationAction {
         return tensor;
       } else if (tensor instanceof TorchTensor) {
         return tensor.toTfTensor();
+      } else if (tensor instanceof TorchParameter) {
+        return tensor.tensor.toTfTensor();
       } else if (typeof tensor === 'number') {
         return tensor;
       }
@@ -106,14 +108,88 @@ export class ComputationAction {
 
     const resolvedArgs = pullTensorsFromArgs(args);
 
-    // Threepio
-    const functionName = this.command.split('.').pop();
-    if (self) {
-      resolvedArgs.unshift(self);
+    // hack to support inplace tensor operation
+    // TODO move to Threepio?
+    if (this.command === 'add_') {
+      this.returnPlaceholderIds[0] = this.target;
     }
-    const cmd = new Command(functionName, resolvedArgs, this.kwargs);
-    const translation = threepio.translate(cmd);
-    return translation.executeRoutine();
+
+    try {
+      // Threepio
+      const functionName = this.command.split('.').pop();
+      if (functionName === 'sum') {
+        // TODO update Threepio to support keepdim kwarg
+        throw new Error("Threepio sum doesn't support keepdim");
+      }
+      const args = self ? [self, ...resolvedArgs] : [...resolvedArgs];
+      const cmd = new Command(functionName, args, this.kwargs);
+      const translation = threepio.translate(cmd);
+      return translation.executeRoutine();
+    } catch (e) {
+      // Try our last resort, legacy translation
+      // TODO Update Threepio and remove legacy
+      return legacyTorchToTF(this.command, self, resolvedArgs, this.kwargs);
+    }
+  }
+}
+
+/**
+ * Legacy translation layer to temporarily support ops missing in Threepio
+ * TODO remove it
+ * @param torchCmd
+ * @param self
+ * @param args
+ * @param kwargs
+ * @returns {Promise<*>}
+ */
+const legacyTorchToTF = (torchCmd, self, args, kwargs) => {
+  const cmdMap = {
+    dim: '@rank', // method to property mapping
+    sum: ['sum', [], [kwargs['dim'], kwargs['keepdim']]],
+    copy: 'clone',
+    __rtruediv__: (self, args) => {
+      // rdiv is div with reversed args
+      return tf.div(args[0], self);
+    }
+  };
+
+  let preArgs = [];
+  let postArgs = [];
+  let command = '';
+  let property = '';
+
+  if (torchCmd in cmdMap) {
+    command = cmdMap[torchCmd];
+    if (typeof command === 'function') {
+      return command(self, args, kwargs);
+    }
+    if (Array.isArray(command)) {
+      preArgs = command[1] || [];
+      postArgs = command[2] || [];
+      command = command[0];
+    }
   }
 
-}
+  if (command.match(/^@/)) {
+    // this is a property on self
+    property = command.substr(1);
+    command = '';
+  }
+
+  if (command) {
+    if (!Object.hasOwnProperty.call(tf, command)) {
+      throw new Error(CANNOT_FIND_COMMAND(command));
+    }
+
+    const selfArg = self ? [self] : [];
+    return tf[command](...selfArg, ...preArgs, ...args, ...postArgs);
+  } else if (property) {
+    if (!(property in self)) {
+      throw new Error(CANNOT_FIND_COMMAND(`object.${property}`));
+    }
+
+    return self[property];
+  } else {
+    throw new Error(CANNOT_FIND_COMMAND(torchCmd));
+  }
+};
