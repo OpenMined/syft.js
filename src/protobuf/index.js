@@ -65,7 +65,7 @@ export const unbufferize = (worker, pbObj) => {
  * @param worker
  * @param bin
  * @param pbType
- * @returns {{}}
+ * @returns {Object}
  */
 export const unserialize = (worker, bin, pbType) => {
   const buff =

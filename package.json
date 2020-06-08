@@ -37,12 +37,13 @@
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "release": "np",
     "deploy": "./copy-examples.sh && gh-pages -d tmp && rm -rf tmp",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "doc": "documentation build --config documentation.yml src/syft.js src/syft-model.js src/job.js src/types/plan.js --shallow -f md -o API-REFERENCE.md"
   },
   "browserslist": "> 0.25%, not dead",
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged"
+      "pre-commit": "npm run doc && pretty-quick --staged"
     }
   },
   "jest": {
@@ -76,6 +77,7 @@
     "auto-changelog": "^1.16.2",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^24.9.0",
+    "documentation": "^13.0.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.20.1",

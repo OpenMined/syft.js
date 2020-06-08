@@ -1,0 +1,8 @@
+toc:
+  - Syft
+  - Job
+  - Job#accepted
+  - Job#rejected
+  - Job#error
+  - SyftModel
+  - Plan
