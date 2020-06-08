@@ -7,6 +7,10 @@ export default class ObjectRegistry {
   }
 
   set(id, obj, gc = false) {
+    if (this.objects[id] instanceof tf.Tensor) {
+      this.objects[id].dispose();
+      delete this.objects[id];
+    }
     this.objects[id] = obj;
     this.gc[id] = gc;
   }

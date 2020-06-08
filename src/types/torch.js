@@ -84,12 +84,7 @@ export class TorchTensor {
     const flat = tensor.flatten();
     const array = await flat.array();
     flat.dispose();
-    const t = new TorchTensor(
-      tensor.id,
-      array,
-      tensor.shape,
-      tensor.dtype
-    );
+    const t = new TorchTensor(tensor.id, array, tensor.shape, tensor.dtype);
     t._tfTensor = tensor;
     return t;
   }
