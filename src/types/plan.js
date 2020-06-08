@@ -21,9 +21,6 @@ export class Plan {
    */
   static unbufferize(worker, pb) {
     const id = getPbId(pb.id);
-    if (!pb.is_built) {
-      throw new Error(`Plan #${id} is not built`);
-    }
 
     return new Plan(
       id,

@@ -40,7 +40,6 @@
     "lint": "eslint .",
     "doc": "documentation build --config documentation.yml src/syft.js src/syft-model.js src/job.js src/types/plan.js --shallow -f md -o API-REFERENCE.md"
   },
-  "types": "src/types/index.d.ts",
   "browserslist": "> 0.25%, not dead",
   "husky": {
     "hooks": {
@@ -62,7 +61,7 @@
   "dependencies": {
     "@openmined/threepio": "github:openmined/threepio",
     "long": "^4.0.0",
-    "syft-proto": "git+https://github.com/OpenMined/syft-proto.git#v0.2.9.a2"
+    "syft-proto": "github:openmined/syft-proto#v0.4.7"
   },
   "peerDependencies": {
     "@tensorflow/tfjs-core": "^1.2.5"

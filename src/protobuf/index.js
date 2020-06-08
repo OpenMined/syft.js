@@ -1,6 +1,7 @@
 import { NO_DETAILER } from '../_errors';
 import { initMappings, PB_TO_UNBUFFERIZER } from './mapping';
 import { protobuf } from 'syft-proto';
+import Long from 'long';
 export { protobuf };
 
 export const unbufferize = (worker, pbObj) => {
@@ -32,14 +33,29 @@ export const unbufferize = (worker, pbObj) => {
     return res;
   }
 
+  // automatically unbufferize Id
+  if (pbType === protobuf.syft_proto.types.syft.v1.Id) {
+    return getPbId(pbObj);
+  }
+
   // automatically unwrap Arg
   if (pbType === protobuf.syft_proto.types.syft.v1.Arg) {
-    return unbufferize(worker, pbObj[pbObj.arg]);
+    if (pbObj.arg === 'arg_int' && pbObj[pbObj.arg] instanceof Long) {
+      // protobuf int64 is represented as Long
+      return pbObj[pbObj.arg].toNumber();
+    } else {
+      return unbufferize(worker, pbObj[pbObj.arg]);
+    }
+  }
+
+  // automatically unwrap ArgList
+  if (pbType === protobuf.syft_proto.types.syft.v1.ArgList) {
+    return unbufferize(worker, pbObj.args);
   }
 
   const unbufferizer = PB_TO_UNBUFFERIZER[pbType];
   if (typeof unbufferizer === 'undefined') {
-    throw new Error(NO_DETAILER(pbType));
+    throw new Error(NO_DETAILER(pbType.name));
   }
   return unbufferizer(worker, pbObj);
 };

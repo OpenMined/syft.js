@@ -5,7 +5,17 @@ import { Placeholder, PlaceholderId } from '../../src/types/placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import { protobuf, unserialize } from '../../src/protobuf';
 import Syft from '../../src/syft';
-import { MODEL_MNIST, PLAN_MNIST, PLAN_WITH_STATE } from '../data/dummy';
+import {
+  MNIST_BATCH_SIZE,
+  MNIST_LR,
+  MNIST_BATCH_DATA,
+  MNIST_PLAN,
+  MNIST_MODEL_PARAMS,
+  MNIST_UPD_MODEL_PARAMS,
+  MNIST_LOSS,
+  MNIST_ACCURACY,
+  PLAN_WITH_STATE
+} from '../data/dummy';
 import { ComputationAction } from '../../src/types/computation-action';
 import { Role } from '../../src/types/role';
 
@@ -30,16 +40,17 @@ describe('Plan', () => {
     const phId2 = new PlaceholderId(666);
     const ph1 = new Placeholder(555);
     const ph2 = new Placeholder(666);
-    const action = new ComputationAction('torch.abs', null, [phId1], null, null, [phId2]);
+    const action = new ComputationAction(
+      'torch.abs',
+      null,
+      [phId1],
+      null,
+      null,
+      [phId2]
+    );
     const state = new State([], []);
     const role = new Role(777, [action], state, [ph1, ph2], [phId1], [phId2]);
-    const obj = new Plan(
-      123,
-      'plan',
-      role,
-      ['tag1', 'tag2'],
-      'desc'
-    );
+    const obj = new Plan(123, 'plan', role, ['tag1', 'tag2'], 'desc');
     expect(obj.id).toBe(123);
     expect(obj.name).toBe('plan');
     expect(obj.role.actions).toStrictEqual([action]);
@@ -78,25 +89,58 @@ describe('Plan', () => {
   test('can be executed (MNIST example)', async () => {
     const plan = unserialize(
       null,
-      PLAN_MNIST,
+      MNIST_PLAN,
       protobuf.syft_proto.execution.v1.Plan
     );
+
     const worker = new Syft({ url: 'dummy' });
-    const lr = tf.tensor(0.01);
-    const batchSize = tf.tensor(1);
-    const dataBatch = tf.zeros([1, 784]);
-    const labelsBatch = tf.oneHot(tf.tensor1d([8], 'int32'), 10);
+    const dataState = unserialize(
+      null,
+      MNIST_BATCH_DATA,
+      protobuf.syft_proto.execution.v1.State
+    );
+    const [data, labels] = dataState.tensors;
+    const lr = tf.tensor(MNIST_LR);
+    const batchSize = tf.tensor(MNIST_BATCH_SIZE);
     const modelState = unserialize(
       null,
-      MODEL_MNIST,
+      MNIST_MODEL_PARAMS,
       protobuf.syft_proto.execution.v1.State
     );
     const modelParams = modelState.tensors;
-    const [loss, acc, ...newParams] = await plan.execute(worker, dataBatch, labelsBatch, batchSize, lr, ...modelParams);
+    const [loss, acc, ...updModelParams] = await plan.execute(
+      worker,
+      data,
+      labels,
+      batchSize,
+      lr,
+      ...modelParams
+    );
+
+    const refUpdModelParamsState = unserialize(
+      null,
+      MNIST_UPD_MODEL_PARAMS,
+      protobuf.syft_proto.execution.v1.State
+    );
+    const refUpdModelParams = refUpdModelParamsState.tensors.map(i =>
+      i.toTfTensor()
+    );
+
     expect(loss).toBeInstanceOf(tf.Tensor);
     expect(acc).toBeInstanceOf(tf.Tensor);
-    expect(newParams).toHaveLength(4);
-    expect(loss.arraySync().toFixed(5)).toBe("0.23026");
-    expect(acc.arraySync().toFixed(5)).toBe("0.00000");
+    expect(updModelParams).toHaveLength(refUpdModelParams.length);
+    expect(loss.arraySync()).toStrictEqual(MNIST_LOSS);
+    expect(acc.arraySync()).toStrictEqual(MNIST_ACCURACY);
+
+    for (let i = 0; i < refUpdModelParams.length; i++) {
+      // Check that resulting model params are close to pysyft reference
+      let diff = refUpdModelParams[i].sub(updModelParams[i]);
+      expect(
+        diff
+          .abs()
+          .sum()
+          .arraySync()
+      ).toBeLessThan(1e-7);
+    }
   });
 });

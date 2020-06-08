@@ -10,11 +10,9 @@ export class PlaceholderId {
   }
 
   bufferize(/* worker */) {
-    return protobuf.syft_proto.execution.v1.PlaceholderId.create(
-      {
-        id: pbId(this.id)
-      }
-    );
+    return protobuf.syft_proto.execution.v1.PlaceholderId.create({
+      id: pbId(this.id)
+    });
   }
 }
 
@@ -29,12 +27,12 @@ export class Placeholder {
   static unbufferize(worker, pb) {
     let expected_shape = null;
     if (
-      pb.expected_shape
-      && Array.isArray(pb.expected_shape.dims)
-      && pb.expected_shape.dims.length > 0
+      pb.expected_shape &&
+      Array.isArray(pb.expected_shape.dims) &&
+      pb.expected_shape.dims.length > 0
     ) {
       // Unwrap Shape
-      expected_shape = pb.expected_shape.dims
+      expected_shape = pb.expected_shape.dims;
     }
 
     return new Placeholder(
@@ -46,14 +44,14 @@ export class Placeholder {
   }
 
   bufferize(/* worker */) {
-    return protobuf.syft_proto.execution.v1.Placeholder.create(
-      {
-        id: pbId(this.id),
-        tags: this.tags,
-        description: this.description,
-        expected_shape: protobuf.syft_proto.types.syft.v1.Shape.create(this.expected_shape)
-      }
-    );
+    return protobuf.syft_proto.execution.v1.Placeholder.create({
+      id: pbId(this.id),
+      tags: this.tags,
+      description: this.description,
+      expected_shape: protobuf.syft_proto.types.syft.v1.Shape.create(
+        this.expected_shape
+      )
+    });
   }
 
   getOrderFromTags(prefix) {

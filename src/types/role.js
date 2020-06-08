@@ -23,8 +23,7 @@ export class Role {
     this.description = description;
   }
 
-  static unbufferize(worker, pb)
-  {
+  static unbufferize(worker, pb) {
     let placeholdersArray = unbufferize(worker, pb.placeholders);
     let placeholders = {};
     for (let ph of placeholdersArray) {
@@ -69,8 +68,7 @@ export class Role {
     const planScope = new ObjectRegistry();
     planScope.load(worker.objects);
 
-    const
-      inputPlaceholders = this.getInputPlaceholders(),
+    const inputPlaceholders = this.getInputPlaceholders(),
       outputPlaceholders = this.getOutputPlaceholders(),
       argsLength = inputPlaceholders.length;
 
@@ -120,5 +118,4 @@ export class Role {
     // Return them to the worker
     return resolvedResultingTensors;
   }
-
 }

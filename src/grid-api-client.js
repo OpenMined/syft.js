@@ -80,9 +80,6 @@ export default class GridAPIClient {
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting model ${modelId}...`
     );
 
-    // const response = await fetch('/data/model_params.pb');
-    // return response.arrayBuffer();
-
     const response = await this._sendHttp(
       'federated/get-model',
       {
@@ -232,7 +229,7 @@ export default class GridAPIClient {
 
       const timeoutHandler = setTimeout(() => {
         this.ws.onmessage = null;
-        reject();
+        reject(new Error('Response timeout'));
       }, this.responseTimeout);
 
       // We expect first message after send to be response.
@@ -256,13 +253,13 @@ export default class GridAPIClient {
       this.ws.onerror = event => {
         clearTimeout(timeoutHandler);
         this._handleWsError(event);
-        reject();
+        reject(new Error(event));
       };
 
       this.ws.onclose = event => {
         clearTimeout(timeoutHandler);
         this._handleWsClose(event);
-        reject();
+        reject(new Error('WS connection closed'));
       };
     });
   }
@@ -280,12 +277,12 @@ export default class GridAPIClient {
       ws.onerror = event => {
         // couldn't connect
         this._handleWsError(event);
-        reject();
+        reject(new Error(event));
       };
       ws.onclose = event => {
         // couldn't connect
         this._handleWsClose(event);
-        reject();
+        reject(new Error('WS connection closed during connect'));
       };
     });
   }
