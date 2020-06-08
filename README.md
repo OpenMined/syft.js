@@ -1,9 +1,10 @@
 # Syft.js
 
-![Travis (.org)](https://img.shields.io/travis/OpenMined/syft.js.svg)
+![Build](https://img.shields.io/github/workflow/status/OpenMined/syft.js/Run%20tests%20and%20coverage)
 ![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)
-![npm](https://img.shields.io/npm/v/syft.js.svg)
+![npm](https://img.shields.io/npm/v/@openmined/syft.js)
 ![GitHub](https://img.shields.io/github/license/OpenMined/syft.js.svg)
+![OpenCollective](https://img.shields.io/opencollective/all/openmined)
 
 ## Introduction to Syft.js
 
@@ -55,14 +56,12 @@ For further API documentation, [please check that out here](https://docs.openmin
 
 ### Running Demos
 
-It's important to note that each of the examples are self-sustaining projects. This means that they run independent of the `npm start` command run at the root syft.js directory. In order to run the demos, please do the following:
+Demos are placed in `example` folder. It's important to note
+that examples are self-sustaining projects and need `npm install`
+executed in their own folders.
 
-1. Make sure that grid.js is [running and seeded with data](https://github.com/OpenMined/grid.js/#development).
-2. Open a terminal to the root syft.js directory.
-3. Run `npm install` and then `npm start`.
-4. Open a new terminal tab and `cd` into one of the examples.
-5. Run `npm install` and then `npm start` inside of that example's directory. This should open a new browser tab for that example.
-6. Leave both tasks going as you proceed with normal development. The example will automatically refresh in your browser every time you make a change to syft.js or to the example itself.
+The "Hello World" syft.js demo is MNIST training example located in `examples/mnist` folder.
+See its README file for installation and running instructions.
 
 ### Contributing
 

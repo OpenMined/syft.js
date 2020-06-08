@@ -50,11 +50,10 @@
       }
     </style>
 
-    <title>syft.js Example</title>
+    <title>Syft.js MNIST Example</title>
 
     <!-- NOTE: TFJS version must match with one in package-lock.json -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   </head>
   <body>
@@ -63,14 +62,15 @@
       id="logo"
       alt="OpenMined"
     />
-    <h1>syft.js/grid.js testing</h1>
+    <h1>Syft.js MNIST Example</h1>
     <p id="explanation">
       <i
         >This is a demo using
         <a href="https://github.com/OpenMined/syft.js" target="_blank"
           >syft.js from OpenMined</a
         >
-        to execute a multi-worker protocol hosted on grid.js. Please open your
+        to train MNIST model hosted on the PyGrid using local data and Federated
+        Learning approach. The data never leaves the browser. Please open your
         Javascript console to see what's going on (instructions for
         <a
           href="https://developers.google.com/web/tools/chrome-devtools/open#console"
@@ -88,7 +88,7 @@
 
     <form action="#">
       <p>
-        <label for="grid-server">Grid URL:</label>
+        <label for="grid-server">PyGrid URL:</label>
         <input type="text" id="grid-server" value="ws://localhost:5000" />
       </p>
 
@@ -98,18 +98,21 @@
       </p>
 
       <p>
-        <label for="model-id">FL Model Version:</label>
+        <label for="model-version">FL Model Version:</label>
         <input type="text" id="model-version" value="1.0.0" />
       </p>
 
       <p>
         <button id="start">Start FL Worker</button>
       </p>
+
+      <p>
+        <label for="worker-repeat">
+          <input id="worker-repeat" type="checkbox" checked /> Keep making cycle
+          requests
+        </label>
+      </p>
     </form>
-
-
-    <!--    <input type="text" id="protocol" value="10000000013" />-->
-    <!--    <button id="connect">Connect to grid.js server</button>-->
 
     <div id="fl-training" style="display: none">
       <div style="display: table-row">
@@ -123,18 +126,6 @@
       </div>
 
       <div id="status"></div>
-    </div>
-
-    <div id="app">
-      <button id="disconnect">Disconnect</button>
-      <p id="identity"></p>
-      <div id="participant-links"></div>
-      <textarea
-        id="message"
-        placeholder="Type some message in here..."
-      ></textarea
-      ><br />
-      <button id="message-send">Send message</button>
     </div>
   </body>
 </html>
