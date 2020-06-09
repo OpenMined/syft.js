@@ -112,4 +112,8 @@ export class TorchParameter {
       unbufferize(worker, pb.grad)
     );
   }
+
+  toTfTensor() {
+    return this.tensor.toTfTensor();
+  }
 }
