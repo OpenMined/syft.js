@@ -18,7 +18,7 @@ Syft.js is the “web” part of the [OpenMined](https://openmined.org)'s open-s
 which currently spans across web, [iOS](https://github.com/OpenMined/SwiftSyft), [Android](https://github.com/OpenMined/KotlinSyft), and [servers/IoT](https://github.com/OpenMined/PySyft).
 
 The library is built on top of [TensorFlow.js](https://js.tensorflow.org/) and allows to train and inference [PySyft](https://github.com/OpenMined/PySyft) models in a browser.
-This enables you to utilize training data located directly in the browser itself,
+This enables developers and researchers to utilize training data located directly in the browser itself,
 bypassing the need to send a user's data to a central server.
 
 ## Introduction
@@ -29,12 +29,18 @@ to use private data that users would not normally want to share.
 
 OpenMined infrastructure helps to implement federated learning in the following way:
 
-1. Develop your ML model and training procedure (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft). By design, PySyft is built upon PyTorch and TensorFlow so you **don't need to learn a new ML framework**.
-1. Host your model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
-1. Execute the training on the variety of end-user devices using the client library (syft.js, SwiftSyft, KotlinSyft, PySyft).
-1. Securely aggregate trained user models.
+1. Develop ML model and training procedure (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft). By design, PySyft is built upon PyTorch and TensorFlow so you **don't need to learn a new ML framework**.
+1. Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
+1. Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
+1. Securely aggregate trained user models in PyGrid.
 
 **The entire workflow and process is described in greater detail in the [Web & Mobile Federated Learning project roadmap](https://github.com/OpenMined/Roadmap/blob/master/web_and_mobile_team/projects/federated_learning.md).**
+
+As federated learning client library, syft.js provides following core features:
+
+- Integration with PyGrid federated learning API.
+- PySyft Plans execution.
+- PySyft Protocols execution for secure aggregation - _IN PROGRESS_
 
 There are a variety of additional privacy-preserving protections that may be applied, including [differential privacy](https://towardsdatascience.com/understanding-differential-privacy-85ce191e198a), [muliti-party computation](https://www.inpher.io/technology/what-is-secure-multiparty-computation), and [secure aggregation](https://research.google/pubs/pub45808/).
 
@@ -48,8 +54,8 @@ please check following articles:
 
 _We have not currently made our initial release. Syft.js would soon be available npm._
 
-Meanwhile, you can install directly from Github.
-Note that syft.js needs Tensorflow.js library installed as peer dependency.
+Meanwhile, you can install syft.js directly from Github.
+Note that syft.js needs Tensorflow.js library as peer dependency.
 
 If you're using a package manage like NPM:
 
@@ -80,8 +86,16 @@ syft.js was tested with Chrome and Firefox browsers.
 
 ## Usage
 
-Syft.js provides minimalistic API to communicate with PyGrid and execute PySyft's Plans.
-The whole federated learning cycle can be expressed in the following code.
+Syft.js provides minimalistic API to communicate with federated learning PyGrid endpoints
+and execute PySyft's Plans in a browser.
+The federated learning cycle implemented with syft.js would contain following steps:
+
+- Register into training cycle and get accepted by PyGrid.
+- Download required model and Plans.
+- Execute the Plan with given model parameters and local user's data.
+- Submit difference between original and trained model parameters for aggregation.
+
+This whole cycle can be expressed in the following code:
 
 ```javascript
 import * as tf from '@tensorflow/tfjs-core';
@@ -110,7 +124,7 @@ job.on('accepted', async ({ model, clientConfig }) => {
 
   // Main training loop.
   for (let [data, labels] of batches) {
-    // NOTE: this is just an example.
+    // NOTE: this is just one possible example.
     // Plan name (e.g. 'training_plan'), its input arguments and outputs depends on FL configuration and actual Plan implementation.
     let updatedModelParams = await job.plans['training_plan'].execute(
       job.worker,
@@ -134,7 +148,7 @@ job.on('accepted', async ({ model, clientConfig }) => {
 });
 
 job.on('rejected', ({ timeout }) => {
-  // Handle the job rejection, e.g. re-try.
+  // Handle the job rejection, e.g. re-try after timeout.
 });
 
 job.on('error', err => {
@@ -152,7 +166,7 @@ See [API Documentation](API-REFERENCE.md) for complete reference.
 
 The “Hello World” syft.js demo is MNIST training example located in `examples/mnist` folder.
 It demonstrates how a simple neural net model created in PySyft can be trained in a browser
-and averaged across multiple federated learning participants.
+and the result of training averaged from multiple federated learning participants.
 
 <img src="art/mnist-demo-ani.gif" alt="syft.js MNIST demo animation" />
 
@@ -179,7 +193,7 @@ conda create -n syft python=3.7
 conda activate syft
 ```
 
-#### PySyft
+#### Install PySyft
 
 Get the latest `master` branch of PySyft:
 
@@ -190,7 +204,7 @@ cd PySyft
 pip install .
 ```
 
-#### PyGrid
+#### Install PyGrid
 
 Get the latest `dev` branch of PyGrid:
 
@@ -221,7 +235,7 @@ Then continue with install:
 pip install .
 ```
 
-#### Syft.js MNIST demo
+#### Install Syft.js with MNIST demo
 
 Get the latest `master` branch of syft.js with MNIST demo app included:
 
@@ -236,8 +250,8 @@ npm install
 
 #### Seeding the Model & Plan
 
-Syft.js connects to PyGrid to pick up the model and how to train it.
-For demo to work, we need to populate that data into PyGrid.
+Syft.js connects to PyGrid to pick up the model and training Plan.
+For the demo to work, we need to populate that data into PyGrid.
 
 ##### Run PyGrid
 
@@ -252,7 +266,7 @@ PyGrid URL will need to be adjusted accordingly in further steps.
 
 ##### Create Model & Plan
 
-After the PyGrid is running, the next step is to create model and training plan and host them in the PyGrid.
+After the PyGrid is running, the next step is to create the model and training plan and host them in the PyGrid.
 PySyft tutorials include MNIST example jupyter notebooks that guide you through this process.
 
 Fire up jupyter notebook:
@@ -262,23 +276,23 @@ cd ~/fl-demo/PySyft
 jupyter notebook --notebook-dir=$(pwd)
 ```
 
-In the console, you should see localhost URL you should open, or the browser will open automatically.
+In the console, you should see URL you should open, or the browser will open automatically.
 Inside the browser, navigate to `examples/experimental/FL Training Plan` folder in PySyft root.
 
 There should be two notebooks of interest:
 
-- _Create Plan_: here the MNIST model and training plan are defined and saved into files.
+- _Create Plan_: In this notebook the MNIST model and training plan are defined and saved into files.
   Run all cells to get files created.
 
-- _Host Plan_: Model and plan files created in previous notebook are hosted in PyGrid.
+- _Host Plan_: Model and plan files created in the previous notebook are hosted in PyGrid.
   Run all cells to seed that data into PyGrid instance.
 
 ##### PyGrid Clean-up
 
 In case you need to reset PyGrid database to blank state, stop the process with `Ctrl+C` and remove `databasegateway.db` file in PyGrid root folder.
-Or, if you used docker-compose, re-start it using `docker-compose up --force-recreate` command.
+Or, if you used docker-compose, stop and re-start it using `docker-compose up --force-recreate` command.
 
-#### Start the Demo
+#### Starting the Demo
 
 Finally, we got to the browser part of the demo:
 
@@ -288,19 +302,21 @@ npm start
 ```
 
 This should start development server and open `localhost:8080` in the browser.
-Assuming that PyGrid URL, MNIST model name and version were not modified while running previous steps, just
+Assuming PyGrid URL, MNIST model name and version were not modified in previous steps, just
 press “Start FL Worker”.
 
 You should see following in dev console:
 
-- syft.js registers into training cycle on PyGrid and gets configuration, plan, and the model.
-- App loads MNIST dataset and executes the training plan multiple times.
-  Charts are updated during this process and you should see loss going down and accuracy going up.
-- Model update is submitted to PyGrid.
+- Syft.js registers into training cycle on PyGrid and gets configuration, Plan, and the model.
+- App loads MNIST dataset and executes the training plan with each data batch.
+  Charts are updated during this process, and you should see the training loss going down and the accuracy going up.
+- After the training is complete, model diff is submitted to PyGrid.
 
-If “Keep making cycle requests” is checked, the process is repeated
-resulting in better model each 3 cycles
-(PyGrid updates the global model after every 3 submissions).
+If “Keep making cycle requests” is checked,
+the whole cycle process is repeated until PyGrid tells worker that model training is complete.
+It should be visible that
+PyGrid aggregates each 3 submissions into the global model, so each 3rd starts
+with lower loss and higher accuracy.
 
 ## Contributing
 
@@ -327,6 +343,7 @@ These people were integral part of the efforts to bring syft.js to fruition and 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 
