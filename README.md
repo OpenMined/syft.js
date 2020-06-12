@@ -14,45 +14,25 @@
 
 # Syft.js
 
-Syft.js is the “web” part of the [OpenMined](https://openmined.org)'s open-source ecosystem for federated learning,
+Syft.js is the “web” part of the [OpenMined](https://openmined.org)'s open-source ecosystem for [federated learning](https://ai.googleblog.com/2017/04/federated-learning-collaborative.html),
 which currently spans across web, [iOS](https://github.com/OpenMined/SwiftSyft), [Android](https://github.com/OpenMined/KotlinSyft), and [servers/IoT](https://github.com/OpenMined/PySyft).
 
-The library is built on top of [TensorFlow.js](https://js.tensorflow.org/) and allows to train and inference [PySyft](https://github.com/OpenMined/PySyft) models in a browser.
-This enables developers and researchers to utilize training data located directly in the browser itself,
-bypassing the need to send a user's data to a central server.
+Syft.js has following core features:
 
-## Introduction
+- :hammer_and_wrench: Integration with PyGrid federated learning API.
+- :gear: **Training and inference** of any PySyft model written in PyTorch or TensorFlow.
+- :bust_in_silhouette: Allows all data to stay on the user's device.
+- :lock: Support for **secure multi-party computation** and **secure aggregation** protocols using **peer-to-peer WebRTC** connections (_in progress_).
 
-The main idea of federated learning is that the user's data never
-leaves the user's device. This provides researchers and developers with opportunity
-to use private data that users would not normally want to share.
-
-OpenMined infrastructure helps to implement federated learning in the following way:
-
-1. Develop ML model and training procedure (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft). By design, PySyft is built upon PyTorch and TensorFlow so you **don't need to learn a new ML framework**.
-1. Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
-1. Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
-1. Securely aggregate trained user models in PyGrid.
-
-**The entire workflow and process is described in greater detail in the [Web & Mobile Federated Learning project roadmap](https://github.com/OpenMined/Roadmap/blob/master/web_and_mobile_team/projects/federated_learning.md).**
-
-As federated learning client library, syft.js provides following core features:
-
-- Integration with PyGrid federated learning API.
-- PySyft Plans execution.
-- PySyft Protocols execution for secure aggregation - _IN PROGRESS_
+The library is built on top of [TensorFlow.js](https://js.tensorflow.org/).
 
 There are a variety of additional privacy-preserving protections that may be applied, including [differential privacy](https://towardsdatascience.com/understanding-differential-privacy-85ce191e198a), [muliti-party computation](https://www.inpher.io/technology/what-is-secure-multiparty-computation), and [secure aggregation](https://research.google/pubs/pub45808/).
 
-If you are not familiar with federated learning concepts,
-please check following articles:
-
-- [Federated Learning: Collaborative Machine Learning without Centralized Training Data](https://ai.googleblog.com/2017/04/federated-learning-collaborative.html)
-- [Towards Federated Learning at Scale](https://arxiv.org/pdf/1902.01046.pdf)
+If you want to know how scalable federated systems are built, [Towards Federated Learning at Scale](https://arxiv.org/pdf/1902.01046.pdf) is a fantastic introduction!
 
 ## Installation
 
-_We have not currently made our initial release. Syft.js would soon be available npm._
+_We have not currently made our initial release. Syft.js would soon be available via npm._
 
 Meanwhile, you can install syft.js directly from Github.
 Note that syft.js needs Tensorflow.js library as peer dependency.
@@ -76,22 +56,23 @@ If you're not using a package manager, you will be able to include Syft.js withi
 <script src="https://cdn.jsdelivr.net/npm/@openmined/syft.js@latest/dist/index.js"></script>
 ```
 
-### Tensorflow.js Versions Compatibility
+## Quick Start
 
-syft.js was tested with Tensorflow.js v1.2.5.
+As a developer, there are few steps to building your own secure federated learning system upon the OpenMined infrastructure:
 
-### Browser Support
+1. :robot: Develop ML model and training procedure (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft). By design, PySyft is built upon PyTorch and TensorFlow so you **don't need to learn a new ML framework**.
+1. :earth_americas: Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
+1. :tada: Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
+1. :lock: Securely aggregate trained user models in PyGrid.
 
-syft.js was tested with Chrome and Firefox browsers.
-
-## Usage
+**:notebook: The entire workflow and process is described in greater detail in the [Web & Mobile Federated Learning project roadmap](https://github.com/OpenMined/Roadmap/blob/master/web_and_mobile_team/projects/federated_learning.md).**
 
 Syft.js provides minimalistic API to communicate with federated learning PyGrid endpoints
 and execute PySyft's Plans in a browser.
 The federated learning cycle implemented with syft.js would contain following steps:
 
-- Register into training cycle and get accepted by PyGrid.
-- Download required model and Plans.
+- Register into training cycle on PyGrid.
+- Download required model and Plans from PyGrid.
 - Execute the Plan with given model parameters and local user's data.
 - Submit difference between original and trained model parameters for aggregation.
 
@@ -317,6 +298,16 @@ the whole cycle process is repeated until PyGrid tells worker that model trainin
 It should be visible that
 PyGrid aggregates each 3 submissions into the global model, so each 3rd starts
 with lower loss and higher accuracy.
+
+## Compatibility
+
+### Tensorflow.js Versions Compatibility
+
+Syft.js was tested with Tensorflow.js v1.2.5.
+
+### Browser Support
+
+syft.js was tested with Chrome and Firefox browsers.
 
 ## Contributing
 
