@@ -1,4 +1,7 @@
 <img src="art/fake-logo.png" alt="syft.js logo" width="200" />
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ![Build](https://img.shields.io/github/workflow/status/OpenMined/syft.js/Run%20tests%20and%20coverage)
 ![codecov](https://img.shields.io/codecov/c/github/OpenMined/syft.js)
@@ -330,6 +333,18 @@ The Slack channel `#lib_syft_js` is specific to syft.js development. See you the
 ## Contributors
 
 These people were integral part of the efforts to bring syft.js to fruition and in its active development.
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://www.patrickcason.com"><img src="https://avatars1.githubusercontent.com/u/1297930?v=4" width="100px;" alt=""/><br /><sub><b>Patrick Cason</b></sub></a><br /><a href="#ideas-cereallarceny" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/OpenMined/syft.js/commits?author=cereallarceny" title="Code">💻</a> <a href="#design-cereallarceny" title="Design">🎨</a> <a href="https://github.com/OpenMined/syft.js/commits?author=cereallarceny" title="Documentation">📖</a> <a href="#business-cereallarceny" title="Business development">💼</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
