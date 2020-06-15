@@ -1,4 +1,4 @@
-import { randomFillSync } from 'crypto';
+import { randomFillSync } from 'randomfill';
 
 export class SpeedTest {
   constructor({
