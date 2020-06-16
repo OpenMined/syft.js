@@ -11,6 +11,9 @@
   },
   "author": "",
   "license": "",
+  "dependencies": {
+    "@openmined/syft.js": "github:openmined/syft.js"
+  },
   "devDependencies": {
     "babel-loader": "^8.0.6",
     "html-webpack-plugin": "^3.2.0",
