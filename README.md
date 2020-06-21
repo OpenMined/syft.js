@@ -312,6 +312,10 @@ Syft.js was tested with Tensorflow.js v1.2.5.
 
 syft.js was tested with Chrome and Firefox browsers.
 
+## Support
+
+For support in using this library, please join the **#lib_syft_js** Slack channel. If you’d like to follow along with any code changes to the library, please join the **#code_syftjs** Slack channel. [Click here to join our Slack community!](https://slack.openmined.org)
+
 ## Contributing
 
 Please check [open issues](https://github.com/OpenMined/syft.js/issues) as a starting point.
