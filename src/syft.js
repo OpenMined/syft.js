@@ -17,13 +17,13 @@ import ObjectRegistry from './object-registry';
  *
  * const client = new Syft({url: "ws://localhost:5000", verbose: true})
  * const job = client.newJob({modelName: "mnist", modelVersion: "1.0.0"})
- * job.on('accepted', async (model, config) => {
+ * job.on('accepted', async ({model, clientConfig}) => {
  *   // execute training
  *   const [...newParams] = await this.plans['...'].execute(...)
  *   const diff = await model.createSerializedDiff(newParams)
  *   await this.report(diff)
  * })
- * job.on('rejected', (timeout) => {
+ * job.on('rejected', ({timeout}) => {
  *   // re-try later or stop
  * })
  * job.on('error', (err) => {
@@ -55,6 +55,7 @@ export default class Syft {
   /**
    * Authenticates the client against PyGrid and instantiates new Job with given options.
    *
+   * @throws Error
    * @param {Object} options
    * @param {string} options.modelName FL Model name.
    * @param {string} options.modelVersion FL Model version.

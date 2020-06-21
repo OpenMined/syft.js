@@ -74,7 +74,14 @@ export const unserialize = (worker, bin, pbType) => {
       : bin instanceof ArrayBuffer
       ? new Uint8Array(bin)
       : bin;
-  const pbObj = pbType.decode(buff);
+  let pbObj;
+  try {
+    pbObj = pbType.decode(buff);
+  } catch (e) {
+    throw new Error(
+      `Failed to unserialize binary protobuf data into ${pbType.name}: ${e.message}`
+    );
+  }
   return unbufferize(worker, pbObj);
 };
 

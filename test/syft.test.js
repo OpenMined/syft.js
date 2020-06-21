@@ -1,4 +1,8 @@
 import Syft from '../src/index';
+import Job from '../src/job';
+import SyftModel from '../src/syft-model';
+import { GridMock } from './mocks/grid';
+import { MNIST_PLAN, MNIST_MODEL_PARAMS } from './data/dummy';
 
 describe('Syft', () => {
   test('can construct', () => {
@@ -11,214 +15,161 @@ describe('Syft', () => {
     expect(syft).toBeInstanceOf(Syft);
     expect(syft.authToken).toBe('abc');
   });
+
+  describe('PyGrid integration', () => {
+    const dummyFLConfig = {
+      client_config: {
+        name: 'mnist',
+        version: '1.0.0',
+        batch_size: 64,
+        lr: 0.005,
+        max_updates: 100
+      }
+    };
+    const dummyHostname = 'localhost';
+    const dummyPort = 8080;
+    const wsUrl = `ws://${dummyHostname}:${dummyPort}`;
+    let grid;
+
+    beforeEach(() => {
+      grid = new GridMock(dummyHostname, dummyPort);
+    });
+
+    afterEach(() => {
+      grid.stop();
+    });
+
+    test('Auth flow, success', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true,
+        authToken: 'auth secret'
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'rejected'
+      });
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      job.on('rejected', function({ timeout }) {
+        expect(this).toBeInstanceOf(Job);
+        expect(syft.worker_id).toBe('abc');
+        // Timeout is not provided in the response.
+        expect(timeout).toBe(undefined);
+        expect(grid.wsMessagesHistory[0].data.auth_token).toBe('auth secret');
+        done();
+      });
+
+      job.on('error', err => {
+        console.log('ERROR', err);
+        expect(err).toBe(undefined);
+      });
+    });
+
+    test('Auth flow, error', async () => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true,
+        authToken: 'auth secret'
+      });
+
+      grid.setAuthenticationResponse({
+        error: "The 'auth_token' you sent is invalid."
+      });
+
+      expect.assertions(3);
+      try {
+        await syft.newJob({ modelName: 'test', modelVersion: '1.2.3' });
+      } catch (err) {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain("The 'auth_token' you sent is invalid");
+        expect(grid.wsMessagesHistory[0].data.auth_token).toBe('auth secret');
+      }
+    });
+
+    test('Acceptance into FL cycle (no auth)', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, Buffer.from(MNIST_MODEL_PARAMS, 'base64'));
+      grid.setPlan(1, Buffer.from(MNIST_PLAN, 'base64'));
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      job.on('accepted', function({ model, clientConfig }) {
+        expect(this).toBeInstanceOf(Job);
+        expect(job.cycleParams.request_key).toBe('reqkey');
+        expect(syft.worker_id).toBe('abc');
+        expect(model).toBeInstanceOf(SyftModel);
+        expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);
+        done();
+      });
+
+      job.on('error', err => {
+        console.log('ERROR', err);
+        expect(err).toBe(undefined);
+      });
+    });
+
+    test('Cycle rejection with timeout', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'rejected',
+        timeout: 100500
+      });
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      job.on('rejected', function({ timeout }) {
+        expect(this).toBeInstanceOf(Job);
+        expect(syft.worker_id).toBe('abc');
+        expect(timeout).toBe(100500);
+        done();
+      });
+
+      job.on('error', err => {
+        console.log('ERROR', err);
+        expect(err).toBe(undefined);
+      });
+    });
+  });
 });
-
-// import 'regenerator-runtime/runtime';
-// import { Server } from 'mock-socket';
-// import Syft from '../src/index';
-// import { TENSOR_REMOVED } from '../src/_constants';
-
-// const fakeURL = 'ws://localhost:8080/';
-
-// let syft = null;
-// let mockServer = null;
-
-// describe('Syft', () => {
-//   beforeAll(done => {
-//     mockServer = new Server(fakeURL);
-//     syft = new Syft({ verbose: true });
-
-//     done();
-//   });
-
-//   beforeEach(() => {
-//     syft.start(fakeURL);
-//   });
-
-//   afterEach(() => {
-//     if (syft.socket) {
-//       syft.stop();
-//     }
-//   });
-
-//   /* ----- CONSTRUCTOR ----- */
-
-//   test('can construct a syft client', async () => {
-//     const newSyft = new Syft({
-//       url: fakeURL,
-//       verbose: true
-//     });
-
-//     expect(newSyft.tensors.length).toBe(0);
-
-//     expect(typeof newSyft.observer.subscribe).toBe('function');
-//     expect(typeof newSyft.observer.unsubscribe).toBe('function');
-//     expect(typeof newSyft.observer.broadcast).toBe('function');
-
-//     expect(typeof newSyft.logger.log).toBe('function');
-//     expect(newSyft.logger.verbose).toBe(true);
-
-//     expect(newSyft.socket.url).toBe(fakeURL);
-//   });
-
-//   /* ----- HELPERS ----- */
-
-//   // genTensors()
-//   test('can get a list of tensors', async () => {
-//     expect(syft.getTensors().length).toBe(0);
-
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//     expect(syft.getTensors().length).toBe(1);
-//   });
-
-//   // getTensorById()
-//   test('can get a tensor by id', async () => {
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-
-//     const tensor = syft.getTensorById('first-tensor');
-
-//     expect(tensor.id).toBe('first-tensor');
-//   });
-
-//   // getTensorIndex()
-//   test('can the index of a tensor', async () => {
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//     await syft.addTensor('second-tensor', [[1, 2], [3, 4]]);
-//     await syft.addTensor('third-tensor', [[1, 2], [3, 4]]);
-
-//     const index = syft.getTensorIndex('second-tensor');
-
-//     expect(index).toBe(1);
-//   });
-
-//   /* ----- FUNCTIONALITY ----- */
-
-//   // addTensor()
-//   test('can add a tensor to the list', async () => {
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]).then(tensors => {
-//       expect(tensors.length).toBe(1);
-//       expect(tensors[0].id).toBe('first-tensor');
-//     });
-//   });
-
-//   // removeTensor()
-//   test('can remove a tensor from the list', async () => {
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-
-//     await syft.removeTensor('first-tensor').then(tensors => {
-//       expect(tensors.length).toBe(0);
-//     });
-//   });
-
-//   // runOperation()
-//   test('can perform a TensorFlow operation', async () => {
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//     await syft.addTensor('second-tensor', [[5, 6], [7, 8]]);
-
-//     await syft
-//       .runOperation('add', ['first-tensor', 'second-tensor'])
-//       .then(result => {
-//         const resultData = result.dataSync();
-
-//         expect(resultData).toContain(6);
-//         expect(resultData).toContain(8);
-//         expect(resultData).toContain(10);
-//         expect(resultData).toContain(12);
-
-//         expect(resultData).not.toContain(1);
-//         expect(resultData).not.toContain(2);
-//         expect(resultData).not.toContain(3);
-//         expect(resultData).not.toContain(4);
-//       });
-//   });
-
-//   /* ----- EVENT HANDLERS ----- */
-
-//   test('can subscribe and unsubscribe from an event', async () => {
-//     syft.onTensorRemoved(({ id, tensors }) => ({ id, tensors }));
-
-//     expect(syft.observer.observers.length).toBe(1);
-
-//     syft.observer.unsubscribe(TENSOR_REMOVED);
-
-//     expect(syft.observer.observers.length).toBe(0);
-//   });
-
-//   // onMessageReceived()
-//   // TODO
-
-//   // onMessageSent()
-//   // TODO
-
-//   // onRunOperation()
-//   test('can subscribe to a TensorFlow operation being performed', async () => {
-//     syft.onRunOperation(({ func, result }) => {
-//       expect(func).toBe('add');
-
-//       const resultData = result.dataSync();
-
-//       expect(resultData).toContain(6);
-//       expect(resultData).toContain(8);
-//       expect(resultData).toContain(10);
-//       expect(resultData).toContain(12);
-
-//       expect(resultData).not.toContain(1);
-//       expect(resultData).not.toContain(2);
-//       expect(resultData).not.toContain(3);
-//       expect(resultData).not.toContain(4);
-//     });
-
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//     await syft.addTensor('second-tensor', [[5, 6], [7, 8]]);
-//     await syft.runOperation('add', ['first-tensor', 'second-tensor']);
-//   });
-
-//   // onTensorAdded()
-//   test('can subscribe to a tensor being added', async () => {
-//     syft.onTensorAdded(({ id, tensor, tensors }) => {
-//       expect(id).toBe('first-tensor');
-//       expect(tensor.size).toBe(4);
-//       expect(tensors.length).toBe(1);
-//     });
-
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//   });
-
-//   // onTensorRemoved()
-//   test('can subscribe to a tensor being removed', async () => {
-//     syft.onTensorRemoved(({ id, tensors }) => {
-//       expect(id).toBe('first-tensor');
-//       expect(tensors.length).toBe(0);
-//     });
-
-//     await syft.addTensor('first-tensor', [[1, 2], [3, 4]]);
-//     await syft.removeTensor('first-tensor');
-//   });
-
-//   /* ----- SOCKET COMMUNICATION ----- */
-
-//   // createSocketConnection()
-//   test('can create a socket connection', async () => {
-//     expect(syft.createSocketConnection()).toBe(null);
-//     expect(syft.createSocketConnection(fakeURL).url).toBe(fakeURL);
-//   });
-
-//   // sendMessage()
-//   // TODO
-
-//   // start()
-//   test('can start', async () => {
-//     const newSyft = new Syft();
-
-//     newSyft.start(fakeURL);
-
-//     expect(newSyft.socket.url).toBe(fakeURL);
-//   });
-
-//   // stop()
-//   test('can stop', async () => {
-//     syft.stop();
-
-//     expect(syft.socket).toBe(null);
-//   });
-// });

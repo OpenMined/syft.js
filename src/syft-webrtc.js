@@ -3,7 +3,7 @@
  * during implementation of Protocols functionality in syft.js.
  * Do not use this file as it will be removed in the future.
  */
-
+/* istanbul ignore file */
 import {
   GET_PROTOCOL,
   SOCKET_STATUS,

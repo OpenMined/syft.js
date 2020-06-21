@@ -6,7 +6,8 @@ const HTTP_PATH_VERB = {
   'federated/get-model': 'GET',
   'federated/get-protocol': 'GET',
   'federated/cycle-request': 'POST',
-  'federated/report': 'POST'
+  'federated/report': 'POST',
+  'federated/authenticate': 'POST'
 };
 
 export default class GridAPIClient {
@@ -56,23 +57,6 @@ export default class GridAPIClient {
     });
 
     return response;
-
-    /*
-    return Promise.resolve({
-      status: 'accepted',
-      request_key: 'request_key',
-      plans: {
-        training_plan: 'training_plan_id',
-        another_plan: 'another_plan_id'
-      },
-      client_config: {
-        lr: 0.05,
-        batch_size: 64,
-        max_updates: 400
-      },
-      protocols: { secure_agg_protocol: 'sec_agg_protocol_id' },
-      model_id: 'model_id'
-    }); */
   }
 
   async getModel(workerId, requestKey, modelId) {
@@ -96,9 +80,6 @@ export default class GridAPIClient {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting plan ${planId}...`
     );
-
-    // const response = await fetch('/data/tp_ops.pb');
-    // return response.arrayBuffer();
 
     const response = await this._sendHttp(
       'federated/get-plan',
