@@ -203,7 +203,7 @@ export default class GridAPIClient {
     }
 
     const message = { type, data };
-    this.logger.log('Sending WS message', message);
+    this.logger.log('Sending WS message', type);
 
     return new Promise((resolve, reject) => {
       this.ws.send(JSON.stringify(message));

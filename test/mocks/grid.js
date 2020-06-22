@@ -12,6 +12,8 @@ export class GridMock {
     this.ws.on('connection', socket => {
       this.wsConnections.push(socket);
       socket.on('message', message => this.messageHandler(socket, message));
+      socket.on('error', err => console.log('WS ERROR', err));
+      socket.on('close', err => console.log('WS CLOSE', err));
     });
 
     this.wsMessagesHistory = [];
@@ -23,6 +25,10 @@ export class GridMock {
 
   setCycleResponse(data) {
     this.cycleResponse = data;
+  }
+
+  setReportResponse(data) {
+    this.reportResponse = data;
   }
 
   setModel(model_id, data) {
@@ -73,6 +79,15 @@ export class GridMock {
           JSON.stringify({
             type: data.type,
             data: this.cycleResponse
+          })
+        );
+        break;
+
+      case 'federated/report':
+        socket.send(
+          JSON.stringify({
+            type: data.type,
+            data: this.reportResponse
           })
         );
         break;

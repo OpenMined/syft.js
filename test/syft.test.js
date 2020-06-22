@@ -2,7 +2,15 @@ import Syft from '../src/index';
 import Job from '../src/job';
 import SyftModel from '../src/syft-model';
 import { GridMock } from './mocks/grid';
-import { MNIST_PLAN, MNIST_MODEL_PARAMS } from './data/dummy';
+import {
+  MNIST_PLAN,
+  MNIST_MODEL_PARAMS,
+  MNIST_LR,
+  MNIST_BATCH_SIZE,
+  MNIST_BATCH_DATA
+} from './data/dummy';
+import * as tf from '@tensorflow/tfjs-core';
+import { protobuf, unserialize } from '../src/protobuf';
 
 describe('Syft', () => {
   test('can construct', () => {
@@ -171,5 +179,72 @@ describe('Syft', () => {
         expect(err).toBe(undefined);
       });
     });
+
+    test('Full flow with diff report (no auth)', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, Buffer.from(MNIST_MODEL_PARAMS, 'base64'));
+      grid.setPlan(1, Buffer.from(MNIST_PLAN, 'base64'));
+      grid.setReportResponse({ status: 'success' });
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+
+      job.start({ skipGridSpeedTest: true });
+
+      job.on('accepted', async function({ model, clientConfig }) {
+        // Execute real Plan.
+        const dataState = unserialize(
+          null,
+          MNIST_BATCH_DATA,
+          protobuf.syft_proto.execution.v1.State
+        );
+        const [data, labels] = dataState.tensors;
+        const lr = tf.tensor(MNIST_LR);
+        const batchSize = tf.tensor(MNIST_BATCH_SIZE);
+        const modelParams = model.params.map(t => t.clone());
+
+        const [loss, acc, ...updModelParams] = await job.plans[
+          'training_plan'
+        ].execute(syft, data, labels, batchSize, lr, ...modelParams);
+        const diff = await model.createSerializedDiff(updModelParams);
+        await job.report(diff);
+
+        // Check diff report request.
+        expect(grid.wsMessagesHistory[2].data.worker_id).toStrictEqual('abc');
+        expect(grid.wsMessagesHistory[2].data.request_key).toStrictEqual(
+          job.cycleParams.request_key
+        );
+        expect(grid.wsMessagesHistory[2].data.diff).toStrictEqual(
+          Buffer.from(diff).toString('base64')
+        );
+
+        done();
+      });
+
+      job.on('error', err => {
+        console.log('ERROR', err);
+        expect(err).toBe(undefined);
+      });
+    }, 20000);
   });
 });
