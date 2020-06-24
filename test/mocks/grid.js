@@ -31,33 +31,44 @@ export class GridMock {
     this.reportResponse = data;
   }
 
-  setModel(model_id, data) {
-    fetchMock.get(
-      {
-        url: `http://${this.hostname}:${this.port}/federated/get-model`,
-        query: { model_id }
-      },
+  _setHttpResponse(method, url, query, data, status) {
+    let contentType = 'application/json';
+    let json = true;
+    if (data instanceof ArrayBuffer || data instanceof Buffer) {
+      contentType = 'application/octet-stream';
+      json = false;
+    }
+
+    fetchMock[method](
+      { url, query },
       {
         body: data,
-        status: 200,
-        headers: { 'Content-Type': 'application/octet-stream' }
+        status,
+        headers: {
+          'Content-Type': contentType
+        }
       },
-      { sendAsJson: false }
+      { sendAsJson: json }
     );
   }
 
-  setPlan(plan_id, data) {
-    fetchMock.get(
-      {
-        url: `begin:http://${this.hostname}:${this.port}/federated/get-plan`,
-        query: { plan_id }
-      },
-      {
-        body: data,
-        status: 200,
-        headers: { 'Content-Type': 'application/octet-stream' }
-      },
-      { sendAsJson: false }
+  setModel(model_id, data, status = 200) {
+    this._setHttpResponse(
+      'get',
+      `http://${this.hostname}:${this.port}/federated/get-model`,
+      { model_id },
+      data,
+      status
+    );
+  }
+
+  setPlan(plan_id, data, status = 200) {
+    this._setHttpResponse(
+      'get',
+      `http://${this.hostname}:${this.port}/federated/get-plan`,
+      { plan_id },
+      data,
+      status
     );
   }
 

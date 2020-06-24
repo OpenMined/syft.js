@@ -1,7 +1,7 @@
 import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
-import { GRID_UNKNOWN_CYCLE_STATUS } from './_errors';
+import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
 import SyftModel from './syft-model';
 import Logger from './logger';
 
@@ -85,11 +85,15 @@ export default class Job {
         cycleParams.request_key,
         planId
       );
-      this.plans[planName] = unserialize(
-        this.worker,
-        planBinary,
-        protobuf.syft_proto.execution.v1.Plan
-      );
+      try {
+        this.plans[planName] = unserialize(
+          this.worker,
+          planBinary,
+          protobuf.syft_proto.execution.v1.Plan
+        );
+      } catch (e) {
+        throw new Error(PLAN_LOAD_FAILED(planName, e.message));
+      }
     }
 
     // load all protocols
@@ -119,13 +123,14 @@ export default class Job {
    * @fires Job#accepted
    * @fires Job#rejected
    * @fires Job#error
-   * @param {boolean} skipGridSpeedTest When true, skips the speed test before requesting a cycle.
+   * @param {Object} options
+   * @param {boolean} options.skipGridSpeedTest When true, skips the speed test before requesting a cycle.
    * @returns {Promise<void>}
    */
-  async start({ skipGridSpeedTest = false }) {
+  async start({ skipGridSpeedTest = false } = {}) {
     let cycleParams;
     try {
-      let [ping, download, upload] = [null, null, null];
+      let [ping, download, upload] = [0, 0, 0];
       if (!skipGridSpeedTest) {
         // speed test
         ({ ping, download, upload } = await this.grid.getConnectionSpeed(

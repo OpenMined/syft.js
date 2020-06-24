@@ -212,6 +212,8 @@ describe('Syft', () => {
       job.start({ skipGridSpeedTest: true });
 
       job.on('accepted', async function({ model, clientConfig }) {
+        expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);
+
         // Execute real Plan.
         const dataState = unserialize(
           null,
@@ -226,6 +228,10 @@ describe('Syft', () => {
         const [loss, acc, ...updModelParams] = await job.plans[
           'training_plan'
         ].execute(syft, data, labels, batchSize, lr, ...modelParams);
+
+        expect(loss).toBeInstanceOf(tf.Tensor);
+        expect(acc).toBeInstanceOf(tf.Tensor);
+
         const diff = await model.createSerializedDiff(updModelParams);
         await job.report(diff);
 
@@ -245,6 +251,273 @@ describe('Syft', () => {
         console.log('ERROR', err);
         expect(err).toBe(undefined);
       });
+    }, 20000);
+
+    test('Missing FL model', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        error: 'Not found any process related with this cycle and worker ID.'
+      });
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      expect.assertions(2);
+      job.on('error', err => {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain(
+          'Not found any process related with this cycle and worker ID.'
+        );
+        done();
+      });
+    });
+
+    test('Missing Model', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, { error: 'Model ID not found!' }, 400);
+      grid.setPlan(1, { error: 'Plan ID not found!' }, 400);
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      expect.assertions(2);
+      job.on('error', err => {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain('Model ID not found');
+        done();
+      });
+    });
+
+    test('Missing Plan', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, Buffer.from(MNIST_MODEL_PARAMS, 'base64'));
+      grid.setPlan(1, { error: 'Plan ID not found!' }, 400);
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      expect.assertions(2);
+      job.on('error', err => {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain('Plan ID not found');
+        done();
+      });
+    });
+
+    test('Invalid Model', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, 'AAAAA');
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      expect.assertions(2);
+      job.on('error', err => {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain('Failed to load Model');
+        done();
+      });
+    });
+
+    test('Invalid Plan', async done => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'abc'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, Buffer.from(MNIST_MODEL_PARAMS, 'base64'));
+      grid.setPlan(1, 'AAAAA');
+
+      const job = await syft.newJob({
+        modelName: 'test',
+        modelVersion: '1.2.3'
+      });
+      job.start({ skipGridSpeedTest: true });
+
+      expect.assertions(2);
+      job.on('error', err => {
+        expect(err).toBeInstanceOf(Error);
+        expect(err.message).toContain("Failed to load 'training_plan' Plan");
+        done();
+      });
+    });
+
+    test('Multiple Jobs', async () => {
+      const syft = new Syft({
+        url: wsUrl,
+        verbose: true
+      });
+
+      let job1Done, job2Done;
+      const job1Promise = new Promise(done => {
+        job1Done = done;
+      });
+      const job2Promise = new Promise(done => {
+        job2Done = done;
+      });
+
+      grid.setAuthenticationResponse({
+        status: 'success',
+        worker_id: 'worker1'
+      });
+      grid.setCycleResponse({
+        status: 'accepted',
+        request_key: 'reqkey1',
+        plans: {
+          training_plan: 1
+        },
+        protocols: {},
+        model_id: 1,
+        ...dummyFLConfig
+      });
+      grid.setModel(1, Buffer.from(MNIST_MODEL_PARAMS, 'base64'));
+      grid.setPlan(1, Buffer.from(MNIST_PLAN, 'base64'));
+      grid.setReportResponse({ status: 'success' });
+
+      const job1 = await syft.newJob({
+        modelName: 'test1',
+        modelVersion: '1.2.3'
+      });
+
+      const job2 = await syft.newJob({
+        modelName: 'test2',
+        modelVersion: '1.2.3'
+      });
+
+      job1.start({ skipGridSpeedTest: true });
+      job2.start({ skipGridSpeedTest: true });
+
+      const onAccepted = async function({ model, clientConfig }) {
+        expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);
+
+        // Execute real Plan.
+        const dataState = unserialize(
+          null,
+          MNIST_BATCH_DATA,
+          protobuf.syft_proto.execution.v1.State
+        );
+        const [data, labels] = dataState.tensors;
+        const lr = tf.tensor(MNIST_LR);
+        const batchSize = tf.tensor(MNIST_BATCH_SIZE);
+        const modelParams = model.params.map(t => t.clone());
+
+        const [loss, acc, ...updModelParams] = await this.plans[
+          'training_plan'
+        ].execute(syft, data, labels, batchSize, lr, ...modelParams);
+
+        expect(loss).toBeInstanceOf(tf.Tensor);
+        expect(acc).toBeInstanceOf(tf.Tensor);
+
+        const diff = await model.createSerializedDiff(updModelParams);
+        await this.report(diff);
+      };
+
+      const onError = err => {
+        console.log('ERROR', err);
+        expect(err).toBe(undefined);
+      };
+
+      job1.on('accepted', async e => {
+        console.log('job1 accepted');
+        await onAccepted.bind(job1)(e);
+        job1Done();
+      });
+      job2.on('accepted', async e => {
+        console.log('job2 accepted');
+        await onAccepted.bind(job2)(e);
+        job2Done();
+      });
+      job1.on('error', onError);
+      job2.on('error', onError);
+
+      return Promise.all([job1Promise, job2Promise]);
     }, 20000);
   });
 });
