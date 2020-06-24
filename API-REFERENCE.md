@@ -108,8 +108,8 @@ Starts the Job executing following actions:
 
 #### Parameters
 
--   `skipGridSpeedTest` **[boolean][28]** When true, skips the speed test before requesting a cycle.
-    -   `skipGridSpeedTest.skipGridSpeedTest`   (optional, default `false`)
+-   `options` **[Object][26]**  (optional, default `{}`)
+    -   `options.skipGridSpeedTest` **[boolean][28]** When true, skips the speed test before requesting a cycle. (optional, default `false`)
 
 Returns **[Promise][29]&lt;void>** 
 
