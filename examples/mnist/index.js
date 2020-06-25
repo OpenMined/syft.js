@@ -1,6 +1,5 @@
-// In the real world: import syft from 'syft.js';
 import * as tf from '@tensorflow/tfjs-core';
-import { Syft } from '../../src';
+import { Syft } from '@openmined/syft.js';
 import { MnistData } from './mnist';
 
 const gridServer = document.getElementById('grid-server');

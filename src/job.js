@@ -1,7 +1,7 @@
 import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
-import { GRID_UNKNOWN_CYCLE_STATUS } from './_errors';
+import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
 import SyftModel from './syft-model';
 import Logger from './logger';
 
@@ -85,11 +85,15 @@ export default class Job {
         cycleParams.request_key,
         planId
       );
-      this.plans[planName] = unserialize(
-        this.worker,
-        planBinary,
-        protobuf.syft_proto.execution.v1.Plan
-      );
+      try {
+        this.plans[planName] = unserialize(
+          this.worker,
+          planBinary,
+          protobuf.syft_proto.execution.v1.Plan
+        );
+      } catch (e) {
+        throw new Error(PLAN_LOAD_FAILED(planName, e.message));
+      }
     }
 
     // load all protocols
@@ -119,17 +123,23 @@ export default class Job {
    * @fires Job#accepted
    * @fires Job#rejected
    * @fires Job#error
+   * @param {Object} options
+   * @param {boolean} options.skipGridSpeedTest When true, skips the speed test before requesting a cycle.
    * @returns {Promise<void>}
    */
-  async start() {
+  async start({ skipGridSpeedTest = false } = {}) {
+    let cycleParams;
     try {
-      // speed test
-      const { ping, download, upload } = await this.grid.getConnectionSpeed(
-        this.worker.worker_id
-      );
+      let [ping, download, upload] = [0, 0, 0];
+      if (!skipGridSpeedTest) {
+        // speed test
+        ({ ping, download, upload } = await this.grid.getConnectionSpeed(
+          this.worker.worker_id
+        ));
+      }
 
       // request cycle
-      const cycleParams = await this.grid.requestCycle(
+      cycleParams = await this.grid.requestCycle(
         this.worker.worker_id,
         this.modelName,
         this.modelVersion,
@@ -138,53 +148,24 @@ export default class Job {
         upload
       );
 
-      switch (cycleParams.status) {
-        case CYCLE_STATUS_ACCEPTED:
-          // load model, plans, protocols, etc.
-          this.logger.log(
-            `Accepted into cycle with params: ${JSON.stringify(
-              cycleParams,
-              null,
-              2
-            )}`
-          );
-          await this.initCycle(cycleParams);
+      if (cycleParams.status === CYCLE_STATUS_ACCEPTED) {
+        // load model, plans, protocols, etc.
+        this.logger.log(
+          `Accepted into cycle with params: ${JSON.stringify(
+            cycleParams,
+            null,
+            2
+          )}`
+        );
+        await this.initCycle(cycleParams);
+      }
 
-          /**
-           * `accepted` event.
-           * Triggered PyGrid accepts the client into training cycle.
-           *
-           * @event Job#accepted
-           * @type {Object}
-           * @property {SyftModel} model Instance of SyftModel.
-           * @property {Object} clientConfig Client configuration returned by PyGrid.
-           */
-          this.observer.broadcast('accepted', {
-            model: this.model,
-            clientConfig: this.clientConfig
-          });
-          break;
-
-        case CYCLE_STATUS_REJECTED:
-          this.logger.log(
-            `Rejected from cycle with timeout: ${cycleParams.timeout}`
-          );
-
-          /**
-           * `rejected` event.
-           * Triggered when PyGrid rejects the client.
-           *
-           * @event Job#rejected
-           * @type {Object}
-           * @property {number|null} timeout Time in seconds to re-try. Empty when the FL model is not trainable anymore.
-           */
-          this.observer.broadcast('rejected', {
-            timeout: cycleParams.timeout
-          });
-          break;
-
-        default:
-          throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
+      if (
+        ![CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED].includes(
+          cycleParams.status
+        )
+      ) {
+        throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
       }
     } catch (error) {
       /**
@@ -194,6 +175,44 @@ export default class Job {
        * @event Job#error
        */
       this.observer.broadcast('error', error);
+      return;
+    }
+
+    // Trigger events outside of try/catch.
+    switch (cycleParams.status) {
+      case CYCLE_STATUS_ACCEPTED:
+        /**
+         * `accepted` event.
+         * Triggered when PyGrid accepts the client into training cycle.
+         *
+         * @event Job#accepted
+         * @type {Object}
+         * @property {SyftModel} model Instance of SyftModel.
+         * @property {Object} clientConfig Client configuration returned by PyGrid.
+         */
+        this.observer.broadcast('accepted', {
+          model: this.model,
+          clientConfig: this.clientConfig
+        });
+        break;
+
+      case CYCLE_STATUS_REJECTED:
+        this.logger.log(
+          `Rejected from cycle with timeout: ${cycleParams.timeout}`
+        );
+
+        /**
+         * `rejected` event.
+         * Triggered when PyGrid rejects the client.
+         *
+         * @event Job#rejected
+         * @type {Object}
+         * @property {number|null} timeout Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+         */
+        this.observer.broadcast('rejected', {
+          timeout: cycleParams.timeout
+        });
+        break;
     }
   }
 
