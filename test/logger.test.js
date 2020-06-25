@@ -76,13 +76,10 @@ describe('Logger', () => {
     expect(testLogger.verbose).toBe(true);
     expect(console.log.mock.calls.length).toBe(0);
 
-    const currentTime = Date.now();
     testLogger.log(message, myObj);
 
     expect(console.log.mock.calls.length).toBe(1);
-    expect(console.log.mock.calls[0][0]).toBe(
-      `${currentTime}: syft.js - ${message}`
-    );
+    expect(console.log.mock.calls[0][0]).toContain(`: syft.js - ${message}`);
     expect(console.log.mock.calls[0][1]).toStrictEqual(myObj);
   });
 });

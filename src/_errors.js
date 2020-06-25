@@ -17,3 +17,13 @@ export const CANNOT_FIND_COMMAND = command =>
 
 export const GRID_UNKNOWN_CYCLE_STATUS = status =>
   `Unknown cycle status: ${status}`;
+
+export const GRID_ERROR = status => `Grid error: ${status}`;
+
+export const MODEL_LOAD_FAILED = status => `Failed to load Model: ${status}`;
+
+export const PLAN_LOAD_FAILED = (planName, status) =>
+  `Failed to load '${planName}' Plan: ${status}`;
+
+export const PROTOBUF_UNSERIALIZE_FAILED = (pbType, status) =>
+  `Failed to unserialize binary protobuf data into ${pbType}: ${status}`;

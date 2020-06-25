@@ -75,6 +75,12 @@ export class SpeedTest {
           deltaTime = time - prevTime,
           speed = deltaSize / deltaTime;
 
+        if (deltaTime === 0 || !Number.isFinite(speed)) {
+          prevTime = time;
+          prevSize = size;
+          return;
+        }
+
         const canStop = avgCollector.collect(speed);
         if (canStop) {
           finish();
