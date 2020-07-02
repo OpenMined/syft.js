@@ -1,12 +1,15 @@
 import Logger from './logger';
 import { SpeedTest } from './speed-test';
+import { GRID_ERROR } from './_errors';
+import EventObserver from './events';
 
 const HTTP_PATH_VERB = {
   'federated/get-plan': 'GET',
   'federated/get-model': 'GET',
   'federated/get-protocol': 'GET',
   'federated/cycle-request': 'POST',
-  'federated/report': 'POST'
+  'federated/report': 'POST',
+  'federated/authenticate': 'POST'
 };
 
 export default class GridAPIClient {
@@ -24,9 +27,12 @@ export default class GridAPIClient {
       this.httpUrl = this.httpUrl.replace('http', 'https');
     }
     this.ws = null;
+    this.observer = new EventObserver();
+    this.wsMessageQueue = [];
     this.logger = new Logger('grid', true);
     this.responseTimeout = 10000;
 
+    this._handleWsMessage = this._handleWsMessage.bind(this);
     this._handleWsError = this._handleWsError.bind(this);
     this._handleWsClose = this._handleWsClose.bind(this);
   }
@@ -56,23 +62,6 @@ export default class GridAPIClient {
     });
 
     return response;
-
-    /*
-    return Promise.resolve({
-      status: 'accepted',
-      request_key: 'request_key',
-      plans: {
-        training_plan: 'training_plan_id',
-        another_plan: 'another_plan_id'
-      },
-      client_config: {
-        lr: 0.05,
-        batch_size: 64,
-        max_updates: 400
-      },
-      protocols: { secure_agg_protocol: 'sec_agg_protocol_id' },
-      model_id: 'model_id'
-    }); */
   }
 
   async getModel(workerId, requestKey, modelId) {
@@ -96,9 +85,6 @@ export default class GridAPIClient {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Requesting plan ${planId}...`
     );
-
-    // const response = await fetch('/data/tp_ops.pb');
-    // return response.arrayBuffer();
 
     const response = await this._sendHttp(
       'federated/get-plan',
@@ -210,7 +196,16 @@ export default class GridAPIClient {
     }
 
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      let error = `${response.status} ${response.statusText}`;
+      try {
+        let res = await response.json();
+        if (res.error) {
+          error = res.error;
+        }
+      } catch (e) {
+        // not JSON
+      }
+      throw new Error(GRID_ERROR(error));
     }
 
     return response[type]();
@@ -222,45 +217,51 @@ export default class GridAPIClient {
     }
 
     const message = { type, data };
-    this.logger.log('Sending WS message', message);
+    this.logger.log('Sending WS message', type);
 
     return new Promise((resolve, reject) => {
       this.ws.send(JSON.stringify(message));
 
+      const cleanUp = () => {
+        // Remove all handlers related to message.
+        this.wsMessageQueue = this.wsMessageQueue.filter(
+          item => item !== onMessage
+        );
+        this.observer.unsubscribe('ws-error', onError);
+        this.observer.unsubscribe('ws-close', onClose);
+        clearTimeout(timeoutHandler);
+      };
+
       const timeoutHandler = setTimeout(() => {
-        this.ws.onmessage = null;
+        cleanUp();
         reject(new Error('Response timeout'));
       }, this.responseTimeout);
 
-      // We expect first message after send to be response.
-      this.ws.onmessage = event => {
-        // reset handlers
-        this.ws.onerror = this._handleWsClose;
-        this.ws.onclose = this._handleWsClose;
-        this.ws.onmessage = null;
-        clearTimeout(timeoutHandler);
-
-        const data = JSON.parse(event.data);
-        this.logger.log('Received message', data);
+      const onMessage = data => {
         if (data.type !== message.type) {
-          // TODO do it differently
           this.logger.log('Received invalid response type, ignoring');
-        } else {
-          resolve(data.data);
+          return false;
         }
+        cleanUp();
+        resolve(data.data);
       };
 
-      this.ws.onerror = event => {
-        clearTimeout(timeoutHandler);
-        this._handleWsError(event);
+      const onError = event => {
+        cleanUp();
         reject(new Error(event));
       };
 
-      this.ws.onclose = event => {
-        clearTimeout(timeoutHandler);
-        this._handleWsClose(event);
+      const onClose = () => {
+        cleanUp();
         reject(new Error('WS connection closed'));
       };
+
+      // We expect responses coming in same order as requests.
+      this.wsMessageQueue.push(onMessage);
+
+      // Other events while waiting for response.
+      this.observer.subscribe('ws-error', onError);
+      this.observer.subscribe('ws-close', onClose);
     });
   }
 
@@ -271,6 +272,7 @@ export default class GridAPIClient {
         // setup handlers
         ws.onerror = this._handleWsError;
         ws.onclose = this._handleWsClose;
+        ws.onmessage = this._handleWsMessage;
         this.ws = ws;
         resolve();
       };
@@ -287,13 +289,33 @@ export default class GridAPIClient {
     });
   }
 
+  _handleWsMessage(event) {
+    this.logger.log('Received message', event.data);
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (e) {
+      this.logger.log('Message is not valid JSON!');
+    }
+
+    // Call response handlers (in order of requests),
+    // stopping at the first successful handler.
+    for (let handler of this.wsMessageQueue) {
+      if (handler(data) !== false) {
+        break;
+      }
+    }
+  }
+
   _handleWsError(event) {
     this.logger.log('WS connection error', event);
+    this.observer.broadcast('ws-error', event);
     this.ws = null;
   }
 
   _handleWsClose(event) {
     this.logger.log('WS connection closed', event);
+    this.observer.broadcast('ws-close', event);
     this.ws = null;
   }
 }

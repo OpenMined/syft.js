@@ -2,30 +2,31 @@
 
 ### Table of Contents
 
-- [Syft][1]
-  - [Parameters][2]
-  - [Examples][3]
-  - [newJob][4]
-    - [Parameters][5]
-- [Job][6]
-  - [Properties][7]
-  - [on][8]
-    - [Parameters][9]
-  - [start][10]
-  - [report][11]
-    - [Parameters][12]
-- [Job#accepted][13]
-  - [Properties][14]
-- [Job#rejected][15]
-  - [Properties][16]
-- [Job#error][17]
-- [SyftModel][18]
-  - [Properties][19]
-  - [createSerializedDiff][20]
-    - [Parameters][21]
-- [Plan][22]
-  - [execute][23]
-    - [Parameters][24]
+-   [Syft][1]
+    -   [Parameters][2]
+    -   [Examples][3]
+    -   [newJob][4]
+        -   [Parameters][5]
+-   [Job][6]
+    -   [Properties][7]
+    -   [on][8]
+        -   [Parameters][9]
+    -   [start][10]
+        -   [Parameters][11]
+    -   [report][12]
+        -   [Parameters][13]
+-   [Job#accepted][14]
+    -   [Properties][15]
+-   [Job#rejected][16]
+    -   [Properties][17]
+-   [Job#error][18]
+-   [SyftModel][19]
+    -   [Properties][20]
+    -   [createSerializedDiff][21]
+        -   [Parameters][22]
+-   [Plan][23]
+    -   [execute][24]
+        -   [Parameters][25]
 
 ## Syft
 
@@ -33,24 +34,24 @@ Syft client for static federated learning.
 
 ### Parameters
 
-- `options` **[Object][25]**
-  - `options.url` **[string][26]** Full URL to PyGrid app (`ws` and `http` schemas supported).
-  - `options.verbose` **[boolean][27]** Whether to enable logging and allow unsecured PyGrid connection.
-  - `options.authToken` **[string][26]** PyGrid authentication token.
-  - `options.peerConfig` **[Object][25]** [not implemented] WebRTC peer config used with RTCPeerConnection.
+-   `options` **[Object][26]** 
+    -   `options.url` **[string][27]** Full URL to PyGrid app (`ws` and `http` schemas supported).
+    -   `options.verbose` **[boolean][28]** Whether to enable logging and allow unsecured PyGrid connection.
+    -   `options.authToken` **[string][27]** PyGrid authentication token.
+    -   `options.peerConfig` **[Object][26]** [not implemented] WebRTC peer config used with RTCPeerConnection.
 
 ### Examples
 
 ```javascript
 const client = new Syft({url: "ws://localhost:5000", verbose: true})
 const job = client.newJob({modelName: "mnist", modelVersion: "1.0.0"})
-job.on('accepted', async (model, config) => {
+job.on('accepted', async ({model, clientConfig}) => {
   // execute training
   const [...newParams] = await this.plans['...'].execute(...)
   const diff = await model.createSerializedDiff(newParams)
   await this.report(diff)
 })
-job.on('rejected', (timeout) => {
+job.on('rejected', ({timeout}) => {
   // re-try later or stop
 })
 job.on('error', (err) => {
@@ -65,11 +66,14 @@ Authenticates the client against PyGrid and instantiates new Job with given opti
 
 #### Parameters
 
-- `options` **[Object][25]**
-  - `options.modelName` **[string][26]** FL Model name.
-  - `options.modelVersion` **[string][26]** FL Model version.
+-   `options` **[Object][26]** 
+    -   `options.modelName` **[string][27]** FL Model name.
+    -   `options.modelVersion` **[string][27]** FL Model version.
 
-Returns **[Promise][28]&lt;[Job][29]>**
+
+-   Throws **any** Error
+
+Returns **[Promise][29]&lt;[Job][30]>** 
 
 ## Job
 
@@ -77,9 +81,9 @@ Job represents a single training cycle done by the client.
 
 ### Properties
 
-- `plans` **[Object][25]&lt;[string][26], [Plan][30]>** Plans dictionary.
-- `protocols` **[Object][25]&lt;[string][26], Protocol>** [not implemented] Protocols dictionary.
-- `model` **[SyftModel][31]** Model.
+-   `plans` **[Object][26]&lt;[string][27], [Plan][31]>** Plans dictionary.
+-   `protocols` **[Object][26]&lt;[string][27], Protocol>** [not implemented] Protocols dictionary.
+-   `model` **[SyftModel][32]** Model.
 
 ### on
 
@@ -89,20 +93,25 @@ Available events: `accepted`, `rejected`, `error`.
 
 #### Parameters
 
-- `event` **[string][26]** Event name.
-- `handler` **[function][32]** Event handler.
+-   `event` **[string][27]** Event name.
+-   `handler` **[function][33]** Event handler.
 
 ### start
 
 Starts the Job executing following actions:
 
-- Meters connection speed to PyGrid.
-- Registers into training cycle on PyGrid.
-- Retrieves cycle and client parameters.
-- Downloads Plans, Model, Protocols.
-- Fires `accepted` event on success.
+-   Meters connection speed to PyGrid.
+-   Registers into training cycle on PyGrid.
+-   Retrieves cycle and client parameters.
+-   Downloads Plans, Model, Protocols.
+-   Fires `accepted` event on success.
 
-Returns **[Promise][28]&lt;void>**
+#### Parameters
+
+-   `options` **[Object][26]**  (optional, default `{}`)
+    -   `options.skipGridSpeedTest` **[boolean][28]** When true, skips the speed test before requesting a cycle. (optional, default `false`)
+
+Returns **[Promise][29]&lt;void>** 
 
 ### report
 
@@ -110,32 +119,32 @@ Submits the model diff to PyGrid.
 
 #### Parameters
 
-- `diff` **[ArrayBuffer][33]** Serialized difference between original and trained model parameters.
+-   `diff` **[ArrayBuffer][34]** Serialized difference between original and trained model parameters.
 
-Returns **[Promise][28]&lt;void>**
+Returns **[Promise][29]&lt;void>** 
 
 ## Job#accepted
 
 `accepted` event.
-Triggered PyGrid accepts the client into training cycle.
+Triggered when PyGrid accepts the client into training cycle.
 
-Type: [Object][25]
+Type: [Object][26]
 
 ### Properties
 
-- `model` **[SyftModel][31]** Instance of SyftModel.
-- `clientConfig` **[Object][25]** Client configuration returned by PyGrid.
+-   `model` **[SyftModel][32]** Instance of SyftModel.
+-   `clientConfig` **[Object][26]** Client configuration returned by PyGrid.
 
 ## Job#rejected
 
 `rejected` event.
 Triggered when PyGrid rejects the client.
 
-Type: [Object][25]
+Type: [Object][26]
 
 ### Properties
 
-- `timeout` **([number][34] | null)** Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+-   `timeout` **([number][35] | null)** Time in seconds to re-try. Empty when the FL model is not trainable anymore.
 
 ## Job#error
 
@@ -148,7 +157,7 @@ Model parameters as stored in the PyGrid.
 
 ### Properties
 
-- `params` **[Array][35]&lt;tf.Tensor>** Array of Model parameters.
+-   `params` **[Array][36]&lt;tf.Tensor>** Array of Model parameters.
 
 ### createSerializedDiff
 
@@ -157,9 +166,9 @@ and returns serialized `diff` that can be submitted to PyGrid.
 
 #### Parameters
 
-- `updatedModelParams` **[Array][35]&lt;tf.Tensor>** Array of model parameters (tensors).
+-   `updatedModelParams` **[Array][36]&lt;tf.Tensor>** Array of model parameters (tensors).
 
-Returns **[Promise][28]&lt;[ArrayBuffer][33]>** Protobuf-serialized `diff`.
+Returns **[Promise][29]&lt;[ArrayBuffer][34]>** Protobuf-serialized `diff`.
 
 ## Plan
 
@@ -173,44 +182,81 @@ The order, type and number of arguments must match to arguments defined in the P
 
 #### Parameters
 
-- `worker` **[Syft][36]**
-- `data` **...(tf.Tensor | [number][34])**
+-   `worker` **[Syft][37]** 
+-   `data` **...(tf.Tensor | [number][35])** 
 
-Returns **[Promise][28]&lt;[Array][35]&lt;tf.Tensor>>**
+Returns **[Promise][29]&lt;[Array][36]&lt;tf.Tensor>>** 
 
 [1]: #syft
+
 [2]: #parameters
+
 [3]: #examples
+
 [4]: #newjob
+
 [5]: #parameters-1
+
 [6]: #job
+
 [7]: #properties
+
 [8]: #on
+
 [9]: #parameters-2
+
 [10]: #start
-[11]: #report
-[12]: #parameters-3
-[13]: #jobaccepted
-[14]: #properties-1
-[15]: #jobrejected
-[16]: #properties-2
-[17]: #joberror
-[18]: #syftmodel
-[19]: #properties-3
-[20]: #createserializeddiff
-[21]: #parameters-4
-[22]: #plan
-[23]: #execute
-[24]: #parameters-5
-[25]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
-[26]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
-[27]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
-[28]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
-[29]: #job
-[30]: #plan
-[31]: #syftmodel
-[32]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
-[33]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[34]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
-[35]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
-[36]: #syft
+
+[11]: #parameters-3
+
+[12]: #report
+
+[13]: #parameters-4
+
+[14]: #jobaccepted
+
+[15]: #properties-1
+
+[16]: #jobrejected
+
+[17]: #properties-2
+
+[18]: #joberror
+
+[19]: #syftmodel
+
+[20]: #properties-3
+
+[21]: #createserializeddiff
+
+[22]: #parameters-5
+
+[23]: #plan
+
+[24]: #execute
+
+[25]: #parameters-6
+
+[26]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+
+[27]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[28]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[29]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+
+[30]: #job
+
+[31]: #plan
+
+[32]: #syftmodel
+
+[33]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+
+[34]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+
+[35]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[36]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[37]: #syft

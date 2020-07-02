@@ -1,4 +1,4 @@
-import { NO_DETAILER } from '../_errors';
+import { NO_DETAILER, PROTOBUF_UNSERIALIZE_FAILED } from '../_errors';
 import { initMappings, PB_TO_UNBUFFERIZER } from './mapping';
 import { protobuf } from 'syft-proto';
 import Long from 'long';
@@ -74,7 +74,12 @@ export const unserialize = (worker, bin, pbType) => {
       : bin instanceof ArrayBuffer
       ? new Uint8Array(bin)
       : bin;
-  const pbObj = pbType.decode(buff);
+  let pbObj;
+  try {
+    pbObj = pbType.decode(buff);
+  } catch (e) {
+    throw new Error(PROTOBUF_UNSERIALIZE_FAILED(pbType.name, e.message));
+  }
   return unbufferize(worker, pbObj);
 };
 
