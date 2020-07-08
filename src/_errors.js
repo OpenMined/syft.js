@@ -13,7 +13,7 @@ export const PLAN_ALREADY_COMPLETED = (name, id) =>
   `You have already executed the plan named "${name}" with id "${id}".`;
 
 export const CANNOT_FIND_COMMAND = command =>
-  `We cannot find function ${command} in TensorFlow.js, performing a manual lookup.`;
+  `Command ${command} not found in in TensorFlow.js.`;
 
 export const GRID_UNKNOWN_CYCLE_STATUS = status =>
   `Unknown cycle status: ${status}`;

@@ -73,7 +73,6 @@
     "@babel/preset-env": "^7.10.2",
     "@babel/runtime": "^7.10.2",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
-    "@openmined/threepio": "github:openmined/threepio",
     "@rollup/plugin-babel": "^5.0.3",
     "@rollup/plugin-commonjs": "^13.0.0",
     "@rollup/plugin-json": "^4.1.0",
@@ -103,6 +102,6 @@
     "rollup": "^2.16.1",
     "rollup-plugin-filesize": "^9.0.0",
     "rollup-plugin-peer-deps-external": "^2.2.2",
-    "syft-proto": "github:openmined/syft-proto#v0.4.7"
+    "syft-proto": "github:openmined/syft-proto#v0.4.9"
   }
 }
