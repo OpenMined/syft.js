@@ -86,6 +86,21 @@ describe('Plan', () => {
     ).toBe(1);
   });
 
+  test('invalid args shape throws corresponding error', async () => {
+    // PLAN_WITH_STATE plan contains input + A(2,2)
+    // this should error with tf error about incompatible shapes
+    const input = tf.ones([3, 3]);
+    const plan = unserialize(
+      null,
+      PLAN_WITH_STATE,
+      protobuf.syft_proto.execution.v1.Plan
+    );
+    const worker = new Syft({ url: 'dummy' });
+    expect(plan.execute(worker, input)).rejects.toThrow(
+      'Operands could not be broadcast together with shapes 3,3 and 2.'
+    );
+  });
+
   test('can be executed (MNIST example)', async () => {
     const plan = unserialize(
       null,

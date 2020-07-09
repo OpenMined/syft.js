@@ -37,10 +37,14 @@ export default class GridAPIClient {
     this._handleWsClose = this._handleWsClose.bind(this);
   }
 
-  async authenticate(authToken) {
-    this.logger.log(`Authenticating with ${authToken}...`);
+  async authenticate(modelName, modelVersion, authToken) {
+    this.logger.log(
+      `Authenticating against ${modelName} ${modelVersion} with ${authToken}...`
+    );
 
     const response = await this._send('federated/authenticate', {
+      model_name: modelName,
+      model_version: modelVersion,
       auth_token: authToken
     });
 
@@ -92,7 +96,7 @@ export default class GridAPIClient {
         worker_id: workerId,
         request_key: requestKey,
         plan_id: planId,
-        receive_operations_as: 'list'
+        receive_operations_as: 'tfjs'
       },
       'arrayBuffer'
     );

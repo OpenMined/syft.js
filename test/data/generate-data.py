@@ -1,16 +1,19 @@
 # This python script generates values in dummy.js, for MNIST plan unit tests.
 # Script should be executed with appropriate PySyft version installed.
 
-import syft as sy
+import os
+import base64
+
 import torch as th
 from torch import jit
 from torch import nn
+from torchvision import datasets, transforms
+
+import syft as sy
 from syft.serde import protobuf
-import os
 from syft.execution.state import State
 from syft.execution.placeholder import PlaceHolder
-import base64
-from torchvision import datasets, transforms
+from syft.execution.translation import TranslationTarget
 from syft.grid.grid_client import GridClient
 
 sy.make_hook(globals())
@@ -43,7 +46,7 @@ def set_model_params(module, params_list, start_param_idx=0):
 
     for name, child in module._modules.items():
         if child is not None:
-            param_idx += set_model_params(child, params_list, param_idx)
+            param_idx = set_model_params(child, params_list, param_idx)
 
     return param_idx
 
@@ -131,6 +134,8 @@ training_plan.forward = None
 loss, acc, *upd_params = training_plan(X, y_oh, th.tensor([bs], dtype=th.float32), th.tensor([lr]), model_params)
 
 print(training_plan.code)
+training_plan.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print(training_plan.code)
 
 # Plan with state
 @sy.func2plan(args_shape=[(2,2)], state=(th.tensor([4.2, 7.3]),))
@@ -140,6 +145,7 @@ def plan_with_state(x, state):
     x = th.abs(x)
     return x
 
+plan_with_state.base_framework = TranslationTarget.TENSORFLOW_JS.value
 
 replacements = {
     'MNIST_BATCH_SIZE': bs,
