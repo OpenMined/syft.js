@@ -159,7 +159,6 @@ want to put everything under `~/fl-demo` folder.
 
 ### Installation
 
-First, you will need to install following packages.
 It is recommended that you install python packages in separate virtualenv or conda environment, e.g.:
 
 ```bash
@@ -174,60 +173,27 @@ conda create -n syft python=3.7
 conda activate syft
 ```
 
-#### Install PySyft
+Now, you will need to install following packages:
 
-Get the latest `master` branch of PySyft:
+- PySyft. Follow
+  [PySyft installation guide](https://github.com/OpenMined/PySyft/blob/master/INSTALLATION.md)
+  to install the latest `master` branch of PySyft.
 
-```bash
-cd ~/fl-demo
-git clone https://github.com/OpenMined/PySyft
-cd PySyft
-pip install .
-```
+- PyGrid.
+  Follow [PyGrid documentation](https://github.com/OpenMined/PyGrid/#start-grid-platform-locally)
+  to install the latest `dev` branch of PyGrid.
+  NOTE: If you are running PyGrid with docker-compose, you'll need to [build docker images](https://github.com/OpenMined/PyGrid/#13---build-your-own-images-optional)
+  from the latest `dev` branch.
 
-#### Install PyGrid
-
-Get the latest `dev` branch of PyGrid:
-
-```bash
-cd ~/fl-demo
-git clone https://github.com/OpenMined/PyGrid
-cd PyGrid
-git checkout dev
-```
-
-_NOTE_: currently it's required to replace
-
-```text
-syft==0.2.6
-```
-
-with
-
-```text
-git+git://github.com/OpenMined/PySyft#egg=syft
-```
-
-in `pip-dep/requirements.txt` file in PyGrid root folder.
-
-Then continue with install:
-
-```
-pip install .
-```
-
-#### Install Syft.js with MNIST demo
-
-Get the latest `master` branch of syft.js with MNIST demo app included:
-
-```bash
-cd ~/fl-demo
-git clone https://github.com/OpenMined/syft.js
-cd syft.js
-npm install
-cd examples/mnist
-npm install
-```
+- Syft.js with MNIST demo. Check out the latest `master` branch of syft.js with MNIST demo app included:
+  ```bash
+  cd ~/fl-demo
+  git clone https://github.com/OpenMined/syft.js
+  cd syft.js
+  npm install
+  cd examples/mnist
+  npm install
+  ```
 
 #### Seeding the Model & Plan
 
@@ -248,9 +214,9 @@ PyGrid URL will need to be adjusted accordingly in further steps.
 ##### Create Model & Plan
 
 After the PyGrid is running, the next step is to create the model and training plan and host them in the PyGrid.
-PySyft tutorials include MNIST example jupyter notebooks that guide you through this process.
+PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/tree/master/examples/experimental/FL%20Training%20Plan) that guide you through this process.
 
-Fire up jupyter notebook:
+Fire up jupyter notebook in PySyft root folder:
 
 ```bash
 cd ~/fl-demo/PySyft
