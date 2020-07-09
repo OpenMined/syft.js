@@ -17,6 +17,17 @@
         "doc",
         "business"
       ]
+    },
+    {
+      "login": "vvmnnnkv",
+      "name": "Vova Manannikov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/12518480?v=4",
+      "profile": "https://www.linkedin.com/in/vova-manannikov",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
