@@ -7,9 +7,7 @@
 ![OpenCollective](https://img.shields.io/opencollective/all/openmined)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
-
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # Syft.js
@@ -307,12 +305,12 @@ These people were integral part of the efforts to bring syft.js to fruition and 
 <table>
   <tr>
     <td align="center"><a href="https://www.patrickcason.com"><img src="https://avatars1.githubusercontent.com/u/1297930?v=4" width="100px;" alt=""/><br /><sub><b>Patrick Cason</b></sub></a><br /><a href="#ideas-cereallarceny" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/OpenMined/syft.js/commits?author=cereallarceny" title="Code">💻</a> <a href="#design-cereallarceny" title="Design">🎨</a> <a href="https://github.com/OpenMined/syft.js/commits?author=cereallarceny" title="Documentation">📖</a> <a href="#business-cereallarceny" title="Business development">💼</a></td>
+    <td align="center"><a href="https://www.linkedin.com/in/vova-manannikov"><img src="https://avatars2.githubusercontent.com/u/12518480?v=4" width="100px;" alt=""/><br /><sub><b>Vova Manannikov</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=vvmnnnkv" title="Code">💻</a> <a href="https://github.com/OpenMined/syft.js/commits?author=vvmnnnkv" title="Documentation">📖</a> <a href="https://github.com/OpenMined/syft.js/commits?author=vvmnnnkv" title="Tests">⚠️</a></td>
   </tr>
 </table>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
