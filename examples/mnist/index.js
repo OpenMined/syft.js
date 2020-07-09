@@ -10,7 +10,8 @@ startButton.onclick = () => {
   setFLUI();
   const modelName = document.getElementById('model-id').value;
   const modelVersion = document.getElementById('model-version').value;
-  startFL(gridServer.value, modelName, modelVersion).catch(err => {
+  const authToken = document.getElementById('auth-token').value;
+  startFL(gridServer.value, modelName, modelVersion, authToken).catch(err => {
     updateStatus(`Error: ${err}`);
   });
 };
@@ -22,8 +23,8 @@ startButton.onclick = () => {
  * @param modelVersion Federated learning model version
  * @returns {Promise<void>}
  */
-const startFL = async (url, modelName, modelVersion) => {
-  const worker = new Syft({ url, verbose: true });
+const startFL = async (url, modelName, modelVersion, authToken = null) => {
+  const worker = new Syft({ url, authToken, verbose: true });
   const job = await worker.newJob({ modelName, modelVersion });
 
   job.start();
@@ -126,7 +127,7 @@ const startFL = async (url, modelName, modelVersion) => {
 
     // Try again.
     if (doRepeat()) {
-      setTimeout(startFL, 1000, url, modelName, modelVersion);
+      setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
     }
   });
 

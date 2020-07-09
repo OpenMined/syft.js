@@ -64,7 +64,11 @@ export default class Syft {
   async newJob({ modelName, modelVersion }) {
     if (!this.worker_id) {
       // authenticate
-      const authResponse = await this.gridClient.authenticate(this.authToken);
+      const authResponse = await this.gridClient.authenticate(
+        modelName,
+        modelVersion,
+        this.authToken
+      );
       this.worker_id = authResponse.worker_id;
     }
 
