@@ -6,7 +6,7 @@ with [PyGrid](https://github.com/OpenMined/pygrid) to train a plan on local data
 ## Quick Start
 
 1. Install and start [PyGrid](https://github.com/OpenMined/pygrid)
-2. Install [PySyft](https://github.com/OpenMined/PySyft) and execute the "Part 01 - Create Plan" notebook from `examples/tutorials/static-fl` folder to seed the MNIST plan and model into PyGrid.
+2. Install [PySyft](https://github.com/OpenMined/PySyft) and [execute the "Part 01 - Create Plan" notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2001%20-%20Create%20Plan.ipynb) from `examples/tutorials/static-fl` folder to seed the MNIST plan and model into PyGrid.
 3. Now back in this folder, execute `npm install`
 4. And then execute `npm start`
 

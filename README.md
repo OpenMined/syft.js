@@ -7,7 +7,9 @@
 ![OpenCollective](https://img.shields.io/opencollective/all/openmined)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # Syft.js
@@ -58,7 +60,7 @@ If you're not using a package manager, you will be able to include Syft.js withi
 
 As a developer, there are few steps to building your own secure federated learning system upon the OpenMined infrastructure:
 
-1. :robot: Develop ML model and training procedure (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft). By design, PySyft is built upon PyTorch and TensorFlow so you **don't need to learn a new ML framework**.
+1. :robot: [Develop ML model and training procedure](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2001%20-%20Create%20Plan.ipynb) (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft).
 1. :earth_americas: Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
 1. :tada: Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
 1. :lock: Securely aggregate trained user models in PyGrid.
@@ -150,7 +152,7 @@ and the result of training averaged from multiple federated learning participant
 <img src="art/mnist-demo-ani.gif" alt="syft.js MNIST demo animation" />
 
 Running the demo is multi-stage and multi-component process
-(as the federated learning itself ;-)).
+(as the federated learning itself).
 
 Below are example instructions that assume you
 want to put everything under `~/fl-demo` folder.
@@ -211,8 +213,8 @@ PyGrid URL will need to be adjusted accordingly in further steps.
 
 ##### Create Model & Plan
 
-After the PyGrid is running, the next step is to create the model and training plan and host them in the PyGrid.
-PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/tree/master/examples/experimental/FL%20Training%20Plan) that guide you through this process.
+After PyGrid is running, the next step is to create the model and training plan and host them in PyGrid.
+PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl) that guide you through this process.
 
 Fire up jupyter notebook in PySyft root folder:
 
@@ -221,20 +223,11 @@ cd ~/fl-demo/PySyft
 jupyter notebook --notebook-dir=$(pwd)
 ```
 
-In the console, you should see URL you should open, or the browser will open automatically.
-Inside the browser, navigate to `examples/experimental/FL Training Plan` folder in PySyft root.
-
-There should be two notebooks of interest:
-
-- _Create Plan_: In this notebook the MNIST model and training plan are defined and saved into files.
-  Run all cells to get files created.
-
-- _Host Plan_: Model and plan files created in the previous notebook are hosted in PyGrid.
-  Run all cells to seed that data into PyGrid instance.
+In the console, you should see URL you should open, or the browser will open automatically. After this, navigate to `examples/tutorials/static-fl` and [run the first notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2001%20-%20Create%20Plan.ipynb). At this point, you can pull down the model and training plan with syft.js. However, if you'd like to see how to execute the plan using the PySyft FL worker, [try running the second notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2002%20-%20Execute%20Plan.ipynb).
 
 ##### PyGrid Clean-up
 
-In case you need to reset PyGrid database to blank state, stop the process with `Ctrl+C` and remove `databasegateway.db` file in PyGrid root folder.
+In case you need to reset PyGrid database to blank state, stop the process with `Ctrl+C` and remove `databaseGateway.db` file in PyGrid.
 Or, if you used docker-compose, stop and re-start it using `docker-compose up --force-recreate` command.
 
 #### Starting the Demo
@@ -311,6 +304,7 @@ These people were integral part of the efforts to bring syft.js to fruition and 
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
