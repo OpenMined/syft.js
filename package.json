@@ -5,6 +5,10 @@
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.js",
+  "files": [
+    "dist/*.js",
+    "*.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OpenMined/syft.js.git"
@@ -37,13 +41,13 @@
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "release": "np",
     "deploy": "./copy-examples.sh && gh-pages -d tmp && rm -rf tmp",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "doc": "documentation build --config documentation.yml src/syft.js src/syft-model.js src/job.js src/types/plan.js --shallow -f md -o API-REFERENCE.md"
   },
-  "types": "src/types/index.d.ts",
   "browserslist": "> 0.25%, not dead",
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged"
+      "pre-commit": "npm run doc && pretty-quick --staged"
     }
   },
   "jest": {
@@ -58,42 +62,46 @@
       "window": {}
     }
   },
-  "dependencies": {
-    "long": "^4.0.0",
-    "syft-proto": "git+https://github.com/OpenMined/syft-proto.git"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "@tensorflow/tfjs-core": "^1.2.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.7.7",
-    "@babel/plugin-proposal-class-properties": "^7.7.4",
-    "@babel/preset-env": "^7.7.7",
+    "@babel/core": "^7.10.2",
+    "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "@babel/plugin-transform-runtime": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "@babel/runtime": "^7.10.2",
     "@joseph184/rollup-plugin-node-builtins": "^2.1.4",
-    "@tensorflow/tfjs-core": "^1.2.5",
-    "auto-changelog": "^1.16.2",
+    "@rollup/plugin-babel": "^5.0.3",
+    "@rollup/plugin-commonjs": "^13.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^8.0.1",
+    "@tensorflow/tfjs-core": "^1.7.4",
+    "auto-changelog": "^1.16.4",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^24.9.0",
+    "documentation": "^13.0.1",
     "eslint": "^6.8.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-node": "^11.0.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "gh-pages": "^2.1.1",
+    "fetch-mock": "^9.10.1",
+    "gh-pages": "^2.2.0",
     "husky": "^3.1.0",
     "jest": "^24.9.0",
-    "mock-socket": "^9.0.2",
+    "long": "^4.0.0",
+    "mock-socket": "^9.0.3",
     "np": "^5.2.1",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",
-    "regenerator-runtime": "^0.13.3",
-    "rollup": "^1.27.14",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-filesize": "^6.2.1",
-    "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-peer-deps-external": "^2.2.0"
+    "randomfill": "^1.0.4",
+    "regenerator-runtime": "^0.13.5",
+    "rollup": "^2.16.1",
+    "rollup-plugin-filesize": "^9.0.0",
+    "rollup-plugin-peer-deps-external": "^2.2.2",
+    "syft-proto": "github:openmined/syft-proto#v0.4.9"
   }
 }

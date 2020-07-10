@@ -1,9 +1,9 @@
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
 import builtins from '@joseph184/rollup-plugin-node-builtins';
-import json from 'rollup-plugin-json';
+import json from '@rollup/plugin-json';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import filesize from 'rollup-plugin-filesize';
 
 import pkg from './package.json';
@@ -40,7 +40,10 @@ export default {
     builtins(),
     json(),
     peerDepsExternal(),
-    babel({ exclude: 'node_modules/**' }),
+    babel({
+      babelHelpers: 'bundled',
+      exclude: 'node_modules/**'
+    }),
     resolve({
       preferBuiltins: true
     }),

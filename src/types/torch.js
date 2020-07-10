@@ -1,4 +1,4 @@
-import { getPbId, unbufferize, protobuf } from '../protobuf';
+import { getPbId, unbufferize, protobuf, pbId } from '../protobuf';
 import * as tf from '@tensorflow/tfjs-core';
 
 export class TorchTensor {
@@ -20,9 +20,14 @@ export class TorchTensor {
     this.gradChain = gradChain;
     this.tags = tags;
     this.description = description;
+    this._tfTensor = null;
+  }
 
-    // We need a TensorFlow.js tensor to interact with, but we'll still save all the info above
-    this._tfTensor = tf.tensor(this.contents, this.shape, this.dtype);
+  toTfTensor() {
+    if (!this._tfTensor) {
+      this._tfTensor = tf.tensor(this.contents, this.shape, this.dtype);
+    }
+    return this._tfTensor;
   }
 
   static unbufferize(worker, pb) {
@@ -52,6 +57,37 @@ export class TorchTensor {
       pb.description
     );
   }
+
+  bufferize(/* worker */) {
+    const tensorData = {
+      shape: protobuf.syft_proto.types.torch.v1.Size.create({
+        dims: this.shape
+      }),
+      dtype: this.dtype
+    };
+    tensorData[`contents_${this.dtype}`] = this.contents;
+    const pbTensorData = protobuf.syft_proto.types.torch.v1.TensorData.create(
+      tensorData
+    );
+    return protobuf.syft_proto.types.torch.v1.TorchTensor.create({
+      id: pbId(this.id),
+      serializer:
+        protobuf.syft_proto.types.torch.v1.TorchTensor.Serializer
+          .SERIALIZER_ALL,
+      contents_data: pbTensorData,
+      tags: this.tags,
+      description: this.description
+    });
+  }
+
+  static async fromTfTensor(tensor) {
+    const flat = tensor.flatten();
+    const array = await flat.array();
+    flat.dispose();
+    const t = new TorchTensor(tensor.id, array, tensor.shape, tensor.dtype);
+    t._tfTensor = tensor;
+    return t;
+  }
 }
 
 export class TorchSize {
@@ -75,5 +111,9 @@ export class TorchParameter {
       pb.requires_grad,
       unbufferize(worker, pb.grad)
     );
+  }
+
+  toTfTensor() {
+    return this.tensor.toTfTensor();
   }
 }

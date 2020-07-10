@@ -1,0 +1,39 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "cereallarceny",
+      "name": "Patrick Cason",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1297930?v=4",
+      "profile": "https://www.patrickcason.com",
+      "contributions": [
+        "ideas",
+        "code",
+        "design",
+        "doc",
+        "business"
+      ]
+    },
+    {
+      "login": "vvmnnnkv",
+      "name": "Vova Manannikov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/12518480?v=4",
+      "profile": "https://www.linkedin.com/in/vova-manannikov",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "syft.js",
+  "projectOwner": "OpenMined",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}

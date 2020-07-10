@@ -1,4 +1,4 @@
-import Placeholder from '../../src/types/placeholder';
+import { Placeholder } from '../../src/types/placeholder';
 
 describe('Placeholder', () => {
   test('can be properly constructed', () => {

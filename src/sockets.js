@@ -1,15 +1,16 @@
 import { SOCKET_PING } from './_constants';
+import Logger from './logger';
 
 export default class Sockets {
   constructor({
     url,
-    logger,
     workerId,
     onOpen,
     onClose,
     onMessage,
     keepAliveTimeout = 20000
   }) {
+    this.logger = new Logger();
     const socket = new WebSocket(url);
 
     const keepAlive = () => {
@@ -45,7 +46,6 @@ export default class Sockets {
     };
 
     this.url = url;
-    this.logger = logger;
     this.workerId = workerId;
     this.socket = socket;
     this.onMessage = onMessage;
