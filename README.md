@@ -30,24 +30,21 @@ If you want to know how scalable federated systems are built, [Towards Federated
 
 ## Installation
 
-_We have not currently made our initial release. Syft.js would soon be available via npm._
-
-Meanwhile, you can install syft.js directly from Github.
 Note that syft.js needs Tensorflow.js library as peer dependency.
 
 If you're using a package manage like NPM:
 
 ```text
-npm install --save https://github.com/OpenMined/syft.js @tensorflow/tfjs-core
+npm install --save @openmined/syft.js @tensorflow/tfjs-core
 ```
 
 Or if Yarn is your cup of tea:
 
 ```text
-yarn add https://github.com/OpenMined/syft.js @tensorflow/tfjs-core
+yarn add @openmined/syft.js @tensorflow/tfjs-core
 ```
 
-If you're not using a package manager, you will be able to include Syft.js within a `<script>` tag **when it's released**.
+If you're not using a package manager, you will be able to include Syft.js within a `<script>` tag.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
