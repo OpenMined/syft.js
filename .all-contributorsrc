@@ -37,6 +37,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "IamRavikantSingh",
+      "name": "Ravikant Singh",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/40258150?v=4",
+      "profile": "http://ravikantsingh.com",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
