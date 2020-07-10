@@ -28,6 +28,15 @@
         "doc",
         "test"
       ]
+    },
+    {
+      "login": "pedroespindula",
+      "name": "Pedro Espíndula",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/38431219?v=4",
+      "profile": "https://github.com/pedroespindula",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
