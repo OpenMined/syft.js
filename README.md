@@ -256,7 +256,15 @@ with lower loss and higher accuracy.
 
 ## Compatibility
 
-### Tensorflow.js Versions Compatibility
+### PySyft
+
+Syft.js has been tested with PySyft 0.2.7
+
+### PyGrid
+
+Syft.js has been tested with the latest version of PyGrid on `master`.
+
+### Tensorflow.js
 
 Syft.js was tested with Tensorflow.js v1.2.5.
 
