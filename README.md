@@ -245,11 +245,7 @@ You should see following in dev console:
   Charts are updated during this process, and you should see the training loss going down and the accuracy going up.
 - After the training is complete, model diff is submitted to PyGrid.
 
-If “Keep making cycle requests” is checked,
-the whole cycle process is repeated until PyGrid tells worker that model training is complete.
-It should be visible that
-PyGrid aggregates each 3 submissions into the global model, so each 3rd starts
-with lower loss and higher accuracy.
+If “Keep making cycle requests” is checked, the whole cycle process is repeated until PyGrid tells worker that model training is complete.
 
 ## Compatibility
 
@@ -306,6 +302,8 @@ These people were integral part of the efforts to bring syft.js to fruition and 
     <td align="center"><a href="http://ravikantsingh.com"><img src="https://avatars3.githubusercontent.com/u/40258150?v=4" width="100px;" alt=""/><br /><sub><b>Ravikant Singh</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=IamRavikantSingh" title="Code">💻</a> <a href="https://github.com/OpenMined/syft.js/commits?author=IamRavikantSingh" title="Tests">⚠️</a></td>
     <td align="center"><a href="http://vkkhare.github.io"><img src="https://avatars1.githubusercontent.com/u/18126069?v=4" width="100px;" alt=""/><br /><sub><b>varun khare</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=vkkhare" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/pedroespindula"><img src="https://avatars1.githubusercontent.com/u/38431219?v=4" width="100px;" alt=""/><br /><sub><b>Pedro Espíndula</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=pedroespindula" title="Documentation">📖</a></td>
+  </tr>
+  <tr>
     <td align="center"><a href="https://benardi.github.io/myblog/"><img src="https://avatars0.githubusercontent.com/u/9937551?v=4" width="100px;" alt=""/><br /><sub><b>José Benardi de Souza Nunes</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=Benardi" title="Tests">⚠️</a></td>
     <td align="center"><a href="http://www.linkedin.com/in/singh-taj"><img src="https://avatars1.githubusercontent.com/u/25232829?v=4" width="100px;" alt=""/><br /><sub><b>Tajinder Singh</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=tsingh2k15" title="Code">💻</a></td>
   </tr>
