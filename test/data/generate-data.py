@@ -14,7 +14,6 @@ from syft.serde import protobuf
 from syft.execution.state import State
 from syft.execution.placeholder import PlaceHolder
 from syft.execution.translation import TranslationTarget
-from syft.grid.grid_client import GridClient
 
 sy.make_hook(globals())
 # force protobuf serialization for tensors
@@ -50,6 +49,7 @@ def set_model_params(module, params_list, start_param_idx=0):
 
     return param_idx
 
+# = MNIST =
 
 class Net(nn.Module):
     def __init__(self):
@@ -78,7 +78,6 @@ def softmax_cross_entropy_with_logits(logits, targets, batch_size):
 
 def naive_sgd(param, **kwargs):
     return param - kwargs['lr'] * param.grad
-
 
 model = Net()
 
@@ -133,11 +132,14 @@ y_oh = th.nn.functional.one_hot(y, 10).float()
 training_plan.forward = None
 loss, acc, *upd_params = training_plan(X, y_oh, th.tensor([bs], dtype=th.float32), th.tensor([lr]), model_params)
 
-print(training_plan.code)
-training_plan.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print("MNIST plan (torch): ")
 print(training_plan.code)
 
-# Plan with state
+training_plan.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print("MNIST plan: ")
+print(training_plan.code)
+
+# = Plan with state =
 @sy.func2plan(args_shape=[(2,2)], state=(th.tensor([4.2, 7.3]),))
 def plan_with_state(x, state):
     (y,) = state.read()
@@ -146,6 +148,45 @@ def plan_with_state(x, state):
     return x
 
 plan_with_state.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print("Plan w/ state: ")
+print(plan_with_state.code)
+
+# = Bandit plans =
+# Simple
+reward = th.tensor([0.0, 0.0, 0.0])
+n_so_far = th.tensor([1.0, 1.0, 1.0])
+means = th.tensor([1.0, 2.0, 3.0])
+bandit_args = [reward, n_so_far, means]
+bandit_arg_shape = [arg.shape for arg in bandit_args]
+@sy.func2plan(args_shape=bandit_arg_shape)
+def bandit(reward, n_so_far, means):
+    prev = means
+    new = th.div(prev*(n_so_far-1),n_so_far) + th.div(reward,n_so_far)
+    means=new
+    return means
+
+bandit.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print("Bandit simple plan: ")
+print(bandit.code)
+
+# Thompson
+alphas = th.tensor([1.0, 1.0, 1.0], requires_grad=False)
+betas = th.tensor([1.0, 1.0, 1.0], requires_grad=False)
+rwd = th.tensor([0.0, 0.0, 0.0])
+samples = th.tensor([0.0, 0.0, 0.0])
+bandit_args_th = [rwd, samples, alphas, betas]
+bandit_th_args_shape = [rwd.shape, samples.shape, alphas.shape, betas.shape]
+@sy.func2plan(args_shape=bandit_th_args_shape)
+def bandit_thompson(reward, sample_vector, alphas, betas):
+    prev_alpha = alphas
+    prev_beta = betas
+    alphas = prev_alpha.add(reward)
+    betas = prev_beta.add(sample_vector.sub(reward))
+    return (alphas, betas)
+
+bandit_thompson.base_framework = TranslationTarget.TENSORFLOW_JS.value
+print("Bandit thompson plan: ")
+print(bandit_thompson.code)
 
 replacements = {
     'MNIST_BATCH_SIZE': bs,
@@ -156,7 +197,11 @@ replacements = {
     'MNIST_UPD_MODEL_PARAMS': serialize_to_b64_pb(hook.local_worker, tensors_to_state(upd_params)),
     'MNIST_LOSS': loss.item(),
     'MNIST_ACCURACY': acc.item(),
-    'PLAN_WITH_STATE': serialize_to_b64_pb(hook.local_worker, plan_with_state)
+    'PLAN_WITH_STATE': serialize_to_b64_pb(hook.local_worker, plan_with_state),
+    'BANDIT_SIMPLE_PLAN': serialize_to_b64_pb(hook.local_worker, bandit),
+    'BANDIT_SIMPLE_MODEL_PARAMS': serialize_to_b64_pb(hook.local_worker, tensors_to_state([means])),
+    'BANDIT_THOMPSON_PLAN': serialize_to_b64_pb(hook.local_worker, bandit_thompson),
+    'BANDIT_THOMPSON_MODEL_PARAMS': serialize_to_b64_pb(hook.local_worker, tensors_to_state([alphas, betas])),
 }
 
 with open("dummy.tpl.js", "r") as tpl, open("dummy.js", "w") as output:
@@ -164,4 +209,3 @@ with open("dummy.tpl.js", "r") as tpl, open("dummy.js", "w") as output:
     for k, v in replacements.items():
         js_tpl = js_tpl.replace(f"%{k}%", str(v))
     output.write(js_tpl)
-
