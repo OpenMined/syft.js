@@ -74,6 +74,15 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "tsingh2k15",
+      "name": "Tajinder Singh",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/25232829?v=4",
+      "profile": "http://www.linkedin.com/in/singh-taj",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

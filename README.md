@@ -302,6 +302,7 @@ These people were integral part of the efforts to bring syft.js to fruition and 
     <td align="center"><a href="http://vkkhare.github.io"><img src="https://avatars1.githubusercontent.com/u/18126069?v=4" width="100px;" alt=""/><br /><sub><b>varun khare</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=vkkhare" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/pedroespindula"><img src="https://avatars1.githubusercontent.com/u/38431219?v=4" width="100px;" alt=""/><br /><sub><b>Pedro Espíndula</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=pedroespindula" title="Documentation">📖</a></td>
     <td align="center"><a href="https://benardi.github.io/myblog/"><img src="https://avatars0.githubusercontent.com/u/9937551?v=4" width="100px;" alt=""/><br /><sub><b>José Benardi de Souza Nunes</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=Benardi" title="Tests">⚠️</a></td>
+    <td align="center"><a href="http://www.linkedin.com/in/singh-taj"><img src="https://avatars1.githubusercontent.com/u/25232829?v=4" width="100px;" alt=""/><br /><sub><b>Tajinder Singh</b></sub></a><br /><a href="https://github.com/OpenMined/syft.js/commits?author=tsingh2k15" title="Code">💻</a></td>
   </tr>
 </table>
 
