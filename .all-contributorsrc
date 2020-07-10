@@ -30,6 +30,25 @@
       ]
     },
     {
+      "login": "Nolski",
+      "name": "Mike Nolan",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/2600677?v=4",
+      "profile": "http://nolski.rocks",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "IamRavikantSingh",
+      "name": "Ravikant Singh",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/40258150?v=4",
+      "profile": "http://ravikantsingh.com",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
       "login": "vkkhare",
       "name": "varun khare",
       "avatar_url": "https://avatars1.githubusercontent.com/u/18126069?v=4",

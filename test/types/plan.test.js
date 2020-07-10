@@ -14,7 +14,11 @@ import {
   MNIST_UPD_MODEL_PARAMS,
   MNIST_LOSS,
   MNIST_ACCURACY,
-  PLAN_WITH_STATE
+  PLAN_WITH_STATE,
+  BANDIT_SIMPLE_MODEL_PARAMS,
+  BANDIT_SIMPLE_PLAN,
+  BANDIT_THOMPSON_PLAN,
+  BANDIT_THOMPSON_MODEL_PARAMS
 } from '../data/dummy';
 import { ComputationAction } from '../../src/types/computation-action';
 import { Role } from '../../src/types/role';
@@ -157,5 +161,55 @@ describe('Plan', () => {
           .arraySync()
       ).toBeLessThan(1e-7);
     }
+  });
+
+  test('bandit (simple) example can be executed', async () => {
+    const plan = unserialize(
+      null,
+      BANDIT_SIMPLE_PLAN,
+      protobuf.syft_proto.execution.v1.Plan
+    );
+
+    const worker = new Syft({ url: 'dummy' });
+    const modelState = unserialize(
+      null,
+      BANDIT_SIMPLE_MODEL_PARAMS,
+      protobuf.syft_proto.execution.v1.State
+    );
+    const [means] = modelState.tensors;
+
+    const reward = tf.tensor([0, 1, 0]);
+    const n_so_far = tf.tensor([1, 1, 1]);
+    const [newMeans] = await plan.execute(worker, reward, n_so_far, means);
+
+    newMeans.print();
+  });
+
+  test('bandit (thompson) example can be executed', async () => {
+    const plan = unserialize(
+      null,
+      BANDIT_THOMPSON_PLAN,
+      protobuf.syft_proto.execution.v1.Plan
+    );
+
+    const worker = new Syft({ url: 'dummy' });
+    const modelState = unserialize(
+      null,
+      BANDIT_THOMPSON_MODEL_PARAMS,
+      protobuf.syft_proto.execution.v1.State
+    );
+    const [alphas, betas] = modelState.tensors;
+    const reward = tf.tensor([0, 0, 0]);
+    const samples = tf.tensor([0, 0, 1]);
+    const [newAlphas, newBetas] = await plan.execute(
+      worker,
+      reward,
+      samples,
+      alphas,
+      betas
+    );
+
+    newAlphas.print();
+    newBetas.print();
   });
 });
