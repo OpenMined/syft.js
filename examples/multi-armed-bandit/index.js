@@ -5,21 +5,13 @@ import { Syft } from '@openmined/syft.js';
 
 import App from './app.js';
 
-// //bandit helpers~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-function fake_bandit(rwd, sample, alpha, beta) {
-  console.log(84, rwd, sample, alpha, beta);
-  alpha[0] = alpha[0] + 1;
-  beta[0] = beta[0] + 2;
-  return [alpha, beta];
-}
-
+// =========== bandit helper code ===============
+// note, this code here is very similar to the code in the python client notebook
 var { jStat } = require('jstat');
 
 var beta_sample = (alpha, beta) => jStat.beta.sample(alpha, beta);
 
 var binomial_sample = accept_rate => (Math.random() < accept_rate ? 1 : 0);
-
-// console.log(beta_sample(200,800), binomial_sample(.5))
 
 function make_data_for_plot() {
   var N = 100;
@@ -48,50 +40,17 @@ class Simulator {
     return Number(choice);
   }
 }
+
+// TODO: @patrick: this is current hard coded to 3 values, please feel free to replace with a list (length = matching the number of options) of generated probabilities >0 && <1
+// I recommend making 1 or 2 options much higher than the others for ease of testing
 var env = new Simulator([0.1, 0.6, 0.8]);
-// let exp_rig = (n, _bandit_plan, _model_param) => {
-//   let alphas = _model_param[2];
-//   let betas = _model_param[3];
-//   let samples_from_beta_distr = {};
 
-//   let ts = 0;
-
-//   console.log(1, samples_from_beta_distr);
-
-//   for (i = 0; i < n + 1; i++) {
-//     for (opt = 0; opt < alphas.length; opt++) {
-//       rwd_vec = [0, 0, 0];
-//       sampled_vec = [0, 0, 0];
-//       samples_from_beta_distr[opt] = beta_sample(alphas[opt], betas[opt]);
-//       selected_action = arg_max(samples_from_beta_distr);
-//       //Math.max(samples_from_beta_distr, key=samples_from_beta_distr.get)
-//       reward = env.simulate_ui(selected_action);
-//       console.log(2, samples_from_beta_distr);
-//       console.log(3, selected_action);
-//       console.log(4, reward);
-//       rwd_vec[selected_action] = reward;
-//       sampled_vec[selected_action] = (1)
-//       [
-//         // console.log(sampled_vec, rwd_vec)
-//         (alphas, betas)
-//       ] = _bandit_plan(rwd_vec, sampled_vec, alphas, betas);
-//       console.log('999999999999999, iter', i);
-//       alphas.array().then(array => console.log('alpha', array));
-//       beta_sample.array().then(array => console.log('alpha', array));
-//     }
-//   }
-//   console.log('FINAL_____________________, alpha, beta');
-//   alphas.array().then(array => console.log('alpha', array));
-//   beta_sample.array().then(array => console.log('alpha', array));
-//   return [alphas, betas];
-// };
-
-// //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ========= end bandit helper code ===============
 
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
 const modelName = 'bandit_th';
-const modelVersion = '1.0.0';
+const modelVersion = '1.0.0'; // TODO: @patrick this needs to match what you hosted... 3 option model vs 24 option model etc... usually 2.x.x is for 24 options
 const shouldRepeat = false;
 
 // Pick random values f.or the layout
@@ -105,7 +64,7 @@ const appConfigPossibilities = {
   buttonColor: ['blue', 'white']
 };
 
-// // Final configuration for the app
+// intial config
 let appConfig = {
   heroBackground: pickValue(appConfigPossibilities.heroBackground),
   buttonPosition: pickValue(appConfigPossibilities.buttonPosition),
@@ -113,6 +72,7 @@ let appConfig = {
   buttonColor: pickValue(appConfigPossibilities.buttonColor)
 };
 
+// All ui options as a flat list
 const UIOptions = {
   0: {
     heroBackground: 'black',
@@ -262,11 +222,12 @@ const UIOptions = {
 
 // time out code
 const TIMEOUT = 20000;
+
 let hasSubmittedValue = false;
-let pick;
 let action;
 
-pick = Math.floor(Math.random() * Object.keys(UIOptions).length);
+const n_options = Object.keys(UIOptions).length;
+let pick = Math.floor(Math.random() * n_options); // note: pick is set later in the code (sampled based on model params)
 appConfig = UIOptions[pick];
 
 // Set up an event listener for the button when it's clicked
@@ -282,6 +243,7 @@ const onButtonClick = () => {
   }
 };
 
+// @patrick: this is so I can simulate a no response without waiting by pressing x for the demo
 document.addEventListener('keyup', e => {
   if (e.code === 'KeyX') {
     action = 0;
@@ -328,10 +290,6 @@ const startFL = async (
   job.on('accepted', async ({ model, clientConfig }) => {
     updateStatus('Accepted into cycle!');
     alert('Accepted into cycle!');
-    console.log(155, 'new model params', model, model.params);
-
-    // TODO: @maddie - Replace all of this with the bandit code, but try to still use the same
-    // updateAfterBatch and updateStatus calls... those are helpful for the user to see!
 
     // Copy model to train it.
     let modelParams = [];
@@ -358,33 +316,30 @@ const startFL = async (
     var sampled_vec;
 
     for (let i = 1; i < n + 1; i++) {
-      console.log(177, i, rwd_vec, sampled_vec);
       // convert to array
-      rwd_vec = tf.tensor([0.0, 0.0, 0.0]);
-      sampled_vec = tf.tensor([0.0, 0.0, 0.0]);
+      const blank_vec = Array(3).fill(Number(0.0)); // TODO: change 3 to var:n_options, current is 3 because I am testing using a simpler model (only 3 choices)
+      rwd_vec = tf.tensor(blank_vec);
+      sampled_vec = tf.tensor(blank_vec);
 
       rwd_vec = await rwd_vec.array();
       sampled_vec = await sampled_vec.array();
-      console.log(179, alphas_arr.length);
       for (let opt = 0; opt < alphas_arr.length; opt++) {
         samples_from_beta_distr[opt] = beta_sample(
           alphas_arr[opt],
           betas_arr[opt]
         );
       }
-      console.log(
-        'init_sample_from_beta',
-        'before max',
-        samples_from_beta_distr
-      );
+
       let selected_action = arg_max(samples_from_beta_distr);
       pick = selected_action;
-      alert('pick', pick);
       // TODO: @patrick we need to rerender based on the pick here
-      // maybe setup a loading screen for better UI otherwise user will be shown 2 layouts
+      // the reason is, if we don't render based on the latest learned params, we won't "gradually show the most optimal UI"
+      // maybe setup a "loading screen that explains the exp/demo" for better Ux otherwise user will be shown 2 diff layouts
 
       // block and wait for user actions, get the value of var action
-      let reward = env.simulate(selected_action); // action
+      // TODO: @patrick this needs to block and wait until we get a user action / aka when hasSubmittedValue becomes True
+      // note: you can change this to env.simulate_ui to get a alert that mocks user interactions
+      let reward = env.simulate(selected_action);
 
       rwd_vec[selected_action] = reward;
       sampled_vec[selected_action] = 1;
@@ -426,6 +381,7 @@ const startFL = async (
       betas
     );
 
+    // @patrick: please leave this here because we may want to update plots
     //   await updateAfterBatch({
     //     epoch,
     //     batch,
@@ -441,22 +397,16 @@ const startFL = async (
     //     epoch++;
     //   }
 
-    //   // Free GPU memory
+    //   // Free GPU memory // model is small enough to not need this
     //   acc.dispose();
     //   loss.dispose();
     //   dataBatch.dispose();
     //   targetBatch.dispose();
     // }
 
-    // // Free GPU memory
+    // // Free GPU memory // model is small enough to not need this
     // data.dispose();
     // targets.dispose();
-
-    // // TODO protocol execution
-    // // job.protocols['secure_aggregation'].execute();
-
-    // // Calc model diff
-    // const modelDiff = await model.createSerializedDiff(modelParams);
 
     // // Report diff
     const modelDiff = await model.createSerializedDiff(updated_model_params);
@@ -464,10 +414,10 @@ const startFL = async (
     await job.report(modelDiff);
     updateStatus('Cycle is done!');
 
-    // // Try again...
-    // if (shouldRepeat) {
-    //   setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
-    // }
+    // Try again...
+    if (shouldRepeat) {
+      setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
+    }
   });
 
   job.on('rejected', ({ timeout }) => {
