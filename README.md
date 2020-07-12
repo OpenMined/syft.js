@@ -32,7 +32,7 @@ If you want to know how scalable federated systems are built, [Towards Federated
 
 Note that syft.js needs Tensorflow.js library as peer dependency.
 
-If you're using a package manage like NPM:
+If you're using a package manager like NPM:
 
 ```text
 npm install --save @openmined/syft.js @tensorflow/tfjs-core
@@ -263,7 +263,7 @@ Syft.js was tested with Tensorflow.js v1.2.5.
 
 ### Browser Support
 
-syft.js was tested with Chrome and Firefox browsers.
+Syft.js was tested with Chrome and Firefox browsers.
 
 ## Support
 
