@@ -134,9 +134,9 @@ const Button = ({ background, icon, onClick }) => (
     onClick={onClick}
   >
     <span css={{ marginRight: 60 }}>Sign Up</span>
-    {icon === 'arrow' && <i class="fas fa-arrow-right" />}
-    {icon === 'user' && <i class="fas fa-user-plus" />}
-    {icon === 'code' && <i class="fas fa-code" />}
+    {icon === 'arrow' && <i className="fas fa-arrow-right" />}
+    {icon === 'user' && <i className="fas fa-user-plus" />}
+    {icon === 'code' && <i className="fas fa-code" />}
   </button>
 );
 
@@ -180,28 +180,28 @@ const Footer = () => {
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-github" />
+            <i className="fab fa-github" />
           </a>
           <a
             href="https://twitter.com/openminedorg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-twitter" />
+            <i className="fab fa-twitter" />
           </a>
           <a
             href="https://youtube.com/c/OpenMinedOrg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-youtube" />
+            <i className="fab fa-youtube" />
           </a>
           <a
             href="https://facebook.com/openminedorg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-facebook" />
+            <i className="fab fa-facebook" />
           </a>
         </div>
       </div>
