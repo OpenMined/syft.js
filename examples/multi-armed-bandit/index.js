@@ -1,13 +1,6 @@
-/*
-  Current problems:
-  - Getting rejected from cycles potentially dozens of times until being accepted
-  - Not submitting diff when button is clicked or timeout is hit
-  - UI is not waiting for optimized layout to load
-*/
-
 // Import core dependencies
 import React from 'react';
-import { render } from 'react-dom';
+import { render, hydrate } from 'react-dom';
 import * as tf from '@tensorflow/tfjs-core';
 import { Syft } from '@openmined/syft.js';
 
@@ -25,14 +18,8 @@ const url = 'ws://localhost:5000';
 const modelName = 'bandit';
 const modelVersion = '1.0.0';
 
-// Define timeout
-const TIMEOUT = 20000;
-
-// Pick random values f.or the layout
-const pickValue = p => p[Math.floor(Math.random() * p.length)];
-
 // All possible UI options
-const UIOptions = [
+const allUIOptions = [
   ['black', 'gradient'], // heroBackground
   ['hero', 'vision'], // buttonPosition
   ['arrow', 'user', 'code'], // buttonIcon
@@ -48,85 +35,53 @@ const UIOptions = [
     buttonColor
   }));
 
-// Pick one of the possible UI's to display to the user
-const appConfig = pickValue(UIOptions);
+// User action promise, gotta wait for the user to do something!
+let userActionPromiseResolve;
+const userActionPromise = new Promise(resolve => {
+  userActionPromiseResolve = resolve;
+});
 
 // Has a value already been submitted?
 let hasSubmittedValue = false;
 
+// When the user clicks the button...
 const submitPositiveResult = () => {
   if (!hasSubmittedValue) {
     hasSubmittedValue = true;
-
-    console.log(
-      'Clicked the button! Send a positive result for config',
-      appConfig
-    );
+    userActionPromiseResolve(true);
   }
 };
 
-const submitNegativeResult = () => {
+// When the user doesn't click the button...
+const submitNegativeResult = config => {
   if (!hasSubmittedValue) {
     hasSubmittedValue = true;
-
-    console.log(
-      "Didn't click the button! Send a negative result for config",
-      appConfig
-    );
+    userActionPromiseResolve(false);
   }
 };
 
-// When the user clicks the button... send a positive result
-const onButtonClick = submitPositiveResult;
-
 // When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
-setTimeout(submitNegativeResult, TIMEOUT);
+setTimeout(submitNegativeResult, 20000);
 window.addEventListener('beforeunload', submitNegativeResult);
 document.addEventListener('keyup', e => {
   if (e.code === 'KeyX') submitNegativeResult();
 });
 
+// Define React root elem
+const ROOT = document.getElementById('root');
+
 // Start React
 render(
   <App
-    config={appConfig}
-    onButtonClick={onButtonClick}
+    isLoaded={false}
+    onButtonClick={submitPositiveResult}
     start={() => startFL(url, modelName, modelVersion)}
   />,
-  document.getElementById('root')
+  ROOT
 );
 
 // Main start method
 const startFL = async (url, modelName, modelVersion, authToken = null) => {
-  // TODO: @patrick: Not sure what this simulator class does...
-  class Simulator {
-    constructor(rates) {
-      this.rates = rates;
-      this.action_space = Array(rates.length);
-    }
-
-    simulate(idx) {
-      const binomial_sample = accept_rate =>
-        Math.random() < accept_rate ? 1 : 0;
-
-      let choice = binomial_sample(this.rates[idx]);
-
-      console.log(`simulated ${choice} for UI${idx}`);
-
-      return choice;
-    }
-
-    simulate_ui(idx) {
-      let choice = prompt(`showing UI${Number(idx) + 1}`, '1 for y, 0 for no');
-
-      return Number(choice);
-    }
-  }
-
-  // TODO: @patrick: this is current hard coded to 3 values, please feel free to replace with a list (length = matching the number of options) of generated probabilities >0 && <1
-  // I recommend making 1 or 2 options much higher than the others for ease of testing
-  const env = new Simulator([0.1, 0.6, 0.8]);
-
   // Define the worker and the job
   const worker = new Syft({ url, authToken, verbose: true });
   const job = await worker.newJob({ modelName, modelVersion });
@@ -161,7 +116,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     const alphasArray = await alphas.array();
     const betasArray = await betas.array();
     updateStatus(
-      'Concerted alphas and betas into an array',
+      'Converted alphas and betas into an array',
       alphasArray,
       betasArray
     );
@@ -176,19 +131,20 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     // Define the number of samples
     const numSamples = 1;
 
+    // For each sample...
     for (let i = 1; i <= numSamples; i++) {
-      const blankVector = tf.zeros([UIOptions.length], 'float32');
-      updateStatus('Creating a blank vector', blankVector);
-
-      rewardVector = await blankVector.array();
-      sampledVector = await blankVector.array();
+      // Set the reward and sampled vectors to be a big array of zeros
+      rewardVector = await tf.zeros([allUIOptions.length], 'float32').array();
+      sampledVector = await tf.zeros([allUIOptions.length], 'float32').array();
       updateStatus(
-        'Setting it as the reward and sampled vector, and converting those to arrays',
+        'Setting the reward and sampled vectors to zeros, and converting those to arrays',
         rewardVector,
         sampledVector
       );
 
+      // For each option...
       for (let opt = 0; opt < alphasArray.length; opt++) {
+        // Get a beta distribution between the alphas and betas
         samplesFromBetaDist[opt] = jStat.beta.sample(
           alphasArray[opt],
           betasArray[opt]
@@ -197,19 +153,40 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         updateStatus('Got samples from beta distribution', samplesFromBetaDist);
       }
 
-      // TODO: @patrick we need to rerender based on the pick here
-      // The reason is, if we don't render based on the latest learned params, we won't "gradually show the most optimal UI"
-      // Maybe setup a "loading screen that explains the exp/demo" for better UX otherwise user will be shown 2 diff layouts
-      let selectedAction = argMax(samplesFromBetaDist);
-      updateStatus('Have the desired selected action', selectedAction);
+      // Get the option that the user should be loading...
+      let selectedOption = argMax(samplesFromBetaDist);
+      updateStatus('Have the desired selected option', selectedOption);
 
-      // TODO: @patrick this needs to block and wait until we get a user action / aka when hasSubmittedValue becomes True
-      // Note: you can change this to env.simulate_ui to get a alert that mocks user interactions
-      let reward = env.simulate(selectedAction);
-      updateStatus('Simulate the reward', reward);
+      // Render that option
+      hydrate(
+        <App
+          isLoaded={true}
+          config={allUIOptions[selectedOption]}
+          onButtonClick={submitPositiveResult}
+          start={() => startFL(url, modelName, modelVersion)}
+        />,
+        ROOT
+      );
+      updateStatus(
+        'Re-rendered the React application with config',
+        allUIOptions[selectedOption]
+      );
 
-      rewardVector[selectedAction] = reward;
-      sampledVector[selectedAction] = 1;
+      updateStatus('Waiting on user input...');
+
+      // Wait on user input...
+      const clicked = await userActionPromise;
+
+      // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
+      const reward = clicked ? 1 : 0;
+
+      updateStatus('User input is...', clicked);
+
+      // Set the reward and sampled vectors to be the appropriate values
+      rewardVector[selectedOption] = reward;
+      sampledVector[selectedOption] = 1;
+
+      // And turn them into tensors
       rewardVector = tf.tensor(rewardVector);
       sampledVector = tf.tensor(sampledVector);
       updateStatus(
@@ -218,6 +195,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         sampledVector
       );
 
+      // Execute the plan and get the resulting alphas and betas
       const [newAlphas, newBetas] = await job.plans['training_plan'].execute(
         job.worker,
         rewardVector,
@@ -227,22 +205,25 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
       );
       updateStatus('Plan executed', newAlphas, newBetas);
 
+      // Reset the old alphas and betas to the new alphas and betas
       alphas = newAlphas;
       betas = newBetas;
       updateStatus('Resetting alphas and betas', alphas, betas);
     }
 
+    // Set the updated model params to be the new ones
     let updatedModelParams = modelParams;
 
     updatedModelParams[2] = alphas;
     updatedModelParams[3] = betas;
     updateStatus('Setting updated model params', updatedModelParams);
 
-    // Report diff
+    // And report the diff back to PyGrid
     const modelDiff = await model.createSerializedDiff(updatedModelParams);
     await job.report(modelDiff);
     updateStatus('Reported diff');
 
+    // Finished!
     updateStatus('Cycle is done!');
   });
 

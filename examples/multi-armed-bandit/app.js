@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import backgroundGradient from './background-gradient.svg';
 import logoWhite from './logo-white.svg';
@@ -209,33 +209,51 @@ const Footer = () => {
   );
 };
 
-export default ({ config, onButtonClick, start }) => {
+export default ({ isLoaded, config, onButtonClick, start }) => {
   useEffect(() => {
     start();
   }, []);
 
-  const button = (
-    <Button
-      background={config.buttonColor}
-      icon={config.buttonIcon}
-      onClick={onButtonClick}
-    />
-  );
+  if (isLoaded && config) {
+    const button = (
+      <Button
+        background={config.buttonColor}
+        icon={config.buttonIcon}
+        onClick={onButtonClick}
+      />
+    );
+
+    return (
+      <div
+        css={{
+          minHeight: '100vh',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr auto'
+        }}
+      >
+        <Hero
+          background={config.heroBackground}
+          button={config.buttonPosition === 'hero' ? button : null}
+        />
+        <Vision button={config.buttonPosition === 'vision' ? button : null} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div
-      css={{
-        minHeight: '100vh',
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr auto'
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh'
       }}
     >
-      <Hero
-        background={config.heroBackground}
-        button={config.buttonPosition === 'hero' ? button : null}
-      />
-      <Vision button={config.buttonPosition === 'vision' ? button : null} />
-      <Footer />
+      <i
+        className="fas fa-circle-notch fa-spin fa-5x"
+        style={{ color: '#ccc' }}
+      ></i>
     </div>
   );
 };
