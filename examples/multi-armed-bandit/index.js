@@ -218,14 +218,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         sampledVector
       );
 
-      rewardVector[selectedAction] = tf.tensor(reward);
-      sampledVector[selectedAction] = tf.tensor(1);
-      updateStatus(
-        'New reward and sampled vector',
-        rewardVector,
-        sampledVector
-      );
-
       const [newAlphas, newBetas] = await job.plans['training_plan'].execute(
         job.worker,
         rewardVector,
