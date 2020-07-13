@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import backgroundGradient from './background-gradient.svg';
 import logoWhite from './logo-white.svg';
@@ -134,9 +134,9 @@ const Button = ({ background, icon, onClick }) => (
     onClick={onClick}
   >
     <span css={{ marginRight: 60 }}>Sign Up</span>
-    {icon === 'arrow' && <i class="fas fa-arrow-right" />}
-    {icon === 'user' && <i class="fas fa-user-plus" />}
-    {icon === 'code' && <i class="fas fa-code" />}
+    {icon === 'arrow' && <i className="fas fa-arrow-right" />}
+    {icon === 'user' && <i className="fas fa-user-plus" />}
+    {icon === 'code' && <i className="fas fa-code" />}
   </button>
 );
 
@@ -180,28 +180,28 @@ const Footer = () => {
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-github" />
+            <i className="fab fa-github" />
           </a>
           <a
             href="https://twitter.com/openminedorg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-twitter" />
+            <i className="fab fa-twitter" />
           </a>
           <a
             href="https://youtube.com/c/OpenMinedOrg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-youtube" />
+            <i className="fab fa-youtube" />
           </a>
           <a
             href="https://facebook.com/openminedorg"
             target="_blank"
             css={styles.socialIcon}
           >
-            <i class="fab fa-facebook" />
+            <i className="fab fa-facebook" />
           </a>
         </div>
       </div>
@@ -209,33 +209,51 @@ const Footer = () => {
   );
 };
 
-export default ({ config, onButtonClick, start }) => {
+export default ({ isLoaded, config, onButtonClick, start }) => {
   useEffect(() => {
     start();
   }, []);
 
-  const button = (
-    <Button
-      background={config.buttonColor}
-      icon={config.buttonIcon}
-      onClick={onButtonClick}
-    />
-  );
+  if (isLoaded && config) {
+    const button = (
+      <Button
+        background={config.buttonColor}
+        icon={config.buttonIcon}
+        onClick={onButtonClick}
+      />
+    );
+
+    return (
+      <div
+        css={{
+          minHeight: '100vh',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr auto'
+        }}
+      >
+        <Hero
+          background={config.heroBackground}
+          button={config.buttonPosition === 'hero' ? button : null}
+        />
+        <Vision button={config.buttonPosition === 'vision' ? button : null} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div
-      css={{
-        minHeight: '100vh',
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr auto'
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh'
       }}
     >
-      <Hero
-        background={config.heroBackground}
-        button={config.buttonPosition === 'hero' ? button : null}
-      />
-      <Vision button={config.buttonPosition === 'vision' ? button : null} />
-      <Footer />
+      <i
+        className="fas fa-circle-notch fa-spin fa-5x"
+        style={{ color: '#ccc' }}
+      ></i>
     </div>
   );
 };

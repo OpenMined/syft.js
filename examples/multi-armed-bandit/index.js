@@ -1,171 +1,233 @@
+// Import core dependencies
 import React from 'react';
-import { render } from 'react-dom';
+import { render, hydrate } from 'react-dom';
 import * as tf from '@tensorflow/tfjs-core';
 import { Syft } from '@openmined/syft.js';
 
 import App from './app.js';
 
+// Include jStat
+const { jStat } = require('jstat');
+
+// Status update message
+const updateStatus = (message, ...args) =>
+  console.log('BANDIT PLAN', message, ...args);
+
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
 const modelName = 'bandit';
 const modelVersion = '1.0.0';
-const shouldRepeat = false;
 
-// Pick random values f.or the layout
-const pickValue = p => p[Math.floor(Math.random() * p.length)];
+// All possible UI options
+const allUIOptions = [
+  ['black', 'gradient'], // heroBackground
+  ['hero', 'vision'], // buttonPosition
+  ['arrow', 'user', 'code'], // buttonIcon
+  ['blue', 'white'] // buttonColor
+]
+  .reduce((a, b) =>
+    a.reduce((r, v) => r.concat(b.map(w => [].concat(v, w))), [])
+  )
+  .map(([heroBackground, buttonPosition, buttonIcon, buttonColor]) => ({
+    heroBackground,
+    buttonPosition,
+    buttonIcon,
+    buttonColor
+  }));
 
-// 24 possible configurations
-const appConfigPossibilities = {
-  heroBackground: ['black', 'gradient'],
-  buttonPosition: ['hero', 'vision'],
-  buttonIcon: ['arrow', 'user', 'code'],
-  buttonColor: ['blue', 'white']
+// User action promise, gotta wait for the user to do something!
+let userActionPromiseResolve;
+const userActionPromise = new Promise(resolve => {
+  userActionPromiseResolve = resolve;
+});
+
+// Has a value already been submitted?
+let hasSubmittedValue = false;
+
+// When the user clicks the button...
+const submitPositiveResult = () => {
+  if (!hasSubmittedValue) {
+    hasSubmittedValue = true;
+    userActionPromiseResolve(true);
+  }
 };
 
-// Final configuration for the app
-const appConfig = {
-  heroBackground: pickValue(appConfigPossibilities.heroBackground),
-  buttonPosition: pickValue(appConfigPossibilities.buttonPosition),
-  buttonIcon: pickValue(appConfigPossibilities.buttonIcon),
-  buttonColor: pickValue(appConfigPossibilities.buttonColor)
+// When the user doesn't click the button...
+const submitNegativeResult = config => {
+  if (!hasSubmittedValue) {
+    hasSubmittedValue = true;
+    userActionPromiseResolve(false);
+  }
 };
 
-// Set up an event listener for the button when it's clicked
-// TODO: @maddie - Submit the diff for a positive button click here...
-const onButtonClick = () => {
-  console.log(
-    'Clicked the button! Send a positive result for config',
-    appConfig
-  );
-};
+// When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
+setTimeout(submitNegativeResult, 20000);
+window.addEventListener('beforeunload', submitNegativeResult);
+document.addEventListener('keyup', e => {
+  if (e.code === 'KeyX') submitNegativeResult();
+});
+
+// Define React root elem
+const ROOT = document.getElementById('root');
 
 // Start React
 render(
   <App
-    config={appConfig}
-    onButtonClick={onButtonClick}
-    start={() => startFL(url, modelName, modelVersion, shouldRepeat)}
+    isLoaded={false}
+    onButtonClick={submitPositiveResult}
+    start={() => startFL(url, modelName, modelVersion)}
   />,
-  document.getElementById('root')
+  ROOT
 );
 
 // Main start method
-const startFL = async (
-  url,
-  modelName,
-  modelVersion,
-  authToken = null,
-  shouldRepeat
-) => {
+const startFL = async (url, modelName, modelVersion, authToken = null) => {
+  // Define the worker and the job
   const worker = new Syft({ url, authToken, verbose: true });
   const job = await worker.newJob({ modelName, modelVersion });
 
+  // Immediately start the cycle
+  updateStatus('Starting job request...');
   job.start();
 
-  job.on('accepted', async ({ model, clientConfig }) => {
+  // When we've been accepted into the cycle...
+  job.on('accepted', async ({ model }) => {
     updateStatus('Accepted into cycle!');
 
-    // TODO: @maddie - Replace all of this with the bandit code, but try to still use the same
-    // updateAfterBatch and updateStatus calls... those are helpful for the user to see!
-    // // Load MNIST data
-    // await loadMnistDataset();
-    // const trainDataset = mnist.getTrainData();
-    // const data = trainDataset.xs;
-    // const targets = trainDataset.labels;
+    // Arg max function
+    const argMax = d =>
+      Object.entries(d).filter(
+        el => el[1] == Math.max(...Object.values(d))
+      )[0][0];
 
-    // // Prepare randomized indices for data batching
-    // const indices = Array.from({ length: data.shape[0] }, (v, i) => i);
-    // tf.util.shuffle(indices);
+    // Copy model params
+    let modelParams = [];
+    for (let param of model.params) {
+      modelParams.push(param.clone());
+    }
+    updateStatus('Copying model params');
 
-    // // Prepare train parameters
-    // const batchSize = clientConfig.batch_size;
-    // const lr = clientConfig.lr;
-    // const numBatches = Math.ceil(data.shape[0] / batchSize);
+    // Get alphas and betas from model params
+    let alphas = modelParams[2];
+    let betas = modelParams[3];
+    updateStatus('Getting alphas and betas from model params', alphas, betas);
 
-    // // Calculate total number of model updates
-    // // in case none of these options specified, we fallback to one loop
-    // // though all batches.
-    // const maxEpochs = clientConfig.max_epochs || 1;
-    // const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
-    // const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
+    // Convert them to an array
+    const alphasArray = await alphas.array();
+    const betasArray = await betas.array();
+    updateStatus(
+      'Converted alphas and betas into an array',
+      alphasArray,
+      betasArray
+    );
 
-    // // Copy model to train it
-    // let modelParams = [];
-    // for (let param of model.params) {
-    //   modelParams.push(param.clone());
-    // }
+    // Create an array to hold samples from the beta distribution
+    const samplesFromBetaDist = [];
 
-    // // Main training loop
-    // for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
-    //   // Slice a batch
-    //   const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
-    //   const indicesBatch = indices.slice(
-    //     batch * batchSize,
-    //     batch * batchSize + chunkSize
-    //   );
-    //   const dataBatch = data.gather(indicesBatch);
-    //   const targetBatch = targets.gather(indicesBatch);
+    // Create a reward and sample vector
+    let rewardVector;
+    let sampledVector;
 
-    //   // Execute the plan and get updated model params back
-    //   let [loss, acc, ...updatedModelParams] = await job.plans[
-    //     'training_plan'
-    //   ].execute(
-    //     job.worker,
-    //     dataBatch,
-    //     targetBatch,
-    //     chunkSize,
-    //     lr,
-    //     ...modelParams
-    //   );
+    // Define the number of samples
+    const numSamples = 1;
 
-    //   // Use updated model params in the next cycle
-    //   for (let i = 0; i < modelParams.length; i++) {
-    //     modelParams[i].dispose();
-    //     modelParams[i] = updatedModelParams[i];
-    //   }
+    // For each sample...
+    for (let i = 1; i <= numSamples; i++) {
+      // Set the reward and sampled vectors to be a big array of zeros
+      rewardVector = await tf.zeros([allUIOptions.length], 'float32').array();
+      sampledVector = await tf.zeros([allUIOptions.length], 'float32').array();
+      updateStatus(
+        'Setting the reward and sampled vectors to zeros, and converting those to arrays',
+        rewardVector,
+        sampledVector
+      );
 
-    //   await updateAfterBatch({
-    //     epoch,
-    //     batch,
-    //     accuracy: await acc.array(),
-    //     loss: await loss.array()
-    //   });
+      // For each option...
+      for (let opt = 0; opt < alphasArray.length; opt++) {
+        // Get a beta distribution between the alphas and betas
+        samplesFromBetaDist[opt] = jStat.beta.sample(
+          alphasArray[opt],
+          betasArray[opt]
+        );
 
-    //   batch++;
+        updateStatus('Got samples from beta distribution', samplesFromBetaDist);
+      }
 
-    //   // Check if we're out of batches (end of epoch)
-    //   if (batch === numBatches) {
-    //     batch = 0;
-    //     epoch++;
-    //   }
+      // Get the option that the user should be loading...
+      let selectedOption = argMax(samplesFromBetaDist);
+      updateStatus('Have the desired selected option', selectedOption);
 
-    //   // Free GPU memory
-    //   acc.dispose();
-    //   loss.dispose();
-    //   dataBatch.dispose();
-    //   targetBatch.dispose();
-    // }
+      // Render that option
+      hydrate(
+        <App
+          isLoaded={true}
+          config={allUIOptions[selectedOption]}
+          onButtonClick={submitPositiveResult}
+          start={() => startFL(url, modelName, modelVersion)}
+        />,
+        ROOT
+      );
+      updateStatus(
+        'Re-rendered the React application with config',
+        allUIOptions[selectedOption]
+      );
 
-    // // Free GPU memory
-    // data.dispose();
-    // targets.dispose();
+      updateStatus('Waiting on user input...');
 
-    // // TODO protocol execution
-    // // job.protocols['secure_aggregation'].execute();
+      // Wait on user input...
+      const clicked = await userActionPromise;
 
-    // // Calc model diff
-    // const modelDiff = await model.createSerializedDiff(modelParams);
+      // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
+      const reward = clicked ? 1 : 0;
 
-    // // Report diff
-    // await job.report(modelDiff);
-    // updateStatus('Cycle is done!');
+      updateStatus('User input is...', clicked);
 
-    // // Try again...
-    // if (shouldRepeat) {
-    //   setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
-    // }
+      // Set the reward and sampled vectors to be the appropriate values
+      rewardVector[selectedOption] = reward;
+      sampledVector[selectedOption] = 1;
+
+      // And turn them into tensors
+      rewardVector = tf.tensor(rewardVector);
+      sampledVector = tf.tensor(sampledVector);
+      updateStatus(
+        'New reward and sampled vector',
+        rewardVector,
+        sampledVector
+      );
+
+      // Execute the plan and get the resulting alphas and betas
+      const [newAlphas, newBetas] = await job.plans['training_plan'].execute(
+        job.worker,
+        rewardVector,
+        sampledVector,
+        alphas,
+        betas
+      );
+      updateStatus('Plan executed', newAlphas, newBetas);
+
+      // Reset the old alphas and betas to the new alphas and betas
+      alphas = newAlphas;
+      betas = newBetas;
+      updateStatus('Resetting alphas and betas', alphas, betas);
+    }
+
+    // Set the updated model params to be the new ones
+    let updatedModelParams = modelParams;
+
+    updatedModelParams[2] = alphas;
+    updatedModelParams[3] = betas;
+    updateStatus('Setting updated model params', updatedModelParams);
+
+    // And report the diff back to PyGrid
+    const modelDiff = await model.createSerializedDiff(updatedModelParams);
+    await job.report(modelDiff);
+    updateStatus('Reported diff');
+
+    // Finished!
+    updateStatus('Cycle is done!');
   });
 
+  // When we've been rejected from the cycle...
   job.on('rejected', ({ timeout }) => {
     // Handle the job rejection
     if (timeout) {
@@ -173,32 +235,17 @@ const startFL = async (
 
       // Try to join the job again in "msUntilRetry" milliseconds
       updateStatus(`Rejected from cycle, retry in ${timeout}`);
+
       setTimeout(job.start.bind(job), msUntilRetry);
     } else {
       updateStatus(
-        `Rejected from cycle with no timeout, assuming Model training is complete.`
+        `Rejected from cycle with no timeout, assuming model training is complete.`
       );
     }
   });
 
+  // When there's an error in the cycle...
   job.on('error', err => {
-    updateStatus(`Error: ${err.message}`);
+    updateStatus(`Error: ${err.message}`, err);
   });
-};
-
-// Status update message
-const updateStatus = message => {
-  console.log('STATUS', message);
-};
-
-// Log statistics after each batch
-const updateAfterBatch = async ({ epoch, batch, accuracy, loss }) => {
-  console.log(
-    `Epoch: ${epoch}`,
-    `Batch: ${batch}`,
-    `Accuracy: ${accuracy}`,
-    `Loss: ${loss}`
-  );
-
-  await tf.nextFrame();
 };
