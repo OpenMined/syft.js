@@ -5,6 +5,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import { Syft } from '@openmined/syft.js';
 
 import App from './app.js';
+let _sim = 1;
 
 // Include jStat
 const { jStat } = require('jstat');
@@ -15,8 +16,8 @@ const updateStatus = (message, ...args) =>
 
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
-const modelName = 'bandit';
-const modelVersion = '1.0.0';
+const modelName = 'bandit_th_24';
+const modelVersion = '1.0.3';
 
 // All possible UI options
 const allUIOptions = [
@@ -34,6 +35,33 @@ const allUIOptions = [
     buttonIcon,
     buttonColor
   }));
+
+// bandit simulator helper code
+
+const binomial_sample = accept_rate => (Math.random() < accept_rate ? 1 : 0);
+
+class Simulator {
+  constructor(rates) {
+    this.rates = rates;
+    this.action_space = Array(rates.length);
+  }
+  simulate(idx) {
+    let choice = binomial_sample(this.rates[idx]);
+    console.log(
+      `simulated ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ reward: ${choice} for UI: ${idx}`
+    );
+    return choice;
+  }
+  simulate_ui(idx) {
+    let choice = prompt(`showing UI${Number(idx) + 1}`, '1 for y, 0 for no');
+    return Number(choice);
+  }
+}
+const simulated_rates = Array.from({ length: 24 }, () =>
+  Math.min(Math.abs(Math.random() - Math.random() / 10), 0.77)
+);
+simulated_rates[9] = 0.85;
+const env = new Simulator(simulated_rates);
 
 // User action promise, gotta wait for the user to do something!
 let userActionPromiseResolve;
@@ -175,6 +203,14 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
       updateStatus('Waiting on user input...');
 
       // Wait on user input...
+      if (_sim) {
+        const simulated_result = env.simulate(selectedOption);
+        if (simulated_result == 1) {
+          submitPositiveResult();
+        } else {
+          submitNegativeResult();
+        }
+      }
       const clicked = await userActionPromise;
 
       // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
@@ -217,6 +253,10 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     updatedModelParams[2] = alphas;
     updatedModelParams[3] = betas;
     updateStatus('Setting updated model params', updatedModelParams);
+    const final_alphas = await alphas.array();
+    const final_betas = await betas.array();
+    updateStatus('final updated alphas', final_alphas);
+    updateStatus('final updated betas', final_betas);
 
     // And report the diff back to PyGrid
     const modelDiff = await model.createSerializedDiff(updatedModelParams);
