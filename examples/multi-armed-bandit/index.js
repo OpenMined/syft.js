@@ -1,3 +1,4 @@
+// Import core dependencies
 import React from 'react';
 import { render } from 'react-dom';
 import * as tf from '@tensorflow/tfjs-core';
@@ -5,237 +6,51 @@ import { Syft } from '@openmined/syft.js';
 
 import App from './app.js';
 
-// =========== bandit helper code ===============
-// note, this code here is very similar to the code in the python client notebook
-var { jStat } = require('jstat');
+// Include jStat
+const { jStat } = require('jstat');
 
-var beta_sample = (alpha, beta) => jStat.beta.sample(alpha, beta);
-
-var binomial_sample = accept_rate => (Math.random() < accept_rate ? 1 : 0);
-
-function make_data_for_plot() {
-  var N = 100;
-  let idx = Array.apply(null, { length: N }).map(Number.call, Number);
-  idx = idx.map(x => x / 100);
-  let val = idx.map(i => jStat.beta.pdf(i, 20, 80));
-  return [idx, val];
-}
-
-let arg_max = d =>
-  Object.entries(d).filter(el => el[1] == Math.max(...Object.values(d)))[0][0];
-
-class Simulator {
-  constructor(rates) {
-    this.rates = rates;
-    this.action_space = Array(rates.length);
-  }
-  simulate(idx) {
-    let choice = binomial_sample(this.rates[idx]);
-    console.log(`simulated ${choice} for UI${idx}`);
-    return choice;
-  }
-
-  simulate_ui(idx) {
-    let choice = prompt(`showing UI${Number(idx) + 1}`, '1 for y, 0 for no');
-    return Number(choice);
-  }
-}
-
-// TODO: @patrick: this is current hard coded to 3 values, please feel free to replace with a list (length = matching the number of options) of generated probabilities >0 && <1
-// I recommend making 1 or 2 options much higher than the others for ease of testing
-var env = new Simulator([0.1, 0.6, 0.8]);
-
-// ========= end bandit helper code ===============
+// Status update message
+const updateStatus = (message, ...args) =>
+  console.log('BANDIT PLAN', message, ...args);
 
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
-const modelName = 'bandit_th';
-const modelVersion = '1.0.0'; // TODO: @patrick this needs to match what you hosted... 3 option model vs 24 option model etc... usually 2.x.x is for 24 options
-const shouldRepeat = false;
+const modelName = 'bandit_th_24';
+const modelVersion = '1.0.1';
+
+// Define timeout
+const TIMEOUT = 20000;
 
 // Pick random values f.or the layout
 const pickValue = p => p[Math.floor(Math.random() * p.length)];
 
-// 24 possible configurations
-const appConfigPossibilities = {
-  heroBackground: ['black', 'gradient'],
-  buttonPosition: ['hero', 'vision'],
-  buttonIcon: ['arrow', 'user', 'code'],
-  buttonColor: ['blue', 'white']
-};
+// All possible UI options
+const UIOptions = [
+  ['black', 'gradient'], // heroBackground
+  ['hero', 'vision'], // buttonPosition
+  ['arrow', 'user', 'code'], // buttonIcon
+  ['blue', 'white'] // buttonColor
+]
+  .reduce((a, b) =>
+    a.reduce((r, v) => r.concat(b.map(w => [].concat(v, w))), [])
+  )
+  .map(([heroBackground, buttonPosition, buttonIcon, buttonColor]) => ({
+    heroBackground,
+    buttonPosition,
+    buttonIcon,
+    buttonColor
+  }));
 
-// intial config
-let appConfig = {
-  heroBackground: pickValue(appConfigPossibilities.heroBackground),
-  buttonPosition: pickValue(appConfigPossibilities.buttonPosition),
-  buttonIcon: pickValue(appConfigPossibilities.buttonIcon),
-  buttonColor: pickValue(appConfigPossibilities.buttonColor)
-};
+// Pick one of the possible UI's to display to the user
+const appConfig = pickValue(UIOptions);
 
-// All ui options as a flat list
-const UIOptions = {
-  0: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'arrow',
-    buttonColor: 'blue'
-  },
-  1: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'arrow',
-    buttonColor: 'white'
-  },
-  2: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'user',
-    buttonColor: 'blue'
-  },
-  3: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'user',
-    buttonColor: 'white'
-  },
-  4: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'code',
-    buttonColor: 'blue'
-  },
-  5: {
-    heroBackground: 'black',
-    buttonPosition: 'hero',
-    buttonIcon: 'code',
-    buttonColor: 'white'
-  },
-  6: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'arrow',
-    buttonColor: 'blue'
-  },
-  7: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'arrow',
-    buttonColor: 'white'
-  },
-  8: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'user',
-    buttonColor: 'blue'
-  },
-  9: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'user',
-    buttonColor: 'white'
-  },
-  10: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'code',
-    buttonColor: 'blue'
-  },
-  11: {
-    heroBackground: 'black',
-    buttonPosition: 'vision',
-    buttonIcon: 'code',
-    buttonColor: 'white'
-  },
-  12: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'arrow',
-    buttonColor: 'blue'
-  },
-  13: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'arrow',
-    buttonColor: 'white'
-  },
-  14: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'user',
-    buttonColor: 'blue'
-  },
-  15: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'user',
-    buttonColor: 'white'
-  },
-  16: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'code',
-    buttonColor: 'blue'
-  },
-  17: {
-    heroBackground: 'gradient',
-    buttonPosition: 'hero',
-    buttonIcon: 'code',
-    buttonColor: 'white'
-  },
-  18: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'arrow',
-    buttonColor: 'blue'
-  },
-  19: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'arrow',
-    buttonColor: 'white'
-  },
-  20: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'user',
-    buttonColor: 'blue'
-  },
-  21: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'user',
-    buttonColor: 'white'
-  },
-  22: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'code',
-    buttonColor: 'blue'
-  },
-  23: {
-    heroBackground: 'gradient',
-    buttonPosition: 'vision',
-    buttonIcon: 'code',
-    buttonColor: 'white'
-  }
-};
-
-// time out code
-const TIMEOUT = 20000;
-
+// Has a value already been submitted?
 let hasSubmittedValue = false;
-let action;
 
-const n_options = Object.keys(UIOptions).length;
-let pick = Math.floor(Math.random() * n_options); // note: pick is set later in the code (sampled based on model params)
-appConfig = UIOptions[pick];
-
-// Set up an event listener for the button when it's clicked
-// TODO: @maddie - Submit the diff for a positive button click here...
-const onButtonClick = () => {
+const submitPositiveResult = () => {
   if (!hasSubmittedValue) {
-    action = 1;
     hasSubmittedValue = true;
+
     console.log(
       'Clicked the button! Send a positive result for config',
       appConfig
@@ -243,25 +58,25 @@ const onButtonClick = () => {
   }
 };
 
-// @patrick: this is so I can simulate a no response without waiting by pressing x for the demo
-document.addEventListener('keyup', e => {
-  if (e.code === 'KeyX') {
-    action = 0;
+const submitNegativeResult = () => {
+  if (!hasSubmittedValue) {
     hasSubmittedValue = true;
-    console.log("didn't click, send negative result for config", appConfig);
+
+    console.log(
+      "Didn't click the button! Send a negative result for config",
+      appConfig
+    );
   }
-});
+};
 
-setTimeout(() => {
-  action = 0;
-  hasSubmittedValue = true;
-  console.log("didn't click, send negative result for config", appConfig);
-}, TIMEOUT);
+// When the user clicks the button... send a positive result
+const onButtonClick = submitPositiveResult;
 
-window.addEventListener('beforeunload', e => {
-  action = 0;
-  hasSubmittedValue = true;
-  console.log("didn't click, send negative result for config", appConfig);
+// When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
+setTimeout(submitNegativeResult, TIMEOUT);
+window.addEventListener('beforeunload', submitNegativeResult);
+document.addEventListener('keyup', e => {
+  if (e.code === 'KeyX') submitNegativeResult();
 });
 
 // Start React
@@ -269,157 +84,173 @@ render(
   <App
     config={appConfig}
     onButtonClick={onButtonClick}
-    start={() => startFL(url, modelName, modelVersion, shouldRepeat)}
+    start={() => startFL(url, modelName, modelVersion)}
   />,
   document.getElementById('root')
 );
 
 // Main start method
-const startFL = async (
-  url,
-  modelName,
-  modelVersion,
-  authToken = null,
-  shouldRepeat
-) => {
+const startFL = async (url, modelName, modelVersion, authToken = null) => {
+  // TODO: @patrick: Not sure what this simulator class does...
+  class Simulator {
+    constructor(rates) {
+      this.rates = rates;
+      this.action_space = Array(rates.length);
+    }
+
+    simulate(idx) {
+      const binomial_sample = accept_rate =>
+        Math.random() < accept_rate ? 1 : 0;
+
+      let choice = binomial_sample(this.rates[idx]);
+
+      console.log(`simulated ${choice} for UI${idx}`);
+
+      return choice;
+    }
+
+    simulate_ui(idx) {
+      let choice = prompt(`showing UI${Number(idx) + 1}`, '1 for y, 0 for no');
+
+      return Number(choice);
+    }
+  }
+
+  // TODO: @patrick: this is current hard coded to 3 values, please feel free to replace with a list (length = matching the number of options) of generated probabilities >0 && <1
+  // I recommend making 1 or 2 options much higher than the others for ease of testing
+  const env = new Simulator([0.1, 0.6, 0.8]);
+
+  // Define the worker and the job
   const worker = new Syft({ url, authToken, verbose: true });
   const job = await worker.newJob({ modelName, modelVersion });
 
+  // Immediately start the cycle
+  updateStatus('Starting job request...');
   job.start();
 
-  job.on('accepted', async ({ model, clientConfig }) => {
+  // When we've been accepted into the cycle...
+  job.on('accepted', async ({ model }) => {
     updateStatus('Accepted into cycle!');
-    alert('Accepted into cycle!');
 
-    // Copy model to train it.
+    // Arg max function
+    const argMax = d =>
+      Object.entries(d).filter(
+        el => el[1] == Math.max(...Object.values(d))
+      )[0][0];
+
+    // Copy model params
     let modelParams = [];
     for (let param of model.params) {
       modelParams.push(param.clone());
     }
+    updateStatus('Copying model params');
 
-    let n = 1;
+    // Get alphas and betas from model params
     let alphas = modelParams[2];
     let betas = modelParams[3];
-    let samples_from_beta_distr = {};
-    console.log('init_____________________, alpha, beta', alphas, betas);
+    updateStatus('Getting alphas and betas from model params', alphas, betas);
 
-    alphas.array().then(array => console.log('alpha', array));
-    betas.array().then(array => console.log('beta', array));
+    // Convert them to an array
+    const alphasArray = await alphas.array();
+    const betasArray = await betas.array();
+    updateStatus(
+      'Concerted alphas and betas into an array',
+      alphasArray,
+      betasArray
+    );
 
-    let ts = 0;
+    // Create an array to hold samples from the beta distribution
+    const samplesFromBetaDist = [];
 
-    console.log('init_sample_from_beta', samples_from_beta_distr);
+    // Create a reward and sample vector
+    let rewardVector;
+    let sampledVector;
 
-    var alphas_arr = await alphas.array();
-    var betas_arr = await betas.array();
-    var rwd_vec;
-    var sampled_vec;
+    // Define the number of samples
+    const numSamples = 1;
 
-    for (let i = 1; i < n + 1; i++) {
-      // convert to array
-      const blank_vec = Array(3).fill(Number(0.0)); // TODO: change 3 to var:n_options, current is 3 because I am testing using a simpler model (only 3 choices)
-      rwd_vec = tf.tensor(blank_vec);
-      sampled_vec = tf.tensor(blank_vec);
+    for (let i = 1; i <= numSamples; i++) {
+      updateStatus(`Entering outer loop for ${i} time`);
 
-      rwd_vec = await rwd_vec.array();
-      sampled_vec = await sampled_vec.array();
-      for (let opt = 0; opt < alphas_arr.length; opt++) {
-        samples_from_beta_distr[opt] = beta_sample(
-          alphas_arr[opt],
-          betas_arr[opt]
+      const blankVector = tf.zeros([UIOptions.length], 'float32');
+      updateStatus('Creating a blank vector', blankVector);
+
+      rewardVector = await blankVector.array();
+      sampledVector = await blankVector.array();
+      updateStatus(
+        'Setting it as the reward and sampled vector, and converting those to arrays',
+        rewardVector,
+        sampledVector
+      );
+
+      for (let opt = 0; opt < alphasArray.length; opt++) {
+        updateStatus(`Entering inner loop for ${opt} time`);
+
+        samplesFromBetaDist[opt] = jStat.beta.sample(
+          alphasArray[opt],
+          betasArray[opt]
         );
+
+        updateStatus('Got samples from beta distribution', samplesFromBetaDist);
       }
 
-      let selected_action = arg_max(samples_from_beta_distr);
-      pick = selected_action;
       // TODO: @patrick we need to rerender based on the pick here
-      // the reason is, if we don't render based on the latest learned params, we won't "gradually show the most optimal UI"
-      // maybe setup a "loading screen that explains the exp/demo" for better Ux otherwise user will be shown 2 diff layouts
+      // The reason is, if we don't render based on the latest learned params, we won't "gradually show the most optimal UI"
+      // Maybe setup a "loading screen that explains the exp/demo" for better UX otherwise user will be shown 2 diff layouts
+      let selectedAction = argMax(samplesFromBetaDist);
+      updateStatus('Have the desired selected action', selectedAction);
 
-      // block and wait for user actions, get the value of var action
       // TODO: @patrick this needs to block and wait until we get a user action / aka when hasSubmittedValue becomes True
-      // note: you can change this to env.simulate_ui to get a alert that mocks user interactions
-      let reward = env.simulate(selected_action);
+      // Note: you can change this to env.simulate_ui to get a alert that mocks user interactions
+      let reward = env.simulate(selectedAction);
+      updateStatus('Simulate the reward', reward);
 
-      rwd_vec[selected_action] = reward;
-      sampled_vec[selected_action] = 1;
+      rewardVector[selectedAction] = reward;
+      sampledVector[selectedAction] = 1;
+      updateStatus(
+        'New reward and sampled vector (1)',
+        rewardVector,
+        sampledVector
+      );
 
-      console.log(208, 'rwd_vec / sampled_vec', rwd_vec, sampled_vec);
+      rewardVector = tf.tensor(rewardVector);
+      sampledVector = tf.tensor(sampledVector);
+      updateStatus(
+        'New reward and sampled vector (2)',
+        rewardVector,
+        sampledVector
+      );
 
-      // conver to tensor
-      rwd_vec = tf.tensor(rwd_vec);
-      sampled_vec = tf.tensor(sampled_vec);
-
-      let new_alphas, new_betas;
-      [new_alphas, new_betas] = await job.plans['training_plan'].execute(
+      const [newAlphas, newBetas] = await job.plans['training_plan'].execute(
         job.worker,
-        rwd_vec,
-        sampled_vec,
+        rewardVector,
+        sampledVector,
         alphas,
         betas
       );
-      alphas = new_alphas;
-      betas = new_betas;
-      console.log(`iters_____________________${i}, NEW alpha, beta`);
-      alphas.array().then(array => console.log('alpha', array));
-      betas.array().then(array => console.log('betas', array));
+
+      updateStatus('Plan executed', newAlphas, newBetas);
+
+      alphas = newAlphas;
+      betas = newBetas;
+      updateStatus('Resetting alphas and betas', alphas, betas);
     }
 
-    console.log('FINAL_____________________, alpha, beta');
-    alphas.array().then(array => console.log('alpha', array));
-    betas.array().then(array => console.log('beta', array));
+    let updatedModelParams = modelParams;
 
-    let updated_model_params = modelParams;
-    updated_model_params[3] = betas;
-    updated_model_params[2] = alphas;
-    alphas.print();
-    betas.print();
-    console.log(
-      'final updated_model_params',
-      updated_model_params,
-      alphas,
-      betas
-    );
+    updatedModelParams[2] = alphas;
+    updatedModelParams[3] = betas;
+    updateStatus('Setting updated model params', updatedModelParams);
 
-    // @patrick: please leave this here because we may want to update plots
-    //   await updateAfterBatch({
-    //     epoch,
-    //     batch,
-    //     accuracy: await acc.array(),
-    //     loss: await loss.array()
-    //   });
-
-    //   batch++;
-
-    //   // Check if we're out of batches (end of epoch)
-    //   if (batch === numBatches) {
-    //     batch = 0;
-    //     epoch++;
-    //   }
-
-    //   // Free GPU memory // model is small enough to not need this
-    //   acc.dispose();
-    //   loss.dispose();
-    //   dataBatch.dispose();
-    //   targetBatch.dispose();
-    // }
-
-    // // Free GPU memory // model is small enough to not need this
-    // data.dispose();
-    // targets.dispose();
-
-    // // Report diff
-    const modelDiff = await model.createSerializedDiff(updated_model_params);
-
+    // Report diff
+    const modelDiff = await model.createSerializedDiff(updatedModelParams);
     await job.report(modelDiff);
-    updateStatus('Cycle is done!');
+    updateStatus('Reported diff');
 
-    // Try again...
-    if (shouldRepeat) {
-      setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
-    }
+    updateStatus('Cycle is done!');
   });
 
+  // When we've been rejected from the cycle...
   job.on('rejected', ({ timeout }) => {
     // Handle the job rejection
     if (timeout) {
@@ -427,32 +258,17 @@ const startFL = async (
 
       // Try to join the job again in "msUntilRetry" milliseconds
       updateStatus(`Rejected from cycle, retry in ${timeout}`);
+
       setTimeout(job.start.bind(job), msUntilRetry);
     } else {
       updateStatus(
-        `Rejected from cycle with no timeout, assuming Model training is complete.`
+        `Rejected from cycle with no timeout, assuming model training is complete.`
       );
     }
   });
 
+  // When there's an error in the cycle...
   job.on('error', err => {
-    updateStatus(`Error: ${err.message}`);
+    updateStatus(`Error: ${err.message}`, err);
   });
-};
-
-// Status update message
-const updateStatus = message => {
-  console.log('STATUS', message);
-};
-
-// Log statistics after each batch
-const updateAfterBatch = async ({ epoch, batch, accuracy, loss }) => {
-  console.log(
-    `Epoch: ${epoch}`,
-    `Batch: ${batch}`,
-    `Accuracy: ${accuracy}`,
-    `Loss: ${loss}`
-  );
-
-  await tf.nextFrame();
 };
