@@ -1,3 +1,10 @@
+/*
+  Current problems:
+  - Getting rejected from cycles potentially dozens of times until being accepted
+  - Not submitting diff when button is clicked or timeout is hit
+  - UI is not waiting for optimized layout to load
+*/
+
 // Import core dependencies
 import React from 'react';
 import { render } from 'react-dom';
@@ -15,8 +22,8 @@ const updateStatus = (message, ...args) =>
 
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
-const modelName = 'bandit_th_24';
-const modelVersion = '1.0.1';
+const modelName = 'bandit';
+const modelVersion = '1.0.0';
 
 // Define timeout
 const TIMEOUT = 20000;
@@ -170,8 +177,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     const numSamples = 1;
 
     for (let i = 1; i <= numSamples; i++) {
-      updateStatus(`Entering outer loop for ${i} time`);
-
       const blankVector = tf.zeros([UIOptions.length], 'float32');
       updateStatus('Creating a blank vector', blankVector);
 
@@ -184,8 +189,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
       );
 
       for (let opt = 0; opt < alphasArray.length; opt++) {
-        updateStatus(`Entering inner loop for ${opt} time`);
-
         samplesFromBetaDist[opt] = jStat.beta.sample(
           alphasArray[opt],
           betasArray[opt]
@@ -207,16 +210,18 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
 
       rewardVector[selectedAction] = reward;
       sampledVector[selectedAction] = 1;
+      rewardVector = tf.tensor(rewardVector);
+      sampledVector = tf.tensor(sampledVector);
       updateStatus(
-        'New reward and sampled vector (1)',
+        'New reward and sampled vector',
         rewardVector,
         sampledVector
       );
 
-      rewardVector = tf.tensor(rewardVector);
-      sampledVector = tf.tensor(sampledVector);
+      rewardVector[selectedAction] = tf.tensor(reward);
+      sampledVector[selectedAction] = tf.tensor(1);
       updateStatus(
-        'New reward and sampled vector (2)',
+        'New reward and sampled vector',
         rewardVector,
         sampledVector
       );
@@ -228,7 +233,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         alphas,
         betas
       );
-
       updateStatus('Plan executed', newAlphas, newBetas);
 
       alphas = newAlphas;
