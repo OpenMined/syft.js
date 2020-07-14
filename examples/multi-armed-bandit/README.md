@@ -10,7 +10,7 @@ While this demo is inherently simple, it's easy to see how one could extend it t
 ## Quick Start
 
 1. Install and start [PyGrid](https://github.com/OpenMined/pygrid)
-2. Install [PySyft](https://github.com/OpenMined/PySyft) and ... TODO: @maddie - fill this in here
+2. Install [PySyft](https://github.com/OpenMined/PySyft) and run the [Bandit create plan](<https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2003%20-%20Create%20Plan%20(Bandit%20Demo).ipynb>).
 3. Now back in this folder, execute `npm install`
 4. And then execute `npm start`
 
