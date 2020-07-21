@@ -54,8 +54,14 @@ export class SpeedTest {
 
       req.onreadystatechange = () => {
         if (xhr.readyState === 1) {
+          // as soon as connection is opened
           // set speed test timeout
           timeoutHandler = setTimeout(finish, this.maxTestTimeSec * 1000);
+          // set initial time/size values
+          if (!prevTime) {
+            prevTime = Date.now() / 1000;
+            prevSize = 0;
+          }
         }
       };
 
@@ -76,9 +82,8 @@ export class SpeedTest {
           speed = deltaSize / deltaTime;
 
         if (deltaTime === 0 || !Number.isFinite(speed)) {
-          prevTime = time;
-          prevSize = size;
-          return;
+          // cap to 1Gbps
+          speed = 1000;
         }
 
         const canStop = avgCollector.collect(speed);
@@ -191,7 +196,14 @@ export class SpeedTest {
 }
 
 /**
- * Helper to average series of values
+ * Helper to average series of values.
+ *
+ * @private
+ * @param options {Object}
+ * @param options.avgWindow {number} Window to average (last N measurements)
+ * @param options.lowJitterThreshold {number} Change of avg considered stable
+ * @param maxLowJitterConsecutiveMeasures {number} Number of measures
+ *  when avg stays stable to stop collecting more samples
  */
 class AvgCollector {
   constructor({
@@ -210,6 +222,11 @@ class AvgCollector {
     this.name = name;
   }
 
+  /**
+   * Collects one sample for averaging.
+   * @param value {number} Reported speed
+   * @returns {boolean} Can stop collecting due to average value stability
+   */
   collect(value) {
     this.prevAvg = this.avg;
     const avgWindow = Math.min(this.measuresCount, this.avgWindow);
@@ -227,13 +244,9 @@ class AvgCollector {
       this.lowJitterConsecutiveMeasures = 0;
     }
 
-    if (
+    return (
       this.lowJitterConsecutiveMeasures >= this.maxLowJitterConsecutiveMeasures
-    ) {
-      return true;
-    }
-
-    return false;
+    );
   }
 
   getAvg() {
