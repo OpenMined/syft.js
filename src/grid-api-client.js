@@ -4,12 +4,12 @@ import { GRID_ERROR } from './_errors';
 import EventObserver from './events';
 
 const HTTP_PATH_VERB = {
-  'federated/get-plan': 'GET',
-  'federated/get-model': 'GET',
-  'federated/get-protocol': 'GET',
-  'federated/cycle-request': 'POST',
-  'federated/report': 'POST',
-  'federated/authenticate': 'POST'
+  'model_centric/get-plan': 'GET',
+  'model_centric/get-model': 'GET',
+  'model_centric/get-protocol': 'GET',
+  'model_centric/cycle-request': 'POST',
+  'model_centric/report': 'POST',
+  'model_centric/authenticate': 'POST'
 };
 
 export default class GridAPIClient {
@@ -42,7 +42,7 @@ export default class GridAPIClient {
       `Authenticating against ${modelName} ${modelVersion} with ${authToken}...`
     );
 
-    const response = await this._send('federated/authenticate', {
+    const response = await this._send('model_centric/authenticate', {
       model_name: modelName,
       model_version: modelVersion,
       auth_token: authToken
@@ -56,7 +56,7 @@ export default class GridAPIClient {
       `[WID: ${workerId}] Requesting cycle for model ${modelName} v.${modelVersion} [${ping}, ${download}, ${upload}]...`
     );
 
-    const response = this._send('federated/cycle-request', {
+    const response = this._send('model_centric/cycle-request', {
       worker_id: workerId,
       model: modelName,
       version: modelVersion,
@@ -74,7 +74,7 @@ export default class GridAPIClient {
     );
 
     const response = await this._sendHttp(
-      'federated/get-model',
+      'model_centric/get-model',
       {
         worker_id: workerId,
         request_key: requestKey,
@@ -91,7 +91,7 @@ export default class GridAPIClient {
     );
 
     const response = await this._sendHttp(
-      'federated/get-plan',
+      'model_centric/get-plan',
       {
         worker_id: workerId,
         request_key: requestKey,
@@ -118,7 +118,7 @@ export default class GridAPIClient {
       `[WID: ${workerId}, KEY: ${requestKey}] Submitting report...`
     );
 
-    const response = await this._send('federated/report', {
+    const response = await this._send('model_centric/report', {
       worker_id: workerId,
       request_key: requestKey,
       diff
@@ -131,19 +131,19 @@ export default class GridAPIClient {
     const speedTest = new SpeedTest({
       downloadUrl:
         this.httpUrl +
-        '/federated/speed-test?worker_id=' +
+        '/model_centric/speed-test?worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
         Math.random(),
       uploadUrl:
         this.httpUrl +
-        '/federated/speed-test?worker_id=' +
+        '/model_centric/speed-test?worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
         Math.random(),
       pingUrl:
         this.httpUrl +
-        '/federated/speed-test?is_ping=1&worker_id=' +
+        '/model_centric/speed-test?is_ping=1&worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
         Math.random()

@@ -114,7 +114,7 @@ export default class Job {
 
   /**
    * Starts the Job executing following actions:
-   *  * Meters connection speed to PyGrid.
+   *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.
    *  * Downloads Plans, Model, Protocols.
@@ -123,15 +123,13 @@ export default class Job {
    * @fires Job#accepted
    * @fires Job#rejected
    * @fires Job#error
-   * @param {Object} options
-   * @param {boolean} options.skipGridSpeedTest When true, skips the speed test before requesting a cycle.
    * @returns {Promise<void>}
    */
-  async start({ skipGridSpeedTest = false } = {}) {
+  async start() {
     let cycleParams;
     try {
       let [ping, download, upload] = [0, 0, 0];
-      if (!skipGridSpeedTest) {
+      if (this.worker.requires_speed_test) {
         // speed test
         ({ ping, download, upload } = await this.grid.getConnectionSpeed(
           this.worker.worker_id
