@@ -55,7 +55,7 @@ export class GridMock {
   setModel(model_id, data, status = 200) {
     this._setHttpResponse(
       'get',
-      `http://${this.hostname}:${this.port}/federated/get-model`,
+      `http://${this.hostname}:${this.port}/model_centric/get-model`,
       { model_id },
       data,
       status
@@ -65,7 +65,7 @@ export class GridMock {
   setPlan(plan_id, data, status = 200) {
     this._setHttpResponse(
       'get',
-      `http://${this.hostname}:${this.port}/federated/get-plan`,
+      `http://${this.hostname}:${this.port}/model_centric/get-plan`,
       { plan_id },
       data,
       status
@@ -76,7 +76,7 @@ export class GridMock {
     const data = JSON.parse(message);
     this.wsMessagesHistory.push(data);
     switch (data.type) {
-      case 'federated/authenticate':
+      case 'model_centric/authenticate':
         socket.send(
           JSON.stringify({
             type: data.type,
@@ -85,7 +85,7 @@ export class GridMock {
         );
         break;
 
-      case 'federated/cycle-request':
+      case 'model_centric/cycle-request':
         socket.send(
           JSON.stringify({
             type: data.type,
@@ -94,7 +94,7 @@ export class GridMock {
         );
         break;
 
-      case 'federated/report':
+      case 'model_centric/report':
         socket.send(
           JSON.stringify({
             type: data.type,
