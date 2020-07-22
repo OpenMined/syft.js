@@ -1,6 +1,6 @@
 {
   "name": "@openmined/syft.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Javascript Syft worker in the browser",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
