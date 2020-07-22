@@ -65,7 +65,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       job.on('rejected', function({ timeout }) {
         expect(this).toBeInstanceOf(Job);
@@ -130,7 +130,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       job.on('accepted', function({ model, clientConfig }) {
         expect(this).toBeInstanceOf(Job);
@@ -165,7 +165,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       job.on('rejected', function({ timeout }) {
         expect(this).toBeInstanceOf(Job);
@@ -209,7 +209,7 @@ describe('Syft', () => {
         modelVersion: '1.2.3'
       });
 
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       job.on('accepted', async function({ model, clientConfig }) {
         expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);
@@ -270,7 +270,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       expect.assertions(2);
       job.on('error', err => {
@@ -309,7 +309,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       expect.assertions(2);
       job.on('error', err => {
@@ -346,7 +346,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       expect.assertions(2);
       job.on('error', err => {
@@ -382,7 +382,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       expect.assertions(2);
       job.on('error', err => {
@@ -419,7 +419,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3'
       });
-      job.start({ skipGridSpeedTest: true });
+      job.start();
 
       expect.assertions(2);
       job.on('error', err => {
@@ -471,8 +471,8 @@ describe('Syft', () => {
         modelVersion: '1.2.3'
       });
 
-      job1.start({ skipGridSpeedTest: true });
-      job2.start({ skipGridSpeedTest: true });
+      job1.start();
+      job2.start();
 
       const onAccepted = async function({ model, clientConfig }) {
         expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);

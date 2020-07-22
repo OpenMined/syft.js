@@ -48,6 +48,7 @@ export default class Syft {
     this.observer = new EventObserver();
 
     this.worker_id = null;
+    this.requires_speed_test = false;
     this.peerConfig = peerConfig;
     this.authToken = authToken;
   }
@@ -70,6 +71,7 @@ export default class Syft {
         this.authToken
       );
       this.worker_id = authResponse.worker_id;
+      this.requires_speed_test = authResponse.requires_speed_test || false;
     }
 
     return new Job({
