@@ -45,16 +45,16 @@ Syft client for static federated learning.
 const client = new Syft({url: "ws://localhost:5000", verbose: true})
 const job = client.newJob({modelName: "mnist", modelVersion: "1.0.0"})
 job.on('accepted', async ({model, clientConfig}) => {
-  // execute training
+  // Execute training
   const [...newParams] = await this.plans['...'].execute(...)
   const diff = await model.createSerializedDiff(newParams)
   await this.report(diff)
 })
 job.on('rejected', ({timeout}) => {
-  // re-try later or stop
+  // Retry later or stop
 })
 job.on('error', (err) => {
-  // handle errors
+  // Handle errors
 })
 job.start()
 ```
@@ -70,7 +70,7 @@ Authenticates the client against PyGrid and instantiates new Job with given opti
     -   `options.modelVersion` **[string][26]** FL Model version.
 
 
--   Throws **any** Error
+-   Throws **any** Error if grid client authentication failed.
 
 Returns **[Promise][28]&lt;[Job][29]>** 
 
