@@ -93,7 +93,7 @@ Available events: `accepted`, `rejected`, `error`.
 #### Parameters
 
 -   `event` **[string][26]** Event name.
--   `handler` **[function][32]** Event listener.
+-   `handler` **[Function][32]** Event listener.
 
 ### start
 
@@ -138,7 +138,7 @@ Type: [Object][25]
 
 ### Properties
 
--   `timeout` **([number][34] | null)** Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+-   `timeout` **([number][34] | null)** Time in seconds to retry. Empty when the FL model is not trainable anymore.
 
 ## Job#error
 
