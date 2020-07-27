@@ -29,7 +29,7 @@ export default class Job {
     this.logger = new Logger();
     this.observer = new EventObserver();
 
-    // Parameters to be loaded from grid
+    // Parameters to be loaded from PyGrid
     this.model = null;
     this.plans = {};
     this.protocols = {};
@@ -44,7 +44,7 @@ export default class Job {
    * Available events: `accepted`, `rejected`, `error`.
    *
    * @param {string} event - Event name.
-   * @param {function} handler - Event listener.
+   * @param {Function} handler - Event listener.
    */
   on(event, handler) {
     if (['accepted', 'rejected', 'error'].includes(event)) {
@@ -129,14 +129,14 @@ export default class Job {
     let cycleParams;
     try {
       let [ping, download, upload] = [0, 0, 0];
+      // Test connection speed if required
       if (this.worker.requires_speed_test) {
-        // speed test
         ({ ping, download, upload } = await this.grid.getConnectionSpeed(
           this.worker.worker_id
         ));
       }
 
-      // Request cycle to PyGrid
+      // Client request to join an active federated learning cycle on PyGrid
       cycleParams = await this.grid.requestCycle(
         this.worker.worker_id,
         this.modelName,
@@ -146,8 +146,8 @@ export default class Job {
         upload
       );
 
+      // If the client's job request is accepted, load the model, plans, protocols, etc.
       if (cycleParams.status === CYCLE_STATUS_ACCEPTED) {
-        // Load model, plans, protocols, etc.
         this.logger.log(
           `Accepted into cycle with params: ${JSON.stringify(
             cycleParams,
@@ -158,6 +158,7 @@ export default class Job {
         await this.initCycle(cycleParams);
       }
 
+      // Throw an error if the request is neither accepted nor rejected
       if (
         ![CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED].includes(
           cycleParams.status
@@ -185,8 +186,8 @@ export default class Job {
          *
          * @event Job#accepted
          * @type {Object}
-         * @property {SyftModel} model Instance of SyftModel.
-         * @property {Object} clientConfig Client configuration returned by PyGrid.
+         * @property {SyftModel} model - Instance of SyftModel.
+         * @property {Object} clientConfig - Client configuration returned by PyGrid.
          */
         this.observer.broadcast('accepted', {
           model: this.model,
@@ -205,7 +206,7 @@ export default class Job {
          *
          * @event Job#rejected
          * @type {Object}
-         * @property {number|null} timeout Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+         * @property {number|null} timeout - Time in seconds to retry. Empty when the FL model is not trainable anymore.
          */
         this.observer.broadcast('rejected', {
           timeout: cycleParams.timeout,
