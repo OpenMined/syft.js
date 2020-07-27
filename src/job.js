@@ -8,18 +8,18 @@ import Logger from './logger';
 /**
  * Job represents a single training cycle done by the client.
  *
- * @property {Object.<string, Plan>} plans Plans dictionary.
- * @property {Object.<string, Protocol>} protocols [not implemented] Protocols dictionary.
- * @property {SyftModel} model Model.
+ * @property {Object.<string, Plan>} plans - Plans dictionary.
+ * @property {Object.<string, Protocol>} protocols - [not implemented] Protocols dictionary.
+ * @property {SyftModel} model - Model.
  */
 export default class Job {
   /**
    * @hideconstructor
    * @param {object} options
-   * @param {Syft} options.worker Instance of Syft client.
-   * @param {string} options.modelName Model name.
-   * @param {string} options.modelVersion Model version.
-   * @param {GridAPIClient} options.gridClient Instance of GridAPIClient.
+   * @param {Syft} options.worker - Instance of Syft client.
+   * @param {string} options.modelName - Model name.
+   * @param {string} options.modelVersion - Model version.
+   * @param {GridAPIClient} options.gridClient - Instance of GridAPIClient.
    */
   constructor({ worker, modelName, modelVersion, gridClient }) {
     this.worker = worker;
@@ -39,12 +39,12 @@ export default class Job {
   }
 
   /**
-   * Registers an event listener.
+   * Registers an event listener to the Job's event observer.
    *
    * Available events: `accepted`, `rejected`, `error`.
    *
-   * @param {string} event Event name.
-   * @param {function} handler Event handler.
+   * @param {string} event - Event name.
+   * @param {function} handler - Event listner.
    */
   on(event, handler) {
     if (['accepted', 'rejected', 'error'].includes(event)) {
@@ -113,7 +113,7 @@ export default class Job {
   }
 
   /**
-   * Starts the Job executing following actions:
+   * Starts the Job by executing following actions:
    *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.

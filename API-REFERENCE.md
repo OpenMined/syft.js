@@ -86,18 +86,18 @@ Job represents a single training cycle done by the client.
 
 ### on
 
-Registers an event listener.
+Registers an event listener to the Job's event observer.
 
 Available events: `accepted`, `rejected`, `error`.
 
 #### Parameters
 
 -   `event` **[string][26]** Event name.
--   `handler` **[function][32]** Event handler.
+-   `handler` **[function][32]** Event listner.
 
 ### start
 
-Starts the Job executing following actions:
+Starts the Job by executing following actions:
 
 -   Meters connection speed to PyGrid (if requested by PyGrid).
 -   Registers into training cycle on PyGrid.
