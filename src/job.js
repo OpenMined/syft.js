@@ -29,11 +29,11 @@ export default class Job {
     this.logger = new Logger();
     this.observer = new EventObserver();
 
-    // parameters loaded from grid
+    // Parameters to be loaded from grid
     this.model = null;
     this.plans = {};
     this.protocols = {};
-    // holds request_key
+    // Parameter for hosting request_key
     this.cycleParams = {};
     this.clientConfig = {};
   }
@@ -44,7 +44,7 @@ export default class Job {
    * Available events: `accepted`, `rejected`, `error`.
    *
    * @param {string} event - Event name.
-   * @param {function} handler - Event listner.
+   * @param {function} handler - Event listener.
    */
   on(event, handler) {
     if (['accepted', 'rejected', 'error'].includes(event)) {
@@ -66,7 +66,7 @@ export default class Job {
     this.cycleParams = cycleParams;
     this.clientConfig = cycleParams.client_config;
 
-    // load the model
+    // Load the model returned by PyGrid
     const modelData = await this.grid.getModel(
       this.worker.worker_id,
       cycleParams.request_key,
@@ -74,10 +74,10 @@ export default class Job {
     );
     this.model = new SyftModel({
       worker: this.worker,
-      modelData
+      modelData,
     });
 
-    // load all plans
+    // Load all Plans
     for (let planName of Object.keys(cycleParams.plans)) {
       const planId = cycleParams.plans[planName];
       const planBinary = await this.grid.getPlan(
@@ -96,7 +96,7 @@ export default class Job {
       }
     }
 
-    // load all protocols
+    // Load all protocols
     for (let protocolName of Object.keys(cycleParams.protocols)) {
       const protocolId = cycleParams.protocols[protocolName];
       const protocolBinary = await this.grid.getProtocol(
@@ -136,7 +136,7 @@ export default class Job {
         ));
       }
 
-      // request cycle
+      // Request cycle to PyGrid
       cycleParams = await this.grid.requestCycle(
         this.worker.worker_id,
         this.modelName,
@@ -147,7 +147,7 @@ export default class Job {
       );
 
       if (cycleParams.status === CYCLE_STATUS_ACCEPTED) {
-        // load model, plans, protocols, etc.
+        // Load model, plans, protocols, etc.
         this.logger.log(
           `Accepted into cycle with params: ${JSON.stringify(
             cycleParams,
@@ -190,7 +190,7 @@ export default class Job {
          */
         this.observer.broadcast('accepted', {
           model: this.model,
-          clientConfig: this.clientConfig
+          clientConfig: this.clientConfig,
         });
         break;
 
@@ -208,7 +208,7 @@ export default class Job {
          * @property {number|null} timeout Time in seconds to re-try. Empty when the FL model is not trainable anymore.
          */
         this.observer.broadcast('rejected', {
-          timeout: cycleParams.timeout
+          timeout: cycleParams.timeout,
         });
         break;
     }
