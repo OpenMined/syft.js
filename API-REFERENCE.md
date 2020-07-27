@@ -93,7 +93,7 @@ Available events: `accepted`, `rejected`, `error`.
 #### Parameters
 
 -   `event` **[string][26]** Event name.
--   `handler` **[function][32]** Event listner.
+-   `handler` **[function][32]** Event listener.
 
 ### start
 
