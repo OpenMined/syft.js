@@ -70,6 +70,7 @@ export default class Syft {
         this.authToken
       );
       this.worker_id = authResponse.worker_id;
+      // True if PyGrid requested to meter the speed
       this.requires_speed_test = authResponse.requires_speed_test || false;
     }
 
