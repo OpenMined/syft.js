@@ -32,7 +32,6 @@ export default class EventObserver {
    *
    * @param {string} eventType - Event type.
    * @param {Object} data - Data to be broadcasted.
-   * @returns TODO: Document what is returned
    */
   broadcast(eventType, data) {
     this.observers.forEach((observer) => {
