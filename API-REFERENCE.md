@@ -102,7 +102,7 @@ Starts the Job by executing following actions:
 -   Meters connection speed to PyGrid (if requested by PyGrid).
 -   Registers into training cycle on PyGrid.
 -   Retrieves cycle and client parameters.
--   Downloads Plans, Model, Protocols.
+-   Downloads the model, plans, protocols from PyGrid.
 -   Fires `accepted` event on success.
 
 Returns **[Promise][28]&lt;void>** 
