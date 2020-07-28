@@ -53,7 +53,8 @@ export default class Job {
   }
 
   /**
-   * Initializes the Job with provided training cycle params.
+   * Initializes the Job with provided training cycle params and
+   * downloads the model, plans, and protocols from PyGrid.
    *
    * @private
    * @param {Object} cycleParams
@@ -66,7 +67,7 @@ export default class Job {
     this.cycleParams = cycleParams;
     this.clientConfig = cycleParams.client_config;
 
-    // Load the model returned by PyGrid
+    // Load model
     const modelData = await this.grid.getModel(
       this.worker.worker_id,
       cycleParams.request_key,
@@ -77,7 +78,7 @@ export default class Job {
       modelData,
     });
 
-    // Load all Plans
+    // Load all plans
     for (let planName of Object.keys(cycleParams.plans)) {
       const planId = cycleParams.plans[planName];
       const planBinary = await this.grid.getPlan(
@@ -117,7 +118,7 @@ export default class Job {
    *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.
-   *  * Downloads Plans, Model, Protocols.
+   *  * Downloads the model, plans, protocols from PyGrid.
    *  * Fires `accepted` event on success.
    *
    * @fires Job#accepted
@@ -177,7 +178,7 @@ export default class Job {
       return;
     }
 
-    // Trigger events outside of try/catch.
+    // Trigger events for acacepted or rejected outside the try/catch.
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
         /**
@@ -218,7 +219,7 @@ export default class Job {
   /**
    * Submits the model diff to PyGrid.
    *
-   * @param {ArrayBuffer} diff Serialized difference between original and trained model parameters.
+   * @param {ArrayBuffer} diff - Serialized difference between original and trained model parameters.
    * @returns {Promise<void>}
    */
   async report(diff) {

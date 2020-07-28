@@ -28,7 +28,7 @@ export default class EventObserver {
   }
 
   /**
-   * Broadcasts a specific event type by invoking the appropriate event handler.
+   * Broadcasts a specific event type.
    *
    * @param {string} eventType - Event type.
    * @param {Object} data - Data to be broadcasted.
