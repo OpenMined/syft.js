@@ -9,11 +9,11 @@ export class GridMock {
     this.ws = new Server(`ws://${hostname}:${port}`);
 
     this.wsConnections = [];
-    this.ws.on('connection', socket => {
+    this.ws.on('connection', (socket) => {
       this.wsConnections.push(socket);
-      socket.on('message', message => this.messageHandler(socket, message));
-      socket.on('error', err => console.log('WS ERROR', err));
-      socket.on('close', err => console.log('WS CLOSE', err));
+      socket.on('message', (message) => this.messageHandler(socket, message));
+      socket.on('error', (err) => console.log('WS ERROR', err));
+      socket.on('close', (err) => console.log('WS CLOSE', err));
     });
 
     this.wsMessagesHistory = [];
@@ -45,8 +45,8 @@ export class GridMock {
         body: data,
         status,
         headers: {
-          'Content-Type': contentType
-        }
+          'Content-Type': contentType,
+        },
       },
       { sendAsJson: json }
     );
@@ -55,7 +55,7 @@ export class GridMock {
   setModel(model_id, data, status = 200) {
     this._setHttpResponse(
       'get',
-      `http://${this.hostname}:${this.port}/model_centric/get-model`,
+      `http://${this.hostname}:${this.port}/model-centric/get-model`,
       { model_id },
       data,
       status
@@ -65,7 +65,7 @@ export class GridMock {
   setPlan(plan_id, data, status = 200) {
     this._setHttpResponse(
       'get',
-      `http://${this.hostname}:${this.port}/model_centric/get-plan`,
+      `http://${this.hostname}:${this.port}/model-centric/get-plan`,
       { plan_id },
       data,
       status
@@ -76,29 +76,29 @@ export class GridMock {
     const data = JSON.parse(message);
     this.wsMessagesHistory.push(data);
     switch (data.type) {
-      case 'model_centric/authenticate':
+      case 'model-centric/authenticate':
         socket.send(
           JSON.stringify({
             type: data.type,
-            data: this.authResponse
+            data: this.authResponse,
           })
         );
         break;
 
-      case 'model_centric/cycle-request':
+      case 'model-centric/cycle-request':
         socket.send(
           JSON.stringify({
             type: data.type,
-            data: this.cycleResponse
+            data: this.cycleResponse,
           })
         );
         break;
 
-      case 'model_centric/report':
+      case 'model-centric/report':
         socket.send(
           JSON.stringify({
             type: data.type,
-            data: this.reportResponse
+            data: this.reportResponse,
           })
         );
         break;
