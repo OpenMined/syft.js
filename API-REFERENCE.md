@@ -29,7 +29,7 @@
 
 ## Syft
 
-Syft client for static federated learning.
+Syft client for model-centric federated learning.
 
 ### Parameters
 
