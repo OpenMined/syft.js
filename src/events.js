@@ -1,5 +1,5 @@
 /**
- * EventObserver is used by Syft, Job, and GridAPIClient to subscribe, unsubscribe or broadcast events.
+ * Event Observer that subscribes, unsubscribes and broadcasts events.
  *
  * @property {Object.<string, Function>} observers - Event dictionary.
  */

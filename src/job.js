@@ -178,7 +178,7 @@ export default class Job {
       return;
     }
 
-    // Trigger events for acacepted or rejected outside the try/catch.
+    // Trigger accepted or rejected event outside try/catch.
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
         /**
