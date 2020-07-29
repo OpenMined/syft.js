@@ -5,7 +5,7 @@ import Job from './job';
 import ObjectRegistry from './object-registry';
 
 /**
- * Syft client for static federated learning.
+ * Syft client for model-centric federated learning.
  *
  * @param {Object} options
  * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
