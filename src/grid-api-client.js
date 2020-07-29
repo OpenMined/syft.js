@@ -4,12 +4,12 @@ import { GRID_ERROR } from './_errors';
 import EventObserver from './events';
 
 const HTTP_PATH_VERB = {
-  'model_centric/get-plan': 'GET',
-  'model_centric/get-model': 'GET',
-  'model_centric/get-protocol': 'GET',
-  'model_centric/cycle-request': 'POST',
-  'model_centric/report': 'POST',
-  'model_centric/authenticate': 'POST'
+  'model-centric/get-plan': 'GET',
+  'model-centric/get-model': 'GET',
+  'model-centric/get-protocol': 'GET',
+  'model-centric/cycle-request': 'POST',
+  'model-centric/report': 'POST',
+  'model-centric/authenticate': 'POST',
 };
 
 export default class GridAPIClient {
@@ -42,10 +42,10 @@ export default class GridAPIClient {
       `Authenticating against ${modelName} ${modelVersion} with ${authToken}...`
     );
 
-    const response = await this._send('model_centric/authenticate', {
+    const response = await this._send('model-centric/authenticate', {
       model_name: modelName,
       model_version: modelVersion,
-      auth_token: authToken
+      auth_token: authToken,
     });
 
     return response;
@@ -56,13 +56,13 @@ export default class GridAPIClient {
       `[WID: ${workerId}] Requesting cycle for model ${modelName} v.${modelVersion} [${ping}, ${download}, ${upload}]...`
     );
 
-    const response = this._send('model_centric/cycle-request', {
+    const response = this._send('model-centric/cycle-request', {
       worker_id: workerId,
       model: modelName,
       version: modelVersion,
       ping: ping,
       download: download,
-      upload: upload
+      upload: upload,
     });
 
     return response;
@@ -74,11 +74,11 @@ export default class GridAPIClient {
     );
 
     const response = await this._sendHttp(
-      'model_centric/get-model',
+      'model-centric/get-model',
       {
         worker_id: workerId,
         request_key: requestKey,
-        model_id: modelId
+        model_id: modelId,
       },
       'arrayBuffer'
     );
@@ -91,12 +91,12 @@ export default class GridAPIClient {
     );
 
     const response = await this._sendHttp(
-      'model_centric/get-plan',
+      'model-centric/get-plan',
       {
         worker_id: workerId,
         request_key: requestKey,
         plan_id: planId,
-        receive_operations_as: 'tfjs'
+        receive_operations_as: 'tfjs',
       },
       'arrayBuffer'
     );
@@ -118,10 +118,10 @@ export default class GridAPIClient {
       `[WID: ${workerId}, KEY: ${requestKey}] Submitting report...`
     );
 
-    const response = await this._send('model_centric/report', {
+    const response = await this._send('model-centric/report', {
       worker_id: workerId,
       request_key: requestKey,
-      diff
+      diff,
     });
 
     return response;
@@ -131,35 +131,35 @@ export default class GridAPIClient {
     const speedTest = new SpeedTest({
       downloadUrl:
         this.httpUrl +
-        '/model_centric/speed-test?worker_id=' +
+        '/model-centric/speed-test?worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
         Math.random(),
       uploadUrl:
         this.httpUrl +
-        '/model_centric/speed-test?worker_id=' +
+        '/model-centric/speed-test?worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
         Math.random(),
       pingUrl:
         this.httpUrl +
-        '/model_centric/speed-test?is_ping=1&worker_id=' +
+        '/model-centric/speed-test?is_ping=1&worker_id=' +
         encodeURIComponent(workerId) +
         '&random=' +
-        Math.random()
+        Math.random(),
     });
 
     const ping = await speedTest.getPing();
     // start tests altogether
     const [download, upload] = await Promise.all([
       speedTest.getDownloadSpeed(),
-      speedTest.getUploadSpeed()
+      speedTest.getUploadSpeed(),
     ]);
 
     return {
       ping,
       download,
-      upload
+      upload,
     };
   }
 
@@ -182,20 +182,20 @@ export default class GridAPIClient {
 
     if (method === 'GET') {
       const query = Object.keys(data)
-        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(data[k]))
+        .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(data[k]))
         .join('&');
       response = await fetch(this.httpUrl + '/' + path + '?' + query, {
         method: 'GET',
-        mode: 'cors'
+        mode: 'cors',
       });
     } else {
       response = await fetch(this.httpUrl + '/' + path, {
         method: 'POST',
         mode: 'cors',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
     }
 
@@ -229,7 +229,7 @@ export default class GridAPIClient {
       const cleanUp = () => {
         // Remove all handlers related to message.
         this.wsMessageQueue = this.wsMessageQueue.filter(
-          item => item !== onMessage
+          (item) => item !== onMessage
         );
         this.observer.unsubscribe('ws-error', onError);
         this.observer.unsubscribe('ws-close', onClose);
@@ -241,7 +241,7 @@ export default class GridAPIClient {
         reject(new Error('Response timeout'));
       }, this.responseTimeout);
 
-      const onMessage = data => {
+      const onMessage = (data) => {
         if (data.type !== message.type) {
           this.logger.log('Received invalid response type, ignoring');
           return false;
@@ -250,7 +250,7 @@ export default class GridAPIClient {
         resolve(data.data);
       };
 
-      const onError = event => {
+      const onError = (event) => {
         cleanUp();
         reject(new Error(event));
       };
@@ -280,12 +280,12 @@ export default class GridAPIClient {
         this.ws = ws;
         resolve();
       };
-      ws.onerror = event => {
+      ws.onerror = (event) => {
         // couldn't connect
         this._handleWsError(event);
         reject(new Error(event));
       };
-      ws.onclose = event => {
+      ws.onclose = (event) => {
         // couldn't connect
         this._handleWsClose(event);
         reject(new Error('WS connection closed during connect'));

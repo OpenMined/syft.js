@@ -7,7 +7,9 @@
 ![OpenCollective](https://img.shields.io/opencollective/all/openmined)
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # Syft.js
@@ -55,7 +57,7 @@ If you're not using a package manager, you will be able to include Syft.js withi
 
 As a developer, there are few steps to building your own secure federated learning system upon the OpenMined infrastructure:
 
-1. :robot: [Develop ML model and training procedure](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2001%20-%20Create%20Plan.ipynb) (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft).
+1. :robot: [Develop ML model and training procedure](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2001%20-%20Create%20Plan.ipynb) (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft).
 1. :earth_americas: Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
 1. :tada: Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
 1. :lock: Securely aggregate trained user models in PyGrid.
@@ -96,7 +98,7 @@ job.on('accepted', async ({ model, clientConfig }) => {
   const batches = LOAD_DATA(batchSize);
 
   // Load model parameters.
-  let modelParams = model.params.map(p => p.clone());
+  let modelParams = model.params.map((p) => p.clone());
 
   // Main training loop.
   for (let [data, labels] of batches) {
@@ -127,7 +129,7 @@ job.on('rejected', ({ timeout }) => {
   // Handle the job rejection, e.g. re-try after timeout.
 });
 
-job.on('error', err => {
+job.on('error', (err) => {
   // Handle errors.
 });
 ```
@@ -209,7 +211,7 @@ PyGrid URL will need to be adjusted accordingly in further steps.
 ##### Create Model & Plan
 
 After PyGrid is running, the next step is to create the model and training plan and host them in PyGrid.
-PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl) that guide you through this process.
+PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl) that guide you through this process.
 
 Fire up jupyter notebook in PySyft root folder:
 
@@ -218,7 +220,7 @@ cd ~/fl-demo/PySyft
 jupyter notebook --notebook-dir=$(pwd)
 ```
 
-In the console, you should see URL you should open, or the browser will open automatically. After this, navigate to `examples/tutorials/static-fl` and [run the first notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2001%20-%20Create%20Plan.ipynb). At this point, you can pull down the model and training plan with syft.js. However, if you'd like to see how to execute the plan using the PySyft FL worker, [try running the second notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/static-fl/Part%2002%20-%20Execute%20Plan.ipynb).
+In the console, you should see URL you should open, or the browser will open automatically. After this, navigate to `examples/tutorials/model-centric-fl` and [run the first notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2001%20-%20Create%20Plan.ipynb). At this point, you can pull down the model and training plan with syft.js. However, if you'd like to see how to execute the plan using the PySyft FL worker, [try running the second notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2002%20-%20Execute%20Plan.ipynb).
 
 ##### PyGrid Clean-up
 
@@ -311,6 +313,7 @@ These people were integral part of the efforts to bring syft.js to fruition and 
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
