@@ -86,23 +86,23 @@ Job represents a single training cycle done by the client.
 
 ### on
 
-Registers an event listener.
+Registers an event listener to the Job's event observer.
 
 Available events: `accepted`, `rejected`, `error`.
 
 #### Parameters
 
 -   `event` **[string][26]** Event name.
--   `handler` **[function][32]** Event handler.
+-   `handler` **[Function][32]** Event listener.
 
 ### start
 
-Starts the Job executing following actions:
+Starts the Job by executing following actions:
 
 -   Meters connection speed to PyGrid (if requested by PyGrid).
 -   Registers into training cycle on PyGrid.
 -   Retrieves cycle and client parameters.
--   Downloads Plans, Model, Protocols.
+-   Downloads the model, plans, protocols from PyGrid.
 -   Fires `accepted` event on success.
 
 Returns **[Promise][28]&lt;void>** 
@@ -138,7 +138,7 @@ Type: [Object][25]
 
 ### Properties
 
--   `timeout` **([number][34] | null)** Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+-   `timeout` **([number][34] | null)** Time in seconds to retry. Empty when the FL model is not trainable anymore.
 
 ## Job#error
 

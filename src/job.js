@@ -8,18 +8,18 @@ import Logger from './logger';
 /**
  * Job represents a single training cycle done by the client.
  *
- * @property {Object.<string, Plan>} plans Plans dictionary.
- * @property {Object.<string, Protocol>} protocols [not implemented] Protocols dictionary.
- * @property {SyftModel} model Model.
+ * @property {Object.<string, Plan>} plans - Plans dictionary.
+ * @property {Object.<string, Protocol>} protocols - [not implemented] Protocols dictionary.
+ * @property {SyftModel} model - Model.
  */
 export default class Job {
   /**
    * @hideconstructor
    * @param {object} options
-   * @param {Syft} options.worker Instance of Syft client.
-   * @param {string} options.modelName Model name.
-   * @param {string} options.modelVersion Model version.
-   * @param {GridAPIClient} options.gridClient Instance of GridAPIClient.
+   * @param {Syft} options.worker - Instance of Syft client.
+   * @param {string} options.modelName - Model name.
+   * @param {string} options.modelVersion - Model version.
+   * @param {GridAPIClient} options.gridClient - Instance of GridAPIClient.
    */
   constructor({ worker, modelName, modelVersion, gridClient }) {
     this.worker = worker;
@@ -29,22 +29,22 @@ export default class Job {
     this.logger = new Logger();
     this.observer = new EventObserver();
 
-    // parameters loaded from grid
+    // Parameters to be loaded from PyGrid
     this.model = null;
     this.plans = {};
     this.protocols = {};
-    // holds request_key
+    // Parameter for hosting request_key
     this.cycleParams = {};
     this.clientConfig = {};
   }
 
   /**
-   * Registers an event listener.
+   * Registers an event listener to the Job's event observer.
    *
    * Available events: `accepted`, `rejected`, `error`.
    *
-   * @param {string} event Event name.
-   * @param {function} handler Event handler.
+   * @param {string} event - Event name.
+   * @param {Function} handler - Event listener.
    */
   on(event, handler) {
     if (['accepted', 'rejected', 'error'].includes(event)) {
@@ -53,7 +53,8 @@ export default class Job {
   }
 
   /**
-   * Initializes the Job with provided training cycle params.
+   * Initializes the Job with provided training cycle params and
+   * downloads the model, plans, and protocols from PyGrid.
    *
    * @private
    * @param {Object} cycleParams
@@ -66,7 +67,7 @@ export default class Job {
     this.cycleParams = cycleParams;
     this.clientConfig = cycleParams.client_config;
 
-    // load the model
+    // Load model
     const modelData = await this.grid.getModel(
       this.worker.worker_id,
       cycleParams.request_key,
@@ -74,10 +75,10 @@ export default class Job {
     );
     this.model = new SyftModel({
       worker: this.worker,
-      modelData
+      modelData,
     });
 
-    // load all plans
+    // Load all plans
     for (let planName of Object.keys(cycleParams.plans)) {
       const planId = cycleParams.plans[planName];
       const planBinary = await this.grid.getPlan(
@@ -96,7 +97,7 @@ export default class Job {
       }
     }
 
-    // load all protocols
+    // Load all protocols
     for (let protocolName of Object.keys(cycleParams.protocols)) {
       const protocolId = cycleParams.protocols[protocolName];
       const protocolBinary = await this.grid.getProtocol(
@@ -113,11 +114,11 @@ export default class Job {
   }
 
   /**
-   * Starts the Job executing following actions:
+   * Starts the Job by executing following actions:
    *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.
-   *  * Downloads Plans, Model, Protocols.
+   *  * Downloads the model, plans, protocols from PyGrid.
    *  * Fires `accepted` event on success.
    *
    * @fires Job#accepted
@@ -129,14 +130,14 @@ export default class Job {
     let cycleParams;
     try {
       let [ping, download, upload] = [0, 0, 0];
+      // Test connection speed if required
       if (this.worker.requires_speed_test) {
-        // speed test
         ({ ping, download, upload } = await this.grid.getConnectionSpeed(
           this.worker.worker_id
         ));
       }
 
-      // request cycle
+      // Client request to join an active federated learning cycle on PyGrid
       cycleParams = await this.grid.requestCycle(
         this.worker.worker_id,
         this.modelName,
@@ -146,8 +147,8 @@ export default class Job {
         upload
       );
 
+      // If the client's job request is accepted, load the model, plans, protocols, etc.
       if (cycleParams.status === CYCLE_STATUS_ACCEPTED) {
-        // load model, plans, protocols, etc.
         this.logger.log(
           `Accepted into cycle with params: ${JSON.stringify(
             cycleParams,
@@ -158,6 +159,7 @@ export default class Job {
         await this.initCycle(cycleParams);
       }
 
+      // Throw an error if the request is neither accepted nor rejected
       if (
         ![CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED].includes(
           cycleParams.status
@@ -176,7 +178,7 @@ export default class Job {
       return;
     }
 
-    // Trigger events outside of try/catch.
+    // Trigger accepted or rejected event outside try/catch.
     switch (cycleParams.status) {
       case CYCLE_STATUS_ACCEPTED:
         /**
@@ -185,12 +187,12 @@ export default class Job {
          *
          * @event Job#accepted
          * @type {Object}
-         * @property {SyftModel} model Instance of SyftModel.
-         * @property {Object} clientConfig Client configuration returned by PyGrid.
+         * @property {SyftModel} model - Instance of SyftModel.
+         * @property {Object} clientConfig - Client configuration returned by PyGrid.
          */
         this.observer.broadcast('accepted', {
           model: this.model,
-          clientConfig: this.clientConfig
+          clientConfig: this.clientConfig,
         });
         break;
 
@@ -205,10 +207,10 @@ export default class Job {
          *
          * @event Job#rejected
          * @type {Object}
-         * @property {number|null} timeout Time in seconds to re-try. Empty when the FL model is not trainable anymore.
+         * @property {number|null} timeout - Time in seconds to retry. Empty when the FL model is not trainable anymore.
          */
         this.observer.broadcast('rejected', {
-          timeout: cycleParams.timeout
+          timeout: cycleParams.timeout,
         });
         break;
     }
@@ -217,7 +219,7 @@ export default class Job {
   /**
    * Submits the model diff to PyGrid.
    *
-   * @param {ArrayBuffer} diff Serialized difference between original and trained model parameters.
+   * @param {ArrayBuffer} diff - Serialized difference between original and trained model parameters.
    * @returns {Promise<void>}
    */
   async report(diff) {
