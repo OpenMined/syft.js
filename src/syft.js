@@ -7,12 +7,6 @@ import ObjectRegistry from './object-registry';
 /**
  * Syft client for model-centric federated learning.
  *
- * @param {Object} options
- * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
- * @param {boolean} options.verbose - Whether to enable logging and allow unsecured PyGrid connection.
- * @param {string} options.authToken - PyGrid authentication token.
- * @param {Object} options.peerConfig - [not implemented] WebRTC peer config used with RTCPeerConnection.
- *
  * @example
  *
  * const client = new Syft({url: "ws://localhost:5000", verbose: true})
@@ -32,6 +26,14 @@ import ObjectRegistry from './object-registry';
  * job.start()
  */
 export default class Syft {
+  /**
+   * @param {Object} options
+   * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
+   * @param {boolean} options.verbose - Whether to enable logging and allow unsecured PyGrid connection.
+   * @param {string} options.authToken - PyGrid authentication token.
+   * @param {Object} options.peerConfig - [not implemented] WebRTC peer config used with RTCPeerConnection.
+   *
+   */
   constructor({ url, verbose, authToken, peerConfig }) {
     // Create verbose logging if verbose value is true
     this.logger = new Logger('syft.js', verbose);
