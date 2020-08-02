@@ -17,7 +17,7 @@ export default class SyftModel {
    * @param {ArrayBuffer} options.modelData - Serialized Model parameters as returned by PyGrid.
    */
   constructor({ worker, modelData }) {
-    // Convert model from binary into the State class to represent its original state
+    // Convert model from binary and store model weights in the syft class State
     try {
       const state = unserialize(
         worker,
@@ -42,7 +42,7 @@ export default class SyftModel {
     const placeholders = [],
       tensors = [];
 
-    // Store model difference in a new state and convert to protobuf-serialized binary
+    // Store model weight differences in a new State and convert to protobuf-serialized binary
     for (let i = 0; i < updatedModelParams.length; i++) {
       let paramDiff = this.params[i].sub(updatedModelParams[i]);
       placeholders.push(new Placeholder(i, [`#${i}`, `#state-${i}`]));
