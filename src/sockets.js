@@ -3,16 +3,17 @@ import Logger from './logger';
 
 /**
  * Sockets implements and wraps the WebSocket protocol for communication between client and PyGrid.
- *
- * @param {Object} options
- * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
- * @param {string} options.workerId - Worker ID returned from PyGrid to the client.
- * @param {Function} [options.onOpen] - Optional function to be invoked when connection is open.
- * @param {Function} [options.onClose] - Optional function to be invoked when connection is closed.
- * @param {Function} options.onMessage - Optional function to be invoked when a message is received.
- * @param {number} [options.keepAliveTimeout=20000] - Optional timeout duration to keep connection alive in milliseconds.
  */
 export default class Sockets {
+  /**
+   * @param {Object} options
+   * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
+   * @param {string} options.workerId - Worker ID returned from PyGrid to the client.
+   * @param {Function} [options.onOpen] - Optional function to be invoked when connection is open.
+   * @param {Function} [options.onClose] - Optional function to be invoked when connection is closed.
+   * @param {Function} [options.onMessage] - Optional function to be invoked when a message is received.
+   * @param {number} [options.keepAliveTimeout=20000] - Optional timeout duration to keep connection alive in milliseconds.
+   */
   constructor({
     url,
     workerId,
@@ -63,6 +64,13 @@ export default class Sockets {
     this.timerId = null;
   }
 
+  /**
+   * Sends, receives, and handles errors for messages to and from the server.
+   *
+   * @param {string} type - The type of the message.
+   * @param {Object} data - The data to be sent.
+   * @returns {Promise<void>}
+   */
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
       data.workerId = this.workerId;
@@ -89,6 +97,9 @@ export default class Sockets {
     });
   }
 
+  /**
+   * Closes the socket connection.
+   */
   stop() {
     this.socket.close();
   }
