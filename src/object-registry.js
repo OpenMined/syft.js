@@ -1,5 +1,12 @@
 import * as tf from '@tensorflow/tfjs-core';
 
+/**
+ * ObjectRegistry stores a map of {id -> object} and a map of {id -> gc},
+    where gc denotes if we want the object of a given id to be garbage collected
+ *
+ * @property {Object.<string, Plan>} objects
+ * @property {Object.<string, Protocol>} gc
+ */
 export default class ObjectRegistry {
   constructor() {
     this.objects = {};
@@ -7,6 +14,7 @@ export default class ObjectRegistry {
   }
 
   set(id, obj, gc = false) {
+    // We want to get rid of the current id and object in the objects map before replacing them
     if (this.objects[id] instanceof tf.Tensor) {
       this.objects[id].dispose();
       delete this.objects[id];
@@ -37,6 +45,10 @@ export default class ObjectRegistry {
     this.gc = {};
   }
 
+  /**
+   * Load the objects from an existing ObjectRegistry and store them in this.objects
+   * @param {ObjectRegistry} objectRegistry
+   */
   load(objectRegistry) {
     for (let key of Object.keys(objectRegistry.objects)) {
       this.set(key, objectRegistry.get(key));
