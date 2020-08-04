@@ -1,14 +1,28 @@
 import { SOCKET_PING } from './_constants';
 import Logger from './logger';
 
+/**
+ * Sockets implements and wraps the WebSocket protocol for communication between client and PyGrid.
+ *
+ * @property {WebSocket} socket - A socket connection to send and receive data from the server.
+ */
 export default class Sockets {
+  /**
+   * @param {Object} options
+   * @param {string} options.url - Full URL to PyGrid app (`ws` and `http` schemas supported).
+   * @param {string} options.workerId - Worker ID returned from PyGrid to the client.
+   * @param {Function} [options.onOpen] - Optional function to be invoked when connection is open.
+   * @param {Function} [options.onClose] - Optional function to be invoked when connection is closed.
+   * @param {Function} [options.onMessage] - Optional function to be invoked when a message is received.
+   * @param {number} [options.keepAliveTimeout=20000] - Optional timeout duration to keep connection alive in milliseconds.
+   */
   constructor({
     url,
     workerId,
     onOpen,
     onClose,
     onMessage,
-    keepAliveTimeout = 20000
+    keepAliveTimeout = 20000,
   }) {
     this.logger = new Logger();
     const socket = new WebSocket(url);
@@ -23,7 +37,7 @@ export default class Sockets {
       this.timerId = null;
     };
 
-    socket.onopen = event => {
+    socket.onopen = (event) => {
       this.logger.log(
         `Opening socket connection at ${event.currentTarget.url}`,
         event
@@ -34,7 +48,7 @@ export default class Sockets {
       if (onOpen) onOpen(event);
     };
 
-    socket.onclose = event => {
+    socket.onclose = (event) => {
       this.logger.log(
         `Closing socket connection at ${event.currentTarget.url}`,
         event
@@ -52,6 +66,13 @@ export default class Sockets {
     this.timerId = null;
   }
 
+  /**
+   * Sends, receives, and handles errors for messages to and from the server.
+   *
+   * @param {string} type - The type of the message.
+   * @param {Object} data - The data to be sent.
+   * @returns {Promise<void>}
+   */
   send(type, data = {}) {
     return new Promise((resolve, reject) => {
       data.workerId = this.workerId;
@@ -62,7 +83,7 @@ export default class Sockets {
 
       this.socket.send(JSON.stringify(message));
 
-      this.socket.onmessage = event => {
+      this.socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
         this.logger.log('Receiving message', data);
@@ -70,7 +91,7 @@ export default class Sockets {
         resolve(this.onMessage(data));
       };
 
-      this.socket.onerror = event => {
+      this.socket.onerror = (event) => {
         this.logger.log('We have a socket error!', event);
 
         reject(event);
@@ -78,6 +99,9 @@ export default class Sockets {
     });
   }
 
+  /**
+   * Closes the socket connection.
+   */
   stop() {
     this.socket.close();
   }
