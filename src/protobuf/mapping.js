@@ -10,7 +10,7 @@ import { ComputationAction } from '../types/computation-action';
 
 let PB_CLASS_MAP, PB_TO_UNBUFFERIZER;
 
-// because of cyclic dependencies between Protocol/etc modules and protobuf module
+// Because of cyclic dependencies between Protocol/etc modules and protobuf module
 // Protocol/etc classes are undefined at the moment when this module is imported
 export const initMappings = () => {
   PB_CLASS_MAP = [
@@ -23,7 +23,7 @@ export const initMappings = () => {
     [PlaceholderId, protobuf.syft_proto.execution.v1.PlaceholderId],
     [ObjectMessage, protobuf.syft_proto.messaging.v1.ObjectMessage],
     [TorchTensor, protobuf.syft_proto.types.torch.v1.TorchTensor],
-    [TorchParameter, protobuf.syft_proto.types.torch.v1.Parameter]
+    [TorchParameter, protobuf.syft_proto.types.torch.v1.Parameter],
   ];
 
   PB_TO_UNBUFFERIZER = PB_CLASS_MAP.reduce((map, item) => {
