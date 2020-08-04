@@ -3,6 +3,8 @@ import Logger from './logger';
 
 /**
  * Sockets implements and wraps the WebSocket protocol for communication between client and PyGrid.
+ *
+ * @property {WebSocket} socket - A socket connection to send and receive data from the server.
  */
 export default class Sockets {
   /**
