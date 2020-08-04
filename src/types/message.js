@@ -1,6 +1,16 @@
 import { unbufferize } from '../protobuf';
 import Logger from '../logger';
+import { protobuf } from 'syft-proto';
 
+/**
+ * Message enables comunicating between PySyft and Syft workers.
+ * Message is the parent class to all other Message types.
+ *
+ * All Message types are currently are currently not in use.
+ *
+ * @property {*} contents - For storing unbufferized message data.
+ * @property {Logger} logger - For logging information.
+ */
 export class Message {
   constructor(contents) {
     if (contents) {
@@ -10,11 +20,23 @@ export class Message {
   }
 }
 
+/**
+ * ObjectMessage is used to send an object as message between PySyft and Syft workers.
+ * @extends Message
+ */
 export class ObjectMessage extends Message {
   constructor(contents) {
     super(contents);
   }
 
+  /**
+   * Unbufferizes and maps data from protobuf object to JS object.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments when messaging with PySyft.
+   * @param {protobuf.syft_proto.messaging.v1.ObjectMessage} pb - Protobuf object.
+   * @returns {ObjectMessage}
+   */
   static unbufferize(worker, pb) {
     const tensor = unbufferize(worker, pb.tensor);
     return new ObjectMessage(tensor);
