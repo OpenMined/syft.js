@@ -1,6 +1,5 @@
 import { unbufferize } from '../protobuf';
 import Logger from '../logger';
-import { protobuf } from 'syft-proto';
 
 /**
  * Message enables comunicating between PySyft and Syft workers.
