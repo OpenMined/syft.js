@@ -1,17 +1,37 @@
 import { protobuf, getPbId, pbId } from '../protobuf';
 
+/**
+ * PlaceholderId identifies which Placeholder tensors should be used as
+ * inputs and outputs of Actions inside a Plan.
+ *
+ * @property {string} id
+ */
 export class PlaceholderId {
   constructor(id) {
     this.id = id;
   }
 
+  /**
+   * Unbufferizes a protobuf object to a new PlaceholderId object.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments when messaging with PySyft.
+   * @param {protobuf.syft_proto.types.syft.v1.Id} pb - Protobuf object.
+   * @returns {PlaceholderId}
+   */
   static unbufferize(worker, pb) {
     return new PlaceholderId(getPbId(pb.id));
   }
 
+  /**
+   * Bufferizes the Id string to a protobuf PlaceholderId object.
+   * Note that this method should take a worker-specific argument in the future.
+   *
+   * @returns {protobuf.syft_proto.execution.v1.PlaceholderId}
+   */
   bufferize(/* worker */) {
     return protobuf.syft_proto.execution.v1.PlaceholderId.create({
-      id: pbId(this.id)
+      id: pbId(this.id),
     });
   }
 }
@@ -50,7 +70,7 @@ export class Placeholder {
       description: this.description,
       expected_shape: protobuf.syft_proto.types.syft.v1.Shape.create(
         this.expected_shape
-      )
+      ),
     });
   }
 
