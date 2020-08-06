@@ -29,7 +29,7 @@ describe('Sockets', () => {
     mockServer.close();
   });
 
-  test('sends keep-alive messages automatically', async () => {
+  test('client socket sends keep-alive messages automatically', async () => {
     const keepAliveTimeout = 300,
       expectedMessagesCount = 3,
       messages = [],
@@ -38,10 +38,12 @@ describe('Sockets', () => {
     // Creating a socket will open connection and start keep-alive pings.
     new Socket({ url, keepAliveTimeout });
 
+    // Resolving the Promise returns a Websocket object
     const serverSocket = await mockServer.connected;
 
     serverSocket.on('message', message => messages.push(JSON.parse(message)));
 
+    // Use Promise chain to sleep enough time for client socket to ping server socket
     await new Promise(done =>
       setTimeout(
         done,
