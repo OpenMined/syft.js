@@ -7,10 +7,4 @@ describe('Placeholder', () => {
     expect(obj.tags).toStrictEqual(['tag1', 'tag2']);
     expect(obj.description).toStrictEqual('desc');
   });
-
-  test('can get placeholder order', () => {
-    const obj = new Placeholder(123, ['#input-1'], 'desc');
-    expect(obj.getOrderFromTags('#input')).toStrictEqual(1);
-    expect(() => obj.getOrderFromTags('#output')).toThrow();
-  });
 });
