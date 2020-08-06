@@ -96,22 +96,4 @@ export class Placeholder {
       ),
     });
   }
-
-  /**
-   * Gets a list of input/output params order in Plan.
-   * This is an oudated method and will be removed.
-   *
-   * @param {string} prefix
-   * @returns {number}
-   */
-  getOrderFromTags(prefix) {
-    const regExp = new RegExp(`^${prefix}-(\\d+)$`, 'i');
-    for (let tag of this.tags) {
-      let tagMatch = regExp[Symbol.match](tag);
-      if (tagMatch) {
-        return Number(tagMatch[1]);
-      }
-    }
-    throw new Error(`Placeholder ${this.id} doesn't have order tag ${prefix}`);
-  }
 }
