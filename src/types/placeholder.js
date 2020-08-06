@@ -4,7 +4,7 @@ import { protobuf, getPbId, pbId } from '../protobuf';
  * PlaceholderId identifies which Placeholder tensors should be used as
  * inputs and outputs of Actions inside a Plan.
  *
- * @property {string} id - Unbufferized Id object.
+ * @property {string} id - Unbufferized, unique id for a Placeholder object.
  */
 export class PlaceholderId {
   constructor(id) {
@@ -39,7 +39,8 @@ export class PlaceholderId {
 
 /**
  * Placeholder acts as a tensor. It is replaced by actual tensors after actions
- * are acted on it.
+ * are acted on it and can be used to trace the actions from a Plan. A Placeholder
+ * has a PlaceholderId that uniquely identifies itself.
  *
  * @property {string} id - Unbufferized Id object.
  */
@@ -96,6 +97,13 @@ export class Placeholder {
     });
   }
 
+  /**
+   * Gets a list of input/output params order in Plan.
+   * This is an oudated method and will be removed.
+   *
+   * @param {string} prefix
+   * @returns {number}
+   */
   getOrderFromTags(prefix) {
     const regExp = new RegExp(`^${prefix}-(\\d+)$`, 'i');
     for (let tag of this.tags) {
