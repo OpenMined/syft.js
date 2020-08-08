@@ -2,7 +2,6 @@ import { SOCKET_PING } from '../src/_constants';
 import { WebSocket, Server } from 'mock-socket';
 
 import Socket from '../src/sockets';
-import { mock } from 'fetch-mock';
 
 global.WebSocket = WebSocket;
 
