@@ -14,9 +14,6 @@ const makeEventPromise = (emitter, event) => {
   const promise = new Promise((resolve) => (resolver = resolve));
   emitter.on(event, (data) => resolver(data));
 
-  console.log('==========Inside makeEventPromise==========');
-  console.log(promise.constructor);
-  console.log('==========makeEventPromise Returns==========');
   return promise;
 };
 
@@ -84,9 +81,10 @@ describe('Sockets', () => {
 
     await mockServer.connected;
 
+    // Client socket in the process of closing (readyState: 2)
     mySocket.stop();
 
-    await closed;
+    await closed; // same as mockServer.close()
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mySocket.timerId).toBeNull();
