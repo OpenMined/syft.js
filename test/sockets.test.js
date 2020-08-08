@@ -2,6 +2,7 @@ import { SOCKET_PING } from '../src/_constants';
 import { WebSocket, Server } from 'mock-socket';
 
 import Socket from '../src/sockets';
+import { mock } from 'fetch-mock';
 
 global.WebSocket = WebSocket;
 
@@ -81,10 +82,11 @@ describe('Sockets', () => {
 
     await mockServer.connected;
 
-    // Client socket in the process of closing (readyState: 2)
+    // Client socket in the process of closing, (readyState: 2)
     mySocket.stop();
 
-    await closed; // same as mockServer.close()
+    // Server and client sockets closed (readyState: 3)
+    await closed;
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mySocket.timerId).toBeNull();
