@@ -11,9 +11,12 @@ const url = 'ws://localhost:8080/';
 const makeEventPromise = (emitter, event) => {
   let resolver;
 
-  const promise = new Promise(resolve => (resolver = resolve));
-  emitter.on(event, data => resolver(data));
+  const promise = new Promise((resolve) => (resolver = resolve));
+  emitter.on(event, (data) => resolver(data));
 
+  console.log('==========Inside makeEventPromise==========');
+  console.log(promise.constructor);
+  console.log('==========makeEventPromise Returns==========');
   return promise;
 };
 
@@ -41,10 +44,10 @@ describe('Sockets', () => {
     // Resolving the Promise returns a Websocket object
     const serverSocket = await mockServer.connected;
 
-    serverSocket.on('message', message => messages.push(JSON.parse(message)));
+    serverSocket.on('message', (message) => messages.push(JSON.parse(message)));
 
     // Use Promise chain to sleep enough time for client socket to ping server socket
-    await new Promise(done =>
+    await new Promise((done) =>
       setTimeout(
         done,
         keepAliveTimeout * expectedMessagesCount + keepAliveTimeout / 2
@@ -58,7 +61,7 @@ describe('Sockets', () => {
       expectedTypes.push(SOCKET_PING);
     }
 
-    expect(messages.map(message => message['type'])).toEqual(expectedTypes);
+    expect(messages.map((message) => message['type'])).toEqual(expectedTypes);
   });
 
   test('triggers onOpen event', async () => {
@@ -76,7 +79,7 @@ describe('Sockets', () => {
       onClose = jest.fn(),
       mySocket = new Socket({
         url,
-        onClose
+        onClose,
       });
 
     await mockServer.connected;
@@ -97,7 +100,7 @@ describe('Sockets', () => {
       mySocket = new Socket({
         workerId: testworkerId,
         url,
-        onMessage: data => data
+        onMessage: (data) => data,
       });
 
     const serverSocket = await mockServer.connected;
@@ -114,7 +117,7 @@ describe('Sockets', () => {
 
     expect(JSON.parse(message)).toEqual({
       type: testReqType,
-      data: testReqData
+      data: testReqData,
     });
     expect(response).toEqual(testResponse);
   });
@@ -122,7 +125,7 @@ describe('Sockets', () => {
   test('returns error when .send() fails', async () => {
     const mySocket = new Socket({
       url,
-      onMessage: data => data
+      onMessage: (data) => data,
     });
 
     const serverSocket = await mockServer.connected;
@@ -145,7 +148,7 @@ describe('Sockets', () => {
 
   test('disconnects from server after .stop()', async () => {
     const mySocket = new Socket({
-      url
+      url,
     });
 
     await mockServer.connected;
@@ -154,7 +157,7 @@ describe('Sockets', () => {
 
     mySocket.stop();
 
-    await new Promise(done => setTimeout(done, 100));
+    await new Promise((done) => setTimeout(done, 100));
 
     expect(mockServer.clients()).toHaveLength(0);
   });
@@ -162,11 +165,11 @@ describe('Sockets', () => {
   test('triggers onMessage event', async () => {
     const testResponse = { response: 'test' },
       testworkerId = 'test-worker',
-      onMessage = jest.fn(message => message),
+      onMessage = jest.fn((message) => message),
       mySocket = new Socket({
         workerId: testworkerId,
         url,
-        onMessage: onMessage
+        onMessage: onMessage,
       });
 
     const serverSocket = await mockServer.connected;
