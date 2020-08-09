@@ -2,6 +2,8 @@ import { NO_DETAILER, PROTOBUF_UNSERIALIZE_FAILED } from '../_errors';
 import { initMappings, PB_TO_UNBUFFERIZER } from './mapping';
 import { protobuf } from 'syft-proto';
 import Long from 'long';
+import { base64Decode } from '../utils/base64';
+
 export { protobuf };
 
 export const unbufferize = (worker, pbObj) => {
@@ -21,7 +23,7 @@ export const unbufferize = (worker, pbObj) => {
 
   // automatically unbufferize repeated fields
   if (Array.isArray(pbObj)) {
-    return pbObj.map(item => unbufferize(worker, item));
+    return pbObj.map((item) => unbufferize(worker, item));
   }
 
   // automatically unbufferize map fields
@@ -70,7 +72,7 @@ export const unbufferize = (worker, pbObj) => {
 export const unserialize = (worker, bin, pbType) => {
   const buff =
     typeof bin === 'string'
-      ? Buffer.from(bin, 'base64')
+      ? base64Decode(bin)
       : bin instanceof ArrayBuffer
       ? new Uint8Array(bin)
       : bin;
@@ -100,12 +102,12 @@ export const serialize = (worker, obj) => {
   return new Uint8Array(bin).buffer;
 };
 
-export const getPbId = field => {
+export const getPbId = (field) => {
   // convert int64 to string
   return field[field.id].toString();
 };
 
-export const pbId = value => {
+export const pbId = (value) => {
   if (typeof value === 'number') {
     return protobuf.syft_proto.types.syft.v1.Id.create({ id_int: value });
   } else if (typeof value === 'string') {
