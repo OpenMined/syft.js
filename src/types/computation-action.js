@@ -5,6 +5,16 @@ import * as tf from '@tensorflow/tfjs-core';
 import { TorchParameter, TorchTensor } from './torch';
 import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
 
+/**
+ * ComputationAction describes mathematical operations performed on tensors.
+ *
+ * @param {string} command - The name of the method to be invoked (e.g. "torch.abs").
+ * @param {} target - The object to invoke the method on.
+ * @param {} args - The arguments to the method call.
+ * @param {} kwargs - The keyword arguments to the method call.
+ * @param {} returnIds -
+ * @param {} returnPlaceholderIds -
+ */
 export class ComputationAction {
   constructor(command, target, args, kwargs, returnIds, returnPlaceholderIds) {
     this.command = command;
@@ -28,10 +38,10 @@ export class ComputationAction {
 
   async execute(scope) {
     // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
-    const haveValuesForAllArgs = args => {
+    const haveValuesForAllArgs = (args) => {
       let enoughInfo = true;
 
-      args.forEach(arg => {
+      args.forEach((arg) => {
         if (
           (arg instanceof PointerTensor && !scope.has(arg.idAtLocation)) ||
           (arg instanceof Placeholder && !scope.has(arg.id)) ||
@@ -44,7 +54,7 @@ export class ComputationAction {
       return enoughInfo;
     };
 
-    const toTFTensor = tensor => {
+    const toTFTensor = (tensor) => {
       if (tensor instanceof tf.Tensor) {
         return tensor;
       } else if (tensor instanceof TorchTensor) {
@@ -57,7 +67,7 @@ export class ComputationAction {
       return null;
     };
 
-    const getTensorByRef = reference => {
+    const getTensorByRef = (reference) => {
       let tensor = null;
       if (reference instanceof PlaceholderId) {
         tensor = scope.get(reference.id);
@@ -71,10 +81,10 @@ export class ComputationAction {
     };
 
     // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
-    const pullTensorsFromArgs = args => {
+    const pullTensorsFromArgs = (args) => {
       const resolvedArgs = [];
 
-      args.forEach(arg => {
+      args.forEach((arg) => {
         const tensorByRef = getTensorByRef(arg);
         if (tensorByRef) {
           resolvedArgs.push(toTFTensor(tensorByRef));
