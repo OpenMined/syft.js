@@ -1,4 +1,4 @@
-import { randomFillSync } from 'randomfill';
+import { createRandomBuffer } from './utils/random-buffer';
 
 export class SpeedTest {
   constructor({
@@ -6,7 +6,7 @@ export class SpeedTest {
     uploadUrl,
     pingUrl,
     maxUploadSizeMb = 64,
-    maxTestTimeSec = 10
+    maxTestTimeSec = 10,
   }) {
     this.downloadUrl = downloadUrl;
     this.uploadUrl = uploadUrl;
@@ -29,7 +29,7 @@ export class SpeedTest {
           avgWindow: this.bwAvgWindow,
           lowJitterThreshold: this.bwLowJitterThreshold,
           maxLowJitterConsecutiveMeasures: this
-            .bwMaxLowJitterConsecutiveMeasures
+            .bwMaxLowJitterConsecutiveMeasures,
         });
 
       const req = isUpload ? xhr.upload : xhr;
@@ -65,7 +65,7 @@ export class SpeedTest {
         }
       };
 
-      req.onprogress = e => {
+      req.onprogress = (e) => {
         const // mbit
           size = (8 * e.loaded) / 1048576,
           // seconds
@@ -98,7 +98,7 @@ export class SpeedTest {
       req.onload = () => {
         finish();
       };
-      req.onerror = e => {
+      req.onerror = (e) => {
         finish(e);
       };
     });
@@ -117,22 +117,7 @@ export class SpeedTest {
   async getUploadSpeed() {
     const xhr = new XMLHttpRequest();
     const result = this.meterXhr(xhr, true);
-
-    // Create random bytes buffer.
-    const buff = new Uint8Array(this.maxUploadSizeMb * 1024 * 1024);
-    const maxRandomChunkSize = 65536;
-    const chunkNum = Math.ceil(buff.byteLength / maxRandomChunkSize);
-    for (
-      let chunk = 0, offset = 0;
-      chunk < chunkNum;
-      chunk++, offset += maxRandomChunkSize
-    ) {
-      randomFillSync(
-        buff,
-        offset,
-        Math.min(maxRandomChunkSize, buff.byteLength - offset)
-      );
-    }
+    const buff = await createRandomBuffer(this.maxUploadSizeMb * 1024 * 1024);
 
     xhr.open('POST', this.uploadUrl, true);
     xhr.send(buff);
@@ -179,7 +164,7 @@ export class SpeedTest {
           }
         };
 
-        xhr.onerror = e => {
+        xhr.onerror = (e) => {
           finish(xhr, e);
         };
 
@@ -209,7 +194,7 @@ class AvgCollector {
   constructor({
     avgWindow = 5,
     lowJitterThreshold = 0.05,
-    maxLowJitterConsecutiveMeasures = 5
+    maxLowJitterConsecutiveMeasures = 5,
   }) {
     this.measuresCount = 0;
     this.prevAvg = 0;
