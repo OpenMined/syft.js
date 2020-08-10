@@ -1,5 +1,6 @@
 import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
+import { base64Encode } from './utils/base64';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
 import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
 import SyftModel from './syft-model';
@@ -226,7 +227,7 @@ export default class Job {
     await this.grid.submitReport(
       this.worker.worker_id,
       this.cycleParams.request_key,
-      Buffer.from(diff).toString('base64')
+      base64Encode(diff)
     );
   }
 }
