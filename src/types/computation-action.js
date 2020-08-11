@@ -9,11 +9,11 @@ import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
  * ComputationAction describes mathematical operations performed on tensors.
  *
  * @param {string} command - The name of the method to be invoked (e.g. "torch.abs").
- * @param {} target - The object to invoke the method on.
- * @param {} args - The arguments to the method call.
- * @param {} kwargs - The keyword arguments to the method call.
- * @param {} returnIds -
- * @param {} returnPlaceholderIds -
+ * @param {string|PointerTensor|PlaceholderId|TorchTensor} target - The object to invoke the method on.
+ * @param {*} args - The arguments to the method call.
+ * @param {Object} kwargs - The keyword arguments to the method call.
+ * @param {Array.<string>} returnIds - List of ids for action results.
+ * @param {Array.<PlaceholderId>} returnPlaceholderIds - List of PlaceholderIds returned from the action.
  */
 export class ComputationAction {
   constructor(command, target, args, kwargs, returnIds, returnPlaceholderIds) {
