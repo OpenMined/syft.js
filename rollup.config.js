@@ -1,5 +1,4 @@
 import babel from '@rollup/plugin-babel';
-import builtins from '@joseph184/rollup-plugin-node-builtins';
 import json from '@rollup/plugin-json';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import resolve from '@rollup/plugin-node-resolve';
@@ -13,8 +12,8 @@ const sharedOutput = {
   sourcemap: true,
   exports: 'named',
   globals: {
-    '@tensorflow/tfjs-core': 'tf'
-  }
+    '@tensorflow/tfjs-core': 'tf',
+  },
 };
 
 export default {
@@ -23,31 +22,30 @@ export default {
     {
       file: pkg.browser,
       format: 'umd',
-      ...sharedOutput
+      ...sharedOutput,
     },
     {
       file: pkg.main,
       format: 'cjs',
-      ...sharedOutput
+      ...sharedOutput,
     },
     {
       file: pkg.module,
       format: 'es',
-      ...sharedOutput
-    }
+      ...sharedOutput,
+    },
   ],
   plugins: [
-    builtins(),
     json(),
     peerDepsExternal(),
     babel({
-      babelHelpers: 'bundled',
-      exclude: 'node_modules/**'
+      babelHelpers: 'runtime',
+      exclude: 'node_modules/**',
     }),
     resolve({
-      preferBuiltins: true
+      preferBuiltins: true,
     }),
     commonjs(),
-    filesize()
-  ]
+    filesize(),
+  ],
 };
