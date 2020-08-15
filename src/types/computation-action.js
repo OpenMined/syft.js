@@ -5,6 +5,16 @@ import * as tf from '@tensorflow/tfjs-core';
 import { TorchParameter, TorchTensor } from './torch';
 import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
 
+/**
+ * ComputationAction describes mathematical operations performed on tensors.
+ *
+ * @param {string} command - The name of the method to be invoked (e.g. "torch.abs").
+ * @param {string|PointerTensor|PlaceholderId|TorchTensor} target - The object to invoke the method on.
+ * @param {*} args - The arguments to the method call.
+ * @param {Object} kwargs - The keyword arguments to the method call.
+ * @param {Array.<string>} returnIds - List of ids for action results.
+ * @param {Array.<PlaceholderId>} returnPlaceholderIds - List of PlaceholderIds returned from the action.
+ */
 export class ComputationAction {
   constructor(command, target, args, kwargs, returnIds, returnPlaceholderIds) {
     this.command = command;
@@ -15,6 +25,15 @@ export class ComputationAction {
     this.returnPlaceholderIds = returnPlaceholderIds;
   }
 
+  /**
+   * Reconstruct a ComputationAction object from a protobuf message.
+   * Note that this method might take a worker-specific argument in the future.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments.
+   * @param {protobuf.syft_proto.execution.v1.ComputationAction} pb - Protobuf object for ComputationAction.
+   * @returns {ComputationAction}
+   */
   static unbufferize(worker, pb) {
     return new ComputationAction(
       pb.command,
@@ -26,12 +45,17 @@ export class ComputationAction {
     );
   }
 
+  /**
+   * Execute the ComputationAction with given worker.
+   * @param {ObjectRegistry} scope - Local scope provided by the Role on executing the Plan and its actions.
+   * @returns {Promise<Array.<tf.Tensor|number>>}
+   */
   async execute(scope) {
-    // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
-    const haveValuesForAllArgs = args => {
+    // Helper function to determine if all PointerTensors/Placeholders in "this.args" also exist as tensors in "objects"
+    const haveValuesForAllArgs = (args) => {
       let enoughInfo = true;
 
-      args.forEach(arg => {
+      args.forEach((arg) => {
         if (
           (arg instanceof PointerTensor && !scope.has(arg.idAtLocation)) ||
           (arg instanceof Placeholder && !scope.has(arg.id)) ||
@@ -44,7 +68,7 @@ export class ComputationAction {
       return enoughInfo;
     };
 
-    const toTFTensor = tensor => {
+    const toTFTensor = (tensor) => {
       if (tensor instanceof tf.Tensor) {
         return tensor;
       } else if (tensor instanceof TorchTensor) {
@@ -57,7 +81,7 @@ export class ComputationAction {
       return null;
     };
 
-    const getTensorByRef = reference => {
+    const getTensorByRef = (reference) => {
       let tensor = null;
       if (reference instanceof PlaceholderId) {
         tensor = scope.get(reference.id);
@@ -70,16 +94,16 @@ export class ComputationAction {
       return tensor;
     };
 
-    // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
-    const pullTensorsFromArgs = args => {
+    // Helper function to get all operable tensors from PointerTensors in "this.args"
+    const pullTensorsFromArgs = (args) => {
       const resolvedArgs = [];
 
-      args.forEach(arg => {
+      args.forEach((arg) => {
         const tensorByRef = getTensorByRef(arg);
         if (tensorByRef) {
           resolvedArgs.push(toTFTensor(tensorByRef));
         } else {
-          // Try to convert to tensor.
+          // Try to convert to tensor
           const tensor = toTFTensor(arg);
           if (tensor !== null) {
             resolvedArgs.push(toTFTensor(arg));
@@ -93,13 +117,11 @@ export class ComputationAction {
       return resolvedArgs;
     };
 
-    //worker.logger.log(`Given command: ${this.command}, converted command: ${command} + ${JSON.stringify(preArgs)} + ${JSON.stringify(postArgs)}`);
-
     const args = this.args;
     let self = null;
 
     if (this.target) {
-      // resolve "self" if it's present
+      // Resolve "self" if it's present
       self = getTensorByRef(this.target);
       if (!self) {
         throw new Error(MISSING_VARIABLE());
@@ -113,6 +135,7 @@ export class ComputationAction {
     const resolvedArgs = pullTensorsFromArgs(args);
     const functionName = this.command.split('.').pop();
 
+    // If target exists, check if target contains the specific function and return computed results
     if (self) {
       if (!(functionName in self)) {
         throw new Error(CANNOT_FIND_COMMAND(`tensor.${functionName}`));
@@ -121,6 +144,7 @@ export class ComputationAction {
       }
     }
 
+    // Else, check if tfjs contains the specific function and return computed results
     if (!(functionName in tf)) {
       throw new Error(CANNOT_FIND_COMMAND(functionName));
     } else {

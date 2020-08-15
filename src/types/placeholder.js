@@ -58,7 +58,7 @@ export class Placeholder {
    *
    * @static
    * @param {*} worker - Reserved placeholder for worker-specific arguments.
-   * @param {protobuf.syft_proto.messaging.v1.Placeholder} pb - Protobuf object for Placeholder.
+   * @param {protobuf.syft_proto.execution.v1.Placeholder} pb - Protobuf object for Placeholder.
    * @returns {Placeholder}
    */
   static unbufferize(worker, pb) {

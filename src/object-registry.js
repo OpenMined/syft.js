@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * ObjectRegistry stores a map of {id -> object} and a map of {id -> gc},
-    where gc denotes if we want the object of a given id to be garbage collected
+ * where gc denotes if we want the object of a given id to be garbage collected.
  *
  * @property {Object.<string, Plan>} objects
  * @property {Object.<string, Protocol>} gc
