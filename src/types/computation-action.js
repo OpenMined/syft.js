@@ -46,9 +46,9 @@ export class ComputationAction {
   }
 
   /**
-   * Execute the ComputationAction with given worker
+   * Execute the ComputationAction with given worker.
    * @param {ObjectRegistry} scope - Local scope provided by the Role on executing the Plan and its actions.
-   * @returns {Promise<Array.<tf.Tensor>>}
+   * @returns {Promise<Array.<tf.Tensor|number>>}
    */
   async execute(scope) {
     // Helper function to determine if all PointerTensors/Placeholders in "this.args" also exist as tensors in "objects"
@@ -94,7 +94,7 @@ export class ComputationAction {
       return tensor;
     };
 
-    // Helper function to get all operable tensors from PointerTensors in "this._args"
+    // Helper function to get all operable tensors from PointerTensors in "this.args"
     const pullTensorsFromArgs = (args) => {
       const resolvedArgs = [];
 
@@ -135,6 +135,7 @@ export class ComputationAction {
     const resolvedArgs = pullTensorsFromArgs(args);
     const functionName = this.command.split('.').pop();
 
+    // If target exists, check if target contains the specific function and return computed results
     if (self) {
       if (!(functionName in self)) {
         throw new Error(CANNOT_FIND_COMMAND(`tensor.${functionName}`));
@@ -143,6 +144,7 @@ export class ComputationAction {
       }
     }
 
+    // Else, check if tfjs contains the specific function and return computed results
     if (!(functionName in tf)) {
       throw new Error(CANNOT_FIND_COMMAND(functionName));
     } else {
