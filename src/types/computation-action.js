@@ -45,8 +45,13 @@ export class ComputationAction {
     );
   }
 
+  /**
+   * Execute the ComputationAction with given worker
+   * @param {ObjectRegistry} scope - Local scope provided by the Role on executing the Plan and its actions.
+   * @returns {Promise<Array.<tf.Tensor>>}
+   */
   async execute(scope) {
-    // A helper function for helping us determine if all PointerTensors/Placeholders inside of "this.args" also exist as tensors inside of "objects"
+    // Helper function to determine if all PointerTensors/Placeholders in "this.args" also exist as tensors in "objects"
     const haveValuesForAllArgs = (args) => {
       let enoughInfo = true;
 
@@ -89,7 +94,7 @@ export class ComputationAction {
       return tensor;
     };
 
-    // A helper function for helping us get all operable tensors from PointerTensors inside of "this._args"
+    // Helper function to get all operable tensors from PointerTensors in "this._args"
     const pullTensorsFromArgs = (args) => {
       const resolvedArgs = [];
 
@@ -98,7 +103,7 @@ export class ComputationAction {
         if (tensorByRef) {
           resolvedArgs.push(toTFTensor(tensorByRef));
         } else {
-          // Try to convert to tensor.
+          // Try to convert to tensor
           const tensor = toTFTensor(arg);
           if (tensor !== null) {
             resolvedArgs.push(toTFTensor(arg));
@@ -112,13 +117,11 @@ export class ComputationAction {
       return resolvedArgs;
     };
 
-    //worker.logger.log(`Given command: ${this.command}, converted command: ${command} + ${JSON.stringify(preArgs)} + ${JSON.stringify(postArgs)}`);
-
     const args = this.args;
     let self = null;
 
     if (this.target) {
-      // resolve "self" if it's present
+      // Resolve "self" if it's present
       self = getTensorByRef(this.target);
       if (!self) {
         throw new Error(MISSING_VARIABLE());
