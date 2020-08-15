@@ -25,6 +25,15 @@ export class ComputationAction {
     this.returnPlaceholderIds = returnPlaceholderIds;
   }
 
+  /**
+   * Reconstruct a ComputationAction object from a protobuf message.
+   * Note that this method might take a worker-specific argument in the future.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments.
+   * @param {protobuf.syft_proto.execution.v1.ComputationAction} pb - Protobuf object for ComputationAction.
+   * @returns {ComputationAction}
+   */
   static unbufferize(worker, pb) {
     return new ComputationAction(
       pb.command,
