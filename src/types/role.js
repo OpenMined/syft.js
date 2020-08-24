@@ -2,7 +2,23 @@ import { getPbId, unbufferize } from '../protobuf';
 import ObjectRegistry from '../object-registry';
 import { NOT_ENOUGH_ARGS } from '../_errors';
 
+/**
+ * Role encapsulates a list of ComputationActions that are executed in a Plan.
+ *
+ * Concretely, a worker is assigned a Role, which includes actions that the
+ * worker should perform.
+ */
 export class Role {
+  /**
+   * @param {string} id - Id of the Role.
+   * @param {Array.<ComputationAction>} [actions=[]] - Array of actions to be executed.
+   * @param {State} [state=null]
+   * @param {Object.<string,Placeholder>} [placeholders={}] - Array of Placeholders that contain tensors.
+   * @param {Array.<PlaceholderId>} [input_placeholder_ids=[]] - Array of PlaceholderIds for input values.
+   * @param {Array.<PlaceholderId>} [output_placeholder_ids=[]] - Array of PlaceholderIds for output values.
+   * @param {Array.<string>} [tags=[]] - Tags for Role.
+   * @param {string|null} [description=null] Description for Role.
+   */
   constructor(
     id,
     actions = [],
@@ -23,6 +39,15 @@ export class Role {
     this.description = description;
   }
 
+  /**
+   * Reconstruct a Role object from the protobuf message.
+   * Note that this method might take a worker-specific argument in the future.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments.
+   * @param {protobuf.syft_proto.execution.v1.Role} pb - Protobuf object for Role.
+   * @returns {Role}
+   */
   static unbufferize(worker, pb) {
     let placeholdersArray = unbufferize(worker, pb.placeholders);
     let placeholders = {};
@@ -42,19 +67,18 @@ export class Role {
     );
   }
 
-  findPlaceholders(tagRegex) {
-    return this.placeholders.filter(
-      placeholder =>
-        placeholder.tags && placeholder.tags.some(tag => tagRegex.test(tag))
-    );
-  }
-
+  /**
+   * @returns {Array.<Placeholder>} - Input Placeholders
+   */
   getInputPlaceholders() {
-    return this.input_placeholder_ids.map(id => this.placeholders[id]);
+    return this.input_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
+  /**
+   * @returns {Array.<Placeholder>} - Output Placeholders
+   */
   getOutputPlaceholders() {
-    return this.output_placeholder_ids.map(id => this.placeholders[id]);
+    return this.output_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
   /**
@@ -106,7 +130,7 @@ export class Role {
 
     // Resolve all of the requested resultId's as specific by the plan
     const resolvedResultingTensors = [];
-    outputPlaceholders.forEach(placeholder => {
+    outputPlaceholders.forEach((placeholder) => {
       resolvedResultingTensors.push(planScope.get(placeholder.id));
       // Do not gc output tensors
       planScope.setGc(placeholder.id, false);
