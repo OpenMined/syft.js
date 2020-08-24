@@ -11,7 +11,7 @@ startButton.onclick = () => {
   const modelName = document.getElementById('model-id').value;
   const modelVersion = document.getElementById('model-version').value;
   const authToken = document.getElementById('auth-token').value;
-  startFL(gridServer.value, modelName, modelVersion, authToken).catch(err => {
+  startFL(gridServer.value, modelName, modelVersion, authToken).catch((err) => {
     updateStatus(`Error: ${err}`);
   });
 };
@@ -25,7 +25,7 @@ startButton.onclick = () => {
  */
 const startFL = async (url, modelName, modelVersion, authToken = null) => {
   const worker = new Syft({ url, authToken, verbose: true });
-  const job = await worker.newJob({ modelName, modelVersion });
+  const job = worker.newJob({ modelName, modelVersion });
 
   job.start();
 
@@ -93,7 +93,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         epoch,
         batch,
         accuracy: await acc.array(),
-        loss: await loss.array()
+        loss: await loss.array(),
       });
 
       batch++;
@@ -145,7 +145,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     }
   });
 
-  job.on('error', err => {
+  job.on('error', (err) => {
     updateStatus(`Error: ${err.message}`);
   });
 };
@@ -166,7 +166,7 @@ const loadMnistDataset = async () => {
  * Log message on the page.
  * @param message
  */
-const updateStatus = message => {
+const updateStatus = (message) => {
   const cont = document.getElementById('status');
   cont.innerHTML = message + '<br>' + cont.innerHTML;
 };

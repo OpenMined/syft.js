@@ -12,7 +12,7 @@ export default class Protocol {
   static unbufferize(worker, pb) {
     const planAssignments = [];
     if (pb.plan_assignments) {
-      pb.plan_assignments.forEach(item => {
+      pb.plan_assignments.forEach((item) => {
         planAssignments.push([getPbId(item.worker_id), getPbId(item.plan_id)]);
       });
     }
