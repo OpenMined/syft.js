@@ -53,7 +53,7 @@ export default class DataChannelMessage {
   }
 
   once(event, func) {
-    this.observer.subscribe(event, (data) => {
+    this.observer.subscribe(event, data => {
       this.observer.unsubscribe(event);
 
       func(data);
