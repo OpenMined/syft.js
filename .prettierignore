@@ -1,1 +1,10 @@
-API-REFERENCE.md
+examples/
+*.md
+dist/
+package*.json
+test/
+coverage/
+documentation.yml
+.babelrc
+.eslintrc.json
+.github/
