@@ -82,13 +82,13 @@ export class Role {
   }
 
   /**
-   * Execute the Role with given worker
+   * Executes the actions in the Role with a given worker.
    * @param {Syft} worker
-   * @param data
+   * @param {...(tf.Tensor)} data
    * @returns {Promise<Array>}
    */
   async execute(worker, ...data) {
-    // Create local scope.
+    // Create local scope
     const planScope = new ObjectRegistry();
     planScope.load(worker.objects);
 
@@ -96,16 +96,16 @@ export class Role {
       outputPlaceholders = this.getOutputPlaceholders(),
       argsLength = inputPlaceholders.length;
 
-    // If the number of arguments supplied does not match the number of arguments required...
+    // If the number of arguments supplied does not match the number of arguments required
     if (data.length !== argsLength)
       throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
 
-    // For each argument supplied, add them in scope
+    // Add each argument to local scope
     data.forEach((datum, i) => {
       planScope.set(inputPlaceholders[i].id, datum);
     });
 
-    // load state tensors to worker
+    // Load state tensors to worker
     if (this.state && this.state.tensors) {
       this.state.placeholders.forEach((ph, idx) => {
         planScope.set(ph.id, this.state.tensors[idx]);
@@ -128,7 +128,7 @@ export class Role {
       }
     }
 
-    // Resolve all of the requested resultId's as specific by the plan
+    // Resolve all of the requested resultId's as specified by the Plan
     const resolvedResultingTensors = [];
     outputPlaceholders.forEach((placeholder) => {
       resolvedResultingTensors.push(planScope.get(placeholder.id));
@@ -136,10 +136,10 @@ export class Role {
       planScope.setGc(placeholder.id, false);
     });
 
-    // Cleanup intermediate plan variables.
+    // Clean up intermediate plan variables.
     planScope.clear();
 
-    // Return them to the worker
+    // Return resolved tensors to the worker
     return resolvedResultingTensors;
   }
 }
