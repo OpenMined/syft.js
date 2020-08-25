@@ -61,9 +61,9 @@ export class TorchTensor {
   bufferize(/* worker */) {
     const tensorData = {
       shape: protobuf.syft_proto.types.torch.v1.Size.create({
-        dims: this.shape
+        dims: this.shape,
       }),
-      dtype: this.dtype
+      dtype: this.dtype,
     };
     tensorData[`contents_${this.dtype}`] = this.contents;
     const pbTensorData = protobuf.syft_proto.types.torch.v1.TensorData.create(
@@ -76,7 +76,7 @@ export class TorchTensor {
           .SERIALIZER_ALL,
       contents_data: pbTensorData,
       tags: this.tags,
-      description: this.description
+      description: this.description,
     });
   }
 

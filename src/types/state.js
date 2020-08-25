@@ -7,11 +7,11 @@ export class State {
   }
 
   getTfTensors() {
-    return this.tensors.map(t => t.toTfTensor());
+    return this.tensors.map((t) => t.toTfTensor());
   }
 
   static unbufferize(worker, pb) {
-    const tensors = pb.tensors.map(stateTensor => {
+    const tensors = pb.tensors.map((stateTensor) => {
       // unwrap StateTensor
       return unbufferize(worker, stateTensor[stateTensor.tensor]);
     });
@@ -20,15 +20,15 @@ export class State {
   }
 
   bufferize(worker) {
-    const tensorsPb = this.tensors.map(tensor =>
+    const tensorsPb = this.tensors.map((tensor) =>
       protobuf.syft_proto.execution.v1.StateTensor.create({
-        torch_tensor: tensor.bufferize(worker)
+        torch_tensor: tensor.bufferize(worker),
       })
     );
-    const placeholdersPb = this.placeholders.map(ph => ph.bufferize());
+    const placeholdersPb = this.placeholders.map((ph) => ph.bufferize());
     return protobuf.syft_proto.execution.v1.State.create({
       placeholders: placeholdersPb,
-      tensors: tensorsPb
+      tensors: tensorsPb,
     });
   }
 }

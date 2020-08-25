@@ -270,8 +270,8 @@ export default class GridAPIClient {
   }
 
   async _initWs() {
-    const ws = new WebSocket(this.wsUrl);
     return new Promise((resolve, reject) => {
+      const ws = new WebSocket(this.wsUrl);
       ws.onopen = () => {
         // setup handlers
         ws.onerror = this._handleWsError;

@@ -11,7 +11,7 @@ import {
   WEBRTC_JOIN_ROOM,
   WEBRTC_PEER_CONFIG,
   WEBRTC_PEER_LEFT,
-  WEBRTC_PEER_OPTIONS
+  WEBRTC_PEER_OPTIONS,
 } from './_constants';
 import { protobuf, unserialize } from './protobuf';
 import Socket from './sockets';
@@ -28,23 +28,23 @@ export class SyftWebrtc {
       url = url.replace('ws://', 'wss://');
     }
     // When a socket connection is opened...
-    const onOpen = event => {
+    const onOpen = (event) => {
       this.observer.broadcast(SOCKET_STATUS, {
         connected: true,
-        event
+        event,
       });
     };
 
     // When a socket connection is closed...
-    const onClose = event => {
+    const onClose = (event) => {
       this.observer.broadcast(SOCKET_STATUS, {
         connected: false,
-        event
+        event,
       });
     };
 
     // When a socket message is received...
-    const onMessage = event => {
+    const onMessage = (event) => {
       const { type, data } = event;
 
       if (type === GET_PROTOCOL) {
@@ -102,7 +102,7 @@ export class SyftWebrtc {
       workerId: this.workerId,
       onOpen,
       onClose,
-      onMessage
+      onMessage,
     });
   }
 
@@ -127,10 +127,10 @@ export class SyftWebrtc {
     this.rtc = new WebRTCClient({
       peerConfig,
       peerOptions,
-      socket: this.socket
+      socket: this.socket,
     });
 
-    const onDataMessage = data => {
+    const onDataMessage = (data) => {
       this.logger.log(`Data message is received from ${data.worker_id}`, data);
     };
     this.rtc.on('message', onDataMessage);

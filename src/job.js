@@ -20,17 +20,21 @@ export default class Job {
    * @param {Syft} options.worker - Instance of Syft client.
    * @param {string} options.modelName - Model name.
    * @param {string} options.modelVersion - Model version.
+   * @param {string} options.authToken - Authentication token for the model.
    * @param {GridAPIClient} options.gridClient - Instance of GridAPIClient.
    */
-  constructor({ worker, modelName, modelVersion, gridClient }) {
+  constructor({ worker, modelName, modelVersion, authToken, gridClient }) {
     this.worker = worker;
     this.modelName = modelName;
     this.modelVersion = modelVersion;
+    this.authToken = authToken;
     this.grid = gridClient;
     this.logger = new Logger();
     this.observer = new EventObserver();
 
     // Parameters to be loaded from PyGrid
+    this.worker_id = null;
+    this.requires_speed_test = false;
     this.model = null;
     this.plans = {};
     this.protocols = {};
@@ -70,7 +74,7 @@ export default class Job {
 
     // Load model
     const modelData = await this.grid.getModel(
-      this.worker.worker_id,
+      this.worker_id,
       cycleParams.request_key,
       cycleParams.model_id
     );
@@ -83,7 +87,7 @@ export default class Job {
     for (let planName of Object.keys(cycleParams.plans)) {
       const planId = cycleParams.plans[planName];
       const planBinary = await this.grid.getPlan(
-        this.worker.worker_id,
+        this.worker_id,
         cycleParams.request_key,
         planId
       );
@@ -102,7 +106,7 @@ export default class Job {
     for (let protocolName of Object.keys(cycleParams.protocols)) {
       const protocolId = cycleParams.protocols[protocolName];
       const protocolBinary = await this.grid.getProtocol(
-        this.worker.worker_id,
+        this.worker_id,
         cycleParams.request_key,
         protocolId
       );
@@ -129,18 +133,29 @@ export default class Job {
    */
   async start() {
     let cycleParams;
+
     try {
+      // Authenticate
+      const authResponse = await this.grid.authenticate(
+        this.modelName,
+        this.modelVersion,
+        this.authToken
+      );
+      this.worker_id = authResponse.worker_id;
+      // True if PyGrid requested to meter the speed
+      this.requires_speed_test = authResponse.requires_speed_test || false;
+
       let [ping, download, upload] = [0, 0, 0];
       // Test connection speed if required
-      if (this.worker.requires_speed_test) {
+      if (this.requires_speed_test) {
         ({ ping, download, upload } = await this.grid.getConnectionSpeed(
-          this.worker.worker_id
+          this.worker_id
         ));
       }
 
       // Client request to join an active federated learning cycle on PyGrid
       cycleParams = await this.grid.requestCycle(
-        this.worker.worker_id,
+        this.worker_id,
         this.modelName,
         this.modelVersion,
         ping,
@@ -225,7 +240,7 @@ export default class Job {
    */
   async report(diff) {
     await this.grid.submitReport(
-      this.worker.worker_id,
+      this.worker_id,
       this.cycleParams.request_key,
       base64Encode(diff)
     );

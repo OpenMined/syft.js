@@ -23,21 +23,21 @@ const allUIOptions = [
   ['black', 'gradient'], // heroBackground
   ['hero', 'vision'], // buttonPosition
   ['arrow', 'user', 'code'], // buttonIcon
-  ['blue', 'white'] // buttonColor
+  ['blue', 'white'], // buttonColor
 ]
   .reduce((a, b) =>
-    a.reduce((r, v) => r.concat(b.map(w => [].concat(v, w))), [])
+    a.reduce((r, v) => r.concat(b.map((w) => [].concat(v, w))), [])
   )
   .map(([heroBackground, buttonPosition, buttonIcon, buttonColor]) => ({
     heroBackground,
     buttonPosition,
     buttonIcon,
-    buttonColor
+    buttonColor,
   }));
 
 // User action promise, gotta wait for the user to do something!
 let userActionPromiseResolve;
-const userActionPromise = new Promise(resolve => {
+const userActionPromise = new Promise((resolve) => {
   userActionPromiseResolve = resolve;
 });
 
@@ -53,7 +53,7 @@ const submitPositiveResult = () => {
 };
 
 // When the user doesn't click the button...
-const submitNegativeResult = config => {
+const submitNegativeResult = (config) => {
   if (!hasSubmittedValue) {
     hasSubmittedValue = true;
     userActionPromiseResolve(false);
@@ -63,7 +63,7 @@ const submitNegativeResult = config => {
 // When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
 setTimeout(submitNegativeResult, 20000);
 window.addEventListener('beforeunload', submitNegativeResult);
-document.addEventListener('keyup', e => {
+document.addEventListener('keyup', (e) => {
   if (e.code === 'KeyX') submitNegativeResult();
 });
 
@@ -84,7 +84,7 @@ render(
 const startFL = async (url, modelName, modelVersion, authToken = null) => {
   // Define the worker and the job
   const worker = new Syft({ url, authToken, verbose: true });
-  const job = await worker.newJob({ modelName, modelVersion });
+  const job = worker.newJob({ modelName, modelVersion });
 
   // Immediately start the cycle
   updateStatus('Starting job request...');
@@ -95,9 +95,9 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     updateStatus('Accepted into cycle!');
 
     // Arg max function
-    const argMax = d =>
+    const argMax = (d) =>
       Object.entries(d).filter(
-        el => el[1] == Math.max(...Object.values(d))
+        (el) => el[1] == Math.max(...Object.values(d))
       )[0][0];
 
     // Copy model params
@@ -245,7 +245,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
   });
 
   // When there's an error in the cycle...
-  job.on('error', err => {
+  job.on('error', (err) => {
     updateStatus(`Error: ${err.message}`, err);
   });
 };
