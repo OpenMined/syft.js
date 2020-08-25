@@ -24,16 +24,16 @@ export const WEBRTC_PEER_CONFIG = {
       urls: [
         'stun:stun.l.google.com:19302',
         'stun:stun1.l.google.com:19302',
-        'stun:stun2.l.google.com:19302' // FF says too many stuns are bad, don't send more than this
-      ]
-    }
-  ]
+        'stun:stun2.l.google.com:19302', // FF says too many stuns are bad, don't send more than this
+      ],
+    },
+  ],
 };
 
 export const WEBRTC_PEER_OPTIONS = {
   optional: [
-    { DtlsSrtpKeyAgreement: true } // Required for connection between Chrome and Firefox
+    { DtlsSrtpKeyAgreement: true }, // Required for connection between Chrome and Firefox
     // FF works w/o this option, but Chrome fails with it
     // { RtpDataChannels: true } // Required in Firefox to use the DataChannels API
-  ]
+  ],
 };

@@ -44,17 +44,17 @@ export class Role {
 
   findPlaceholders(tagRegex) {
     return this.placeholders.filter(
-      placeholder =>
-        placeholder.tags && placeholder.tags.some(tag => tagRegex.test(tag))
+      (placeholder) =>
+        placeholder.tags && placeholder.tags.some((tag) => tagRegex.test(tag))
     );
   }
 
   getInputPlaceholders() {
-    return this.input_placeholder_ids.map(id => this.placeholders[id]);
+    return this.input_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
   getOutputPlaceholders() {
-    return this.output_placeholder_ids.map(id => this.placeholders[id]);
+    return this.output_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
   /**
@@ -106,7 +106,7 @@ export class Role {
 
     // Resolve all of the requested resultId's as specific by the plan
     const resolvedResultingTensors = [];
-    outputPlaceholders.forEach(placeholder => {
+    outputPlaceholders.forEach((placeholder) => {
       resolvedResultingTensors.push(planScope.get(placeholder.id));
       // Do not gc output tensors
       planScope.setGc(placeholder.id, false);

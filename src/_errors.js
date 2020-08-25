@@ -1,4 +1,4 @@
-export const NO_DETAILER = d =>
+export const NO_DETAILER = (d) =>
   `Serialized object contains type that may exist in PySyft, but is not currently supported in syft.js. Please file a feature request (https://github.com/OpenMined/syft.js/issues) for type ${d}.`;
 
 export const NOT_ENOUGH_ARGS = (passed, expected) =>
@@ -12,15 +12,15 @@ export const NO_PLAN = `The operation you're attempting to run requires a plan b
 export const PLAN_ALREADY_COMPLETED = (name, id) =>
   `You have already executed the plan named "${name}" with id "${id}".`;
 
-export const CANNOT_FIND_COMMAND = command =>
+export const CANNOT_FIND_COMMAND = (command) =>
   `Command ${command} not found in in TensorFlow.js.`;
 
-export const GRID_UNKNOWN_CYCLE_STATUS = status =>
+export const GRID_UNKNOWN_CYCLE_STATUS = (status) =>
   `Unknown cycle status: ${status}`;
 
-export const GRID_ERROR = status => `Grid error: ${status}`;
+export const GRID_ERROR = (status) => `Grid error: ${status}`;
 
-export const MODEL_LOAD_FAILED = status => `Failed to load Model: ${status}`;
+export const MODEL_LOAD_FAILED = (status) => `Failed to load Model: ${status}`;
 
 export const PLAN_LOAD_FAILED = (planName, status) =>
   `Failed to load '${planName}' Plan: ${status}`;

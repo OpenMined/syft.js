@@ -53,7 +53,7 @@ export default class DataChannelMessage {
   }
 
   once(event, func) {
-    this.observer.subscribe(event, data => {
+    this.observer.subscribe(event, (data) => {
       this.observer.unsubscribe(event);
 
       func(data);
@@ -79,7 +79,7 @@ export default class DataChannelMessage {
     return {
       id: view.getUint32(2),
       chunks: view.getUint16(6),
-      chunk: view.getUint16(8)
+      chunk: view.getUint16(8),
     };
   }
 

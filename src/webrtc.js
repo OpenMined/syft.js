@@ -5,7 +5,7 @@ import {
   WEBRTC_DATACHANNEL_CHUNK_SIZE,
   WEBRTC_DATACHANNEL_MAX_BUFFER,
   WEBRTC_DATACHANNEL_MAX_BUFFER_TIMEOUTS,
-  WEBRTC_DATACHANNEL_BUFFER_TIMEOUT
+  WEBRTC_DATACHANNEL_BUFFER_TIMEOUT,
 } from './_constants';
 import DataChannelMessage from './data-channel-message';
 import DataChannelMessageQueue from './data-channel-message-queue';
@@ -103,7 +103,7 @@ export default class WebRTCClient {
     // Otherwise, send to each worker specified
     else {
       const sendPromises = [];
-      this._forEachPeer(peer => {
+      this._forEachPeer((peer) => {
         if (peer.channel) {
           sendPromises.push(send(peer.channel, msg));
         }
@@ -170,7 +170,7 @@ export default class WebRTCClient {
 
     // Create a new peer in the list with a blank candidate cache (to be populated by ICE candidates we receive)
     this.peers[workerId] = {
-      candidateCache: []
+      candidateCache: [],
     };
 
     // Create and initialize the new connection, then add that connection to the peers list
@@ -179,7 +179,7 @@ export default class WebRTCClient {
     this.peers[workerId].connection = pc;
 
     // When this peer connection receives a data channel
-    pc.ondatachannel = e => {
+    pc.ondatachannel = (e) => {
       this.logger.log('WebRTC: Calling ondatachannel');
 
       this.peers[workerId].channel = e.channel;
@@ -195,7 +195,7 @@ export default class WebRTCClient {
     this.logger.log('WebRTC: Initializing connection');
 
     // How an RTCPeerConnection handle new ICE candidates or offer/answer messages...
-    pc.onicecandidate = event => {
+    pc.onicecandidate = (event) => {
       // If we have an ICE candidate to handle
       if (event.candidate) {
         this.logger.log('WebRTC: Saving new ICE candidate');
@@ -229,7 +229,7 @@ export default class WebRTCClient {
 
     // Create a new peer in the list with a blank candidate cache (to be populated by ICE candidates we receive)
     this.peers[workerId] = {
-      candidateCache: []
+      candidateCache: [],
     };
 
     // Create and initialize the new connection, then add that connection to the peers list
@@ -250,7 +250,7 @@ export default class WebRTCClient {
 
     // Create an SDP offer for the peer connection
     pc.createOffer()
-      .then(offer => {
+      .then((offer) => {
         this.logger.log('WebRTC: Offer created');
 
         // Set the offer as the local description
@@ -276,7 +276,7 @@ export default class WebRTCClient {
         scopeId: this.scopeId,
         to,
         type,
-        data: message
+        data: message,
       });
     }
   }
@@ -336,7 +336,7 @@ export default class WebRTCClient {
 
         // Create an SDP answer in response to their SDP offer
         pc.createAnswer()
-          .then(answer => {
+          .then((answer) => {
             this.logger.log('WebRTC: Answer created');
 
             // Set this answer as the peer's local description
@@ -372,17 +372,17 @@ export default class WebRTCClient {
   // This is used to attach generic logging handlers for data channels.
   addDataChannelListeners(channel) {
     // When the data channel is opened
-    channel.onopen = event => {
+    channel.onopen = (event) => {
       this.logger.log('WebRTC: Data channel open', event);
     };
 
     // When the data channel is closed
-    channel.onclose = event => {
+    channel.onclose = (event) => {
       this.logger.log('WebRTC: Data channel close', event);
     };
 
     // When the data channel receives a new message
-    channel.onmessage = event => {
+    channel.onmessage = (event) => {
       const messageInfo = DataChannelMessage.messageInfoFromBuf(event.data);
       if (messageInfo) {
         if (this.messageQueue.isRegistered(messageInfo.id)) {
@@ -390,7 +390,7 @@ export default class WebRTCClient {
         } else {
           const message = new DataChannelMessage({
             id: messageInfo.id,
-            worker_id: channel.owner
+            worker_id: channel.owner,
           });
           this.messageQueue.register(message);
           message.addChunk(event.data);
@@ -404,7 +404,7 @@ export default class WebRTCClient {
     };
 
     // When the data channel errors
-    channel.onerror = err => {
+    channel.onerror = (err) => {
       this.logger.log('WebRTC: Data channel error', err);
     };
   }
@@ -413,7 +413,7 @@ export default class WebRTCClient {
   _handleError(message) {
     const self = this;
 
-    return error => {
+    return (error) => {
       self.logger.log(message, error);
     };
   }
