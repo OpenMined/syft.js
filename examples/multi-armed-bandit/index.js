@@ -16,28 +16,57 @@ const updateStatus = (message, ...args) =>
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
 const modelName = 'bandit';
-const modelVersion = '1.0.0';
+const modelVersion = '666.0.94';
+const simulate = false;
+const dp_noise = 0.2;
 
 // All possible UI options
 const allUIOptions = [
   ['black', 'gradient'], // heroBackground
   ['hero', 'vision'], // buttonPosition
   ['arrow', 'user', 'code'], // buttonIcon
-  ['blue', 'white'] // buttonColor
+  ['blue', 'white'], // buttonColor
 ]
   .reduce((a, b) =>
-    a.reduce((r, v) => r.concat(b.map(w => [].concat(v, w))), [])
+    a.reduce((r, v) => r.concat(b.map((w) => [].concat(v, w))), [])
   )
   .map(([heroBackground, buttonPosition, buttonIcon, buttonColor]) => ({
     heroBackground,
     buttonPosition,
     buttonIcon,
-    buttonColor
+    buttonColor,
   }));
+
+// bandit simulator helper code
+
+const binomial_sample = (accept_rate) => (Math.random() < accept_rate ? 1 : 0);
+
+class Simulator {
+  constructor(rates) {
+    this.rates = rates;
+    this.action_space = Array(rates.length);
+  }
+  simulate(idx) {
+    let choice = binomial_sample(this.rates[idx]);
+    console.log(
+      `SIMULATOR sampled ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ reward: ${choice} for UI: ${idx}`
+    );
+    return choice;
+  }
+  simulate_ui(idx) {
+    let choice = prompt(`showing UI${Number(idx)}`, '1 for y, 0 for no');
+    return Number(choice);
+  }
+}
+const simulated_rates = Array.from({ length: 24 }, () =>
+  Math.min(Math.abs(Math.random() - Math.random() / 10), 0.77)
+);
+simulated_rates[9] = 0.85;
+const env = new Simulator(simulated_rates);
 
 // User action promise, gotta wait for the user to do something!
 let userActionPromiseResolve;
-const userActionPromise = new Promise(resolve => {
+const userActionPromise = new Promise((resolve) => {
   userActionPromiseResolve = resolve;
 });
 
@@ -53,7 +82,7 @@ const submitPositiveResult = () => {
 };
 
 // When the user doesn't click the button...
-const submitNegativeResult = config => {
+const submitNegativeResult = (config) => {
   if (!hasSubmittedValue) {
     hasSubmittedValue = true;
     userActionPromiseResolve(false);
@@ -63,7 +92,7 @@ const submitNegativeResult = config => {
 // When the user doesn't make a decision for 20 seconds, closes the window, or presses X... send a negative result
 setTimeout(submitNegativeResult, 20000);
 window.addEventListener('beforeunload', submitNegativeResult);
-document.addEventListener('keyup', e => {
+document.addEventListener('keyup', (e) => {
   if (e.code === 'KeyX') submitNegativeResult();
 });
 
@@ -95,9 +124,9 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     updateStatus('Accepted into cycle!');
 
     // Arg max function
-    const argMax = d =>
+    const argMax = (d) =>
       Object.entries(d).filter(
-        el => el[1] == Math.max(...Object.values(d))
+        (el) => el[1] == Math.max(...Object.values(d))
       )[0][0];
 
     // Copy model params
@@ -141,6 +170,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         rewardVector,
         sampledVector
       );
+      let samplesFromBetaDist = [];
 
       // For each option...
       for (let opt = 0; opt < alphasArray.length; opt++) {
@@ -149,11 +179,19 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
           alphasArray[opt],
           betasArray[opt]
         );
+        if (!(samplesFromBetaDist[opt] > 0)) {
+          samplesFromBetaDist[opt] = 0.5;
+        }
 
-        updateStatus('Got samples from beta distribution', samplesFromBetaDist);
+        updateStatus(
+          'Got samples from beta distribution',
+          opt,
+          samplesFromBetaDist
+        );
       }
 
       // Get the option that the user should be loading...
+      updateStatus(187, samplesFromBetaDist);
       let selectedOption = argMax(samplesFromBetaDist);
       updateStatus('Have the desired selected option', selectedOption);
 
@@ -171,19 +209,35 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         'Re-rendered the React application with config',
         allUIOptions[selectedOption]
       );
+      let reward;
 
-      updateStatus('Waiting on user input...');
+      const dp_sample = (dp_noise) => {
+        const val = binomial_sample(dp_noise);
+        updateStatus(
+          'DP Noise | simulate? | effectivelySimulate',
+          simulate,
+          val
+        );
+        return val;
+      };
+      let dp_sample_value = dp_sample(dp_noise);
+      let effectivelySimulate = simulate ? 1 : dp_sample_value;
 
-      // Wait on user input...
-      const clicked = await userActionPromise;
+      if (!effectivelySimulate) {
+        updateStatus('Waiting on user input...');
 
-      // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
-      const reward = clicked ? 1 : 0;
+        // Wait on user input...
+        const clicked = await userActionPromise;
 
-      updateStatus('User input is...', clicked);
+        // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
+        const reward = clicked ? Number(1) : Number(0);
+        updateStatus('User input is...', clicked);
 
-      // Set the reward and sampled vectors to be the appropriate values
-      rewardVector[selectedOption] = reward;
+        // Set the reward and sampled vectors to be the appropriate values
+      } else {
+        reward = env.simulate(selectedOption);
+      }
+      rewardVector[selectedOption] = Number(reward);
       sampledVector[selectedOption] = 1;
 
       // And turn them into tensors
@@ -203,9 +257,14 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         alphas,
         betas
       );
-      updateStatus('Plan executed', newAlphas, newBetas);
 
+      const newAlphasArray = await newAlphas.array();
+      const newBetasArray = await newBetas.array();
+
+      updateStatus('Plan executed', newAlphas, newBetas);
+      updateStatus('NEW alphas and betas', newAlphasArray, newBetasArray);
       // Reset the old alphas and betas to the new alphas and betas
+
       alphas = newAlphas;
       betas = newBetas;
       updateStatus('Resetting alphas and betas', alphas, betas);
@@ -245,7 +304,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
   });
 
   // When there's an error in the cycle...
-  job.on('error', err => {
+  job.on('error', (err) => {
     updateStatus(`Error: ${err.message}`, err);
   });
 };
