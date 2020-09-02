@@ -26,7 +26,7 @@ export class ComputationAction {
   }
 
   /**
-   * Reconstruct a ComputationAction object from a protobuf message.
+   * Reconstructs a ComputationAction object from a protobuf message.
    * Note that this method might take a worker-specific argument in the future.
    *
    * @static

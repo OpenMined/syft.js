@@ -1,11 +1,17 @@
 import { getPbId, unbufferize } from '../protobuf';
 
 /**
- * PySyft Plan.
+ * Plan stores a sequence of actions (ComputationAction) in its role.
+ * A worker is assigned plans and executes the actions stored in the plans.
  */
 export class Plan {
   /**
    * @hideconstructor
+   * @param {string} id - Id of the Plan.
+   * @param {string} name - Name of the Plan.
+   * @param {Array.<Role>} [role=[]] Array of Roles.
+   * @param {Array.<string>} [tags=[]] - Tags for Plan.
+   * @param {string|null} [description=null] Description for Plan.
    */
   constructor(id, name, role = [], tags = [], description = null) {
     this.id = id;
@@ -16,7 +22,11 @@ export class Plan {
   }
 
   /**
+   * Reconstructs a Plan object from the protobuf message.
+   * Note that this method take a worker-specific argument in the future.
    * @private
+   * @param {*} worker - Reserved placeholder for worker-specific arguments.
+   * @param {protobuf.syft_proto.execution.v1.Plan} pb - Protobuf object for Role.
    * @returns {Plan}
    */
   static unbufferize(worker, pb) {
