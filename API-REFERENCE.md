@@ -163,7 +163,8 @@ Returns **[Promise][32]&lt;[ArrayBuffer][33]>** Protobuf-serialized `diff`.
 
 ## Plan
 
-PySyft Plan.
+Plan stores a sequence of actions (ComputationAction) in its role.
+A worker is assigned plans and executes the actions stored in the plans.
 
 ### execute
 
