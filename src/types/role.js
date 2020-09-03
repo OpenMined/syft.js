@@ -2,7 +2,23 @@ import { getPbId, unbufferize } from '../protobuf';
 import ObjectRegistry from '../object-registry';
 import { NOT_ENOUGH_ARGS } from '../_errors';
 
+/**
+ * Role encapsulates a list of ComputationActions that are executed in a Plan.
+ *
+ * Concretely, a worker is assigned a Role, which includes actions that the
+ * worker should perform.
+ */
 export class Role {
+  /**
+   * @param {string} id - Id of the Role.
+   * @param {Array.<ComputationAction>} [actions=[]] - Array of actions to be executed.
+   * @param {State} [state=null]
+   * @param {Object.<string,Placeholder>} [placeholders={}] - Array of Placeholders that contain tensors.
+   * @param {Array.<PlaceholderId>} [input_placeholder_ids=[]] - Array of PlaceholderIds for input values.
+   * @param {Array.<PlaceholderId>} [output_placeholder_ids=[]] - Array of PlaceholderIds for output values.
+   * @param {Array.<string>} [tags=[]] - Tags for Role.
+   * @param {string|null} [description=null] Description for Role.
+   */
   constructor(
     id,
     actions = [],
@@ -23,6 +39,15 @@ export class Role {
     this.description = description;
   }
 
+  /**
+   * Reconstruct a Role object from the protobuf message.
+   * Note that this method might take a worker-specific argument in the future.
+   *
+   * @static
+   * @param {*} worker - Reserved placeholder for worker-specific arguments.
+   * @param {protobuf.syft_proto.execution.v1.Role} pb - Protobuf object for Role.
+   * @returns {Role}
+   */
   static unbufferize(worker, pb) {
     let placeholdersArray = unbufferize(worker, pb.placeholders);
     let placeholders = {};
@@ -42,29 +67,28 @@ export class Role {
     );
   }
 
-  findPlaceholders(tagRegex) {
-    return this.placeholders.filter(
-      (placeholder) =>
-        placeholder.tags && placeholder.tags.some((tag) => tagRegex.test(tag))
-    );
-  }
-
+  /**
+   * @returns {Array.<Placeholder>} - Input Placeholders
+   */
   getInputPlaceholders() {
     return this.input_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
+  /**
+   * @returns {Array.<Placeholder>} - Output Placeholders
+   */
   getOutputPlaceholders() {
     return this.output_placeholder_ids.map((id) => this.placeholders[id]);
   }
 
   /**
-   * Execute the Role with given worker
+   * Executes the actions in the Role with a given worker.
    * @param {Syft} worker
-   * @param data
+   * @param {...(tf.Tensor)} data
    * @returns {Promise<Array>}
    */
   async execute(worker, ...data) {
-    // Create local scope.
+    // Create local scope
     const planScope = new ObjectRegistry();
     planScope.load(worker.objects);
 
@@ -72,16 +96,16 @@ export class Role {
       outputPlaceholders = this.getOutputPlaceholders(),
       argsLength = inputPlaceholders.length;
 
-    // If the number of arguments supplied does not match the number of arguments required...
+    // If the number of arguments supplied does not match the number of arguments required
     if (data.length !== argsLength)
       throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
 
-    // For each argument supplied, add them in scope
+    // Add each argument to local scope
     data.forEach((datum, i) => {
       planScope.set(inputPlaceholders[i].id, datum);
     });
 
-    // load state tensors to worker
+    // Load state tensors to worker
     if (this.state && this.state.tensors) {
       this.state.placeholders.forEach((ph, idx) => {
         planScope.set(ph.id, this.state.tensors[idx]);
@@ -104,7 +128,7 @@ export class Role {
       }
     }
 
-    // Resolve all of the requested resultId's as specific by the plan
+    // Resolve all of the requested resultId's as specified by the Plan
     const resolvedResultingTensors = [];
     outputPlaceholders.forEach((placeholder) => {
       resolvedResultingTensors.push(planScope.get(placeholder.id));
@@ -112,10 +136,10 @@ export class Role {
       planScope.setGc(placeholder.id, false);
     });
 
-    // Cleanup intermediate plan variables.
+    // Clean up intermediate plan variables.
     planScope.clear();
 
-    // Return them to the worker
+    // Return resolved tensors to the worker
     return resolvedResultingTensors;
   }
 }
