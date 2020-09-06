@@ -9,11 +9,11 @@ export class SpeedTest {
    * @property {string} downloadUrl
    * @property {string} uploadUrl
    * @property {string} pingUrl
-   * @property {int} maxUploadSizeMb
-   * @property {int} maxTestTimeSec
-   * @property {int} bwAvgWindow - Defined in AvgCollector()
-   * @property {float} bwLowJitterThreshold - Defined in AvgCollector()
-   * @property {int} bwMaxLowJitterConsecutiveMeasures - Defined in AvgCollector()
+   * @property {number} maxUploadSizeMb
+   * @property {number} maxTestTimeSec
+   * @property {number} bwAvgWindow - Defined in AvgCollector()
+   * @property {number} bwLowJitterThreshold - Defined in AvgCollector()
+   * @property {number} bwMaxLowJitterConsecutiveMeasures - Defined in AvgCollector()
    */
   constructor({
     downloadUrl,
