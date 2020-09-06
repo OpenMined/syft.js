@@ -1,7 +1,7 @@
 import { createRandomBuffer } from './utils/random-buffer';
 
 /**
- * SpeedTest is a class that contains the necessary components 
+ * SpeedTest is a class that contains the necessary components
  * to measure download/upload speed, and ping.
  */
 export class SpeedTest {
@@ -36,12 +36,12 @@ export class SpeedTest {
 
   /**
    * Measures the time taken to make an XMLHttpRequest (xhr).
-   * Gets called before the request is sent, to set up values and tools to measure time. 
+   * Gets called before the request is sent, to set up values and tools to measure time.
    * Returns a promise that gets updated when the request is sent and a response is received with no errors.
    *  If the request is successful, then the value of the promise is the time that the request took (in seconds)
    *  Else, the value is an Error
    * @param {XMLHttpRequest} xhr - XMLHttpRequest
-   * @param {boolean} isUpload 
+   * @param {boolean} isUpload
    */
   async meterXhr(xhr, isUpload = false) {
     return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ export class SpeedTest {
         });
 
       const req = isUpload ? xhr.upload : xhr;
-      
+
       // Update the value of the promise when the request is finished
       const finish = (error = null) => {
         if (timeoutHandler) {
@@ -101,8 +101,8 @@ export class SpeedTest {
           prevSize = size;
           return;
         }
-        
-        // Update change in time and size as the request i in progress 
+
+        // Update change in time and size as the request i in progress
         let deltaSize = size - prevSize,
           deltaTime = time - prevTime,
           speed = deltaSize / deltaTime;

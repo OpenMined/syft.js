@@ -5,7 +5,6 @@ import * as tf from '@tensorflow/tfjs-core';
  * where gc denotes if the object of given id will be garbage collected.
  */
 export default class ObjectRegistry {
-  
   /**
    * @property {Object.<string, Object>} objects - a map of {id: object}
    * @property {Object.<string, boolean>} gc - a map of {id: boolean} that determines if the object of id will be garbage collected
