@@ -15,8 +15,8 @@ const updateStatus = (message, ...args) =>
 
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
-const modelName = 'bandit';
-const modelVersion = '666.0.94';
+const modelName = 'bandit_th';
+const modelVersion = '1.1.1';
 const simulate = false;
 const dp_noise = 0.2;
 
@@ -230,14 +230,14 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         const clicked = await userActionPromise;
 
         // If they clicked, set the reward value for this option to be a 1, otherwise it's a 0
-        const reward = clicked ? Number(1) : Number(0);
+        reward = clicked ? 1 : 0;
         updateStatus('User input is...', clicked);
 
         // Set the reward and sampled vectors to be the appropriate values
       } else {
         reward = env.simulate(selectedOption);
       }
-      rewardVector[selectedOption] = Number(reward);
+      rewardVector[selectedOption] = reward;
       sampledVector[selectedOption] = 1;
 
       // And turn them into tensors
