@@ -5,6 +5,7 @@ import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
 import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
 import SyftModel from './syft-model';
 import Logger from './logger';
+import { PlanTrainer } from './plan-trainer';
 
 /**
  * Job represents a single training cycle done by the client.
@@ -80,7 +81,7 @@ export default class Job {
     );
     this.model = new SyftModel({
       worker: this.worker,
-      modelData,
+      serializedModelParameters: modelData,
     });
 
     // Load all plans
@@ -233,6 +234,16 @@ export default class Job {
   }
 
   /**
+   * Alias for `Job.start`
+   *
+   * @see Job.start
+   * @returns {Promise<void>}
+   */
+  async request() {
+    return this.start();
+  }
+
+  /**
    * Submits the model diff to PyGrid.
    *
    * @param {ArrayBuffer} diff - Serialized difference between original and trained model parameters.
@@ -244,5 +255,37 @@ export default class Job {
       this.cycleParams.request_key,
       base64Encode(diff)
     );
+  }
+
+  /**
+   * Train the model against specified plan and using specified parameters.
+   *
+   * @param trainingPlan {string} Training Plan name
+   * @param parameters {Object} Dictionary of training parameters
+   * @param parameters.planInputs {[PlanInputSpec]} List of training Plan input arguments
+   * @param parameters.planOutputs {[PlanOutputSpec]} List of training Plan outputs
+   * @param parameters.data {tf.Tensor} Tensor containing training data
+   * @param parameters.target {tf.Tensor} Tensor containing training targets (optional)
+   * @param parameters.epochs {number} Epochs to train
+   * @param parameters.batchSize {number} Batch size
+   * @param parameters.stepsPerEpoch {number} Max number of steps per epoch (optional)
+   * @param parameters.events {Object} List of event listeners
+   * @param parameters.events.start {CallableFunction} On training start listener
+   * @param parameters.events.end {CallableFunction} On training end listener
+   * @param parameters.events.epochStart {CallableFunction} On epoch start listener
+   * @param parameters.events.epochEnd {CallableFunction} On epoch end listener
+   * @param parameters.events.batchStart {CallableFunction} On batch start listener
+   * @param parameters.events.batchEnd {CallableFunction} On batch end listener
+   * @returns {PlanTrainer}
+   */
+  train(trainingPlan, parameters) {
+    const trainer = new PlanTrainer({
+      worker: this.worker,
+      plan: this.plans[trainingPlan],
+      model: this.model,
+      ...parameters,
+    });
+    trainer.start();
+    return trainer;
   }
 }

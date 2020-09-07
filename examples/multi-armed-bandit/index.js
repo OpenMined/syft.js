@@ -83,12 +83,12 @@ render(
 // Main start method
 const startFL = async (url, modelName, modelVersion, authToken = null) => {
   // Define the worker and the job
-  const worker = new Syft({ url, authToken, verbose: true });
-  const job = worker.newJob({ modelName, modelVersion });
+  const worker = new Syft({ url, verbose: true });
+  const job = worker.newJob({ modelName, modelVersion, authToken });
 
   // Immediately start the cycle
   updateStatus('Starting job request...');
-  job.start();
+  job.request();
 
   // When we've been accepted into the cycle...
   job.on('accepted', async ({ model }) => {
@@ -219,7 +219,9 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     updateStatus('Setting updated model params', updatedModelParams);
 
     // And report the diff back to PyGrid
-    const modelDiff = await model.createSerializedDiff(updatedModelParams);
+    const modelDiff = await model.createSerializedDiff(
+      new SyftModel({worker, modelParameters: updatedModelParams})
+    );
     await job.report(modelDiff);
     updateStatus('Reported diff');
 

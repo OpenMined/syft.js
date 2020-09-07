@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs-core';
-import { Syft } from '@openmined/syft.js';
+import { Syft, PlanInputSpec, PlanOutputSpec } from '@openmined/syft.js';
 import { MnistData } from './mnist';
 
 const gridServer = document.getElementById('grid-server');
@@ -24,111 +24,74 @@ startButton.onclick = () => {
  * @returns {Promise<void>}
  */
 const startFL = async (url, modelName, modelVersion, authToken = null) => {
-  const worker = new Syft({ url, authToken, verbose: true });
-  const job = worker.newJob({ modelName, modelVersion });
+  const worker = new Syft({ url, verbose: true });
+  const job = worker.newJob({ modelName, modelVersion, authToken });
 
-  job.start();
+  // Load MNIST data.
+  await loadMnistDataset();
+  const trainDataset = mnist.getTrainData();
+
+  job.request();
 
   job.on('accepted', async ({ model, clientConfig }) => {
     updateStatus('Accepted into cycle!');
 
-    // Load MNIST data
-    await loadMnistDataset();
-    const trainDataset = mnist.getTrainData();
-    const data = trainDataset.xs;
-    const targets = trainDataset.labels;
+    // Shuffle dataset.
+    // TODO replace with Dataloader API
+    updateStatus('Shuffling MNIST data...');
+    const indices = Array.from(tf.util.createShuffledIndices(trainDataset.xs.shape[0]));
+    const data = trainDataset.xs.gather(indices);
+    const target = trainDataset.labels.gather(indices);
+    updateStatus('MNIST data shuffled.');
 
-    // Prepare randomized indices for data batching.
-    const indices = Array.from({ length: data.shape[0] }, (v, i) => i);
-    tf.util.shuffle(indices);
+    const training = job.train('training_plan', {
+      planInputs: [
+        new PlanInputSpec(PlanInputSpec.TYPE_DATA),
+        new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
+        new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
+        new PlanInputSpec(PlanInputSpec.TYPE_VALUE, 'lr', null, clientConfig.lr),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W1', 0),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b1', 1),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W2', 2),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b2', 3),
+      ],
+      planOutputs: [
+        new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_METRIC, 'accuracy'),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W1', 0),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b1', 1),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W2', 2),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
+      ],
+      data,
+      target,
+      epochs: clientConfig.max_epochs || 1,
+      stepsPerEpoch: clientConfig.max_updates || null,
+      batchSize: clientConfig.batch_size,
+    });
 
-    // Prepare train parameters.
-    const batchSize = clientConfig.batch_size;
-    const lr = clientConfig.lr;
-    const numBatches = Math.ceil(data.shape[0] / batchSize);
+    training.on('batchEnd', updateUIAfterBatch);
 
-    // Calculate total number of model updates
-    // in case none of these options specified, we fallback to one loop
-    // though all batches.
-    const maxEpochs = clientConfig.max_epochs || 1;
-    const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
-    const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
-
-    // Copy model to train it.
-    let modelParams = [];
-    for (let param of model.params) {
-      modelParams.push(param.clone());
-    }
-
-    // Main training loop.
-    for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
-      // Slice a batch.
-      const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
-      const indicesBatch = indices.slice(
-        batch * batchSize,
-        batch * batchSize + chunkSize
-      );
-      const dataBatch = data.gather(indicesBatch);
-      const targetBatch = targets.gather(indicesBatch);
-
-      // Execute the plan and get updated model params back.
-      let [loss, acc, ...updatedModelParams] = await job.plans[
-        'training_plan'
-      ].execute(
-        job.worker,
-        dataBatch,
-        targetBatch,
-        chunkSize,
-        lr,
-        ...modelParams
-      );
-
-      // Use updated model params in the next cycle.
-      for (let i = 0; i < modelParams.length; i++) {
-        modelParams[i].dispose();
-        modelParams[i] = updatedModelParams[i];
-      }
-
-      await updateUIAfterBatch({
-        epoch,
-        batch,
-        accuracy: await acc.array(),
-        loss: await loss.array(),
-      });
-
-      batch++;
-
-      // Check if we're out of batches (end of epoch).
-      if (batch === numBatches) {
-        batch = 0;
-        epoch++;
-      }
-
+    training.on('end', async () => {
       // Free GPU memory.
-      acc.dispose();
-      loss.dispose();
-      dataBatch.dispose();
-      targetBatch.dispose();
-    }
+      data.dispose();
+      target.dispose();
 
-    // Free GPU memory.
-    data.dispose();
-    targets.dispose();
+      // TODO protocol execution
+      // job.protocols['secure_aggregation'].execute();
 
-    // TODO protocol execution
-    // job.protocols['secure_aggregation'].execute();
+      // Calc model diff.
+      const modelDiff = await model.createSerializedDiffFromModel(training.currentModel);
 
-    // Calc model diff.
-    const modelDiff = await model.createSerializedDiff(modelParams);
+      // Report diff.
+      await job.report(modelDiff);
+      updateStatus('Cycle is done!');
 
-    // Report diff.
-    await job.report(modelDiff);
-    updateStatus('Cycle is done!');
-
-    // Try again.
-    if (doRepeat()) {
-      setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
-    }
+      // Try again.
+      if (doRepeat()) {
+        setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
+      }
+    });
   });
 
   job.on('rejected', ({ timeout }) => {
@@ -198,15 +161,14 @@ const setFLUI = () => {
  * @param batch
  * @param accuracy
  * @param loss
- * @returns {Promise<void>}
  */
-const updateUIAfterBatch = async ({ epoch, batch, accuracy, loss }) => {
+const updateUIAfterBatch = ({ epoch, batch, loss, metrics }) => {
+  const accuracy = metrics['accuracy'];
   console.log(
     `Epoch: ${epoch}, Batch: ${batch}, Accuracy: ${accuracy}, Loss: ${loss}`
   );
   Plotly.extendTraces('loss_graph', { y: [[loss]] }, [0]);
   Plotly.extendTraces('acc_graph', { y: [[accuracy]] }, [0]);
-  await tf.nextFrame();
 };
 
 const doRepeat = () => document.getElementById('worker-repeat').checked;

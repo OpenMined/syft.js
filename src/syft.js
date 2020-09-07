@@ -28,7 +28,7 @@ import ObjectRegistry from './object-registry';
  * job.on('error', (err) => {
  *   // Handle errors
  * })
- * job.start()
+ * job.request()
  */
 export default class Syft {
   constructor({ url, verbose, peerConfig }) {
