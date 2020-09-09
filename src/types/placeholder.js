@@ -12,7 +12,7 @@ export class PlaceholderId {
   }
 
   /**
-   * Reconstruct a PlaceholderId object from the protobuf message.
+   * Reconstructs a PlaceholderId object from the protobuf message.
    * Note that this method might take a worker-specific argument in the future.
    *
    * @static
@@ -53,7 +53,7 @@ export class Placeholder {
   }
 
   /**
-   * Reconstruct a Placeholder object from the protobuf message.
+   * Reconstructs a Placeholder object from the protobuf message.
    * Note that this method might take a worker-specific argument in the future.
    *
    * @static
