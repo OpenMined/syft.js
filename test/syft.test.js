@@ -119,7 +119,7 @@ describe('Syft', () => {
         modelVersion: '1.2.3',
         authToken: 'auth secret',
       });
-      job.start();
+      job.request();
 
       job.on('rejected', function ({ timeout }) {
         expect(this).toBeInstanceOf(Job);
@@ -153,7 +153,7 @@ describe('Syft', () => {
         error: "The 'auth_token' you sent is invalid.",
       });
 
-      job.start();
+      job.request();
 
       expect.assertions(3);
       job.on('error', (err) => {
@@ -191,7 +191,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       job.on('accepted', function ({ model, clientConfig }) {
         expect(this).toBeInstanceOf(Job);
@@ -226,7 +226,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       job.on('rejected', function ({ timeout }) {
         expect(this).toBeInstanceOf(Job);
@@ -270,7 +270,7 @@ describe('Syft', () => {
         modelVersion: '1.2.3',
       });
 
-      job.start();
+      job.request();
 
       job.on('accepted', async function ({ model, clientConfig }) {
         expect(clientConfig).toStrictEqual(dummyFLConfig.client_config);
@@ -331,7 +331,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       expect.assertions(2);
       job.on('error', (err) => {
@@ -370,7 +370,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       expect.assertions(2);
       job.on('error', (err) => {
@@ -407,7 +407,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       expect.assertions(2);
       job.on('error', (err) => {
@@ -443,7 +443,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       expect.assertions(2);
       job.on('error', (err) => {
@@ -480,7 +480,7 @@ describe('Syft', () => {
         modelName: 'test',
         modelVersion: '1.2.3',
       });
-      job.start();
+      job.request();
 
       expect.assertions(2);
       job.on('error', (err) => {
