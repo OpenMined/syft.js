@@ -7,17 +7,10 @@ import SyftModel from './syft-model';
 /**
  * Class that contains training loop logic.
  *
- * @param plan {Syft} - Syft Worker
- * @param plan {Plan} - Training Plan to execute
- * @param planInputs {[PlanInputSpec]} - Plan input specification
- * @param planOutputs {[PlanOutputSpec]} - Plan output specification
- * @param model {SyftModel} - Model to train
- * @param data {tf.Tensor} - Training data
- * @param target {tf.Tensor} - Training labels
- * @param epochs {number} - Number of epochs
- * @param batchSize {number} - Batch size
- * @param stepsPerEpoch {number} - Optional max number of steps in epoch
- * @param events {Object} - Dictionary of events
+ * @property {SyftModel} originalModel - Original model.
+ * @property {SyftModel} currentModel - Trained model.
+ * @property {number} epoch - Current epoch.
+ * @property {number} batchIdx - Current batch.
  */
 export class PlanTrainer {
   static EVENT_TRAINING_START = 'start';
@@ -27,24 +20,47 @@ export class PlanTrainer {
   static EVENT_BATCH_START = 'batchStart';
   static EVENT_BATCH_END = 'batchEnd';
 
+  /**
+   * @hideconstructor
+   * @param {Object} parameters - Dictionary of training parameters.
+   * @param {Syft} parameters.worker - Syft Worker.
+   * @param {Plan} parameters.plan - Training Plan to execute.
+   * @param {[PlanInputSpec]} parameters.inputs - Plan input specification.
+   * @param {[PlanOutputSpec]} parameters.outputs - Plan output specification.
+   * @param {SyftModel} parameters.model - Model to train.
+   * @param {tf.Tensor} parameters.data - Training data.
+   * @param {tf.Tensor} parameters.target - Training labels.
+   * @param {number} parameters.epochs - Number of epochs.
+   * @param {number} parameters.batchSize - Batch size.
+   * @param {number} [parameters.stepsPerEpoch] - Optional max number of steps in epoch.
+   * @param {Object} [parameters.clientConfig] - Optional dictionary of additional client configuration parameters.
+   * @param {Object} [parameters.events] - Optional dictionary of events.
+   * @param {Function} [parameters.events.start] - Training start event handler.
+   * @param {Function} [parameters.events.end] - Training end event handler.
+   * @param {Function} [parameters.events.epochStart] - Training epoch start event handler.
+   * @param {Function} [parameters.events.epochEnd] - Training epoch end event handler.
+   * @param {Function} [parameters.events.batchStart] - Training batch start event handler.
+   * @param {Function} [parameters.events.batchEnd] - Training batch end event handler.
+   */
   constructor({
     worker,
     plan,
-    planInputs,
-    planOutputs,
+    inputs,
+    outputs,
     model,
     data,
     target,
     epochs,
     batchSize,
-    stepsPerEpoch,
-    events,
+    stepsPerEpoch = null,
+    clientConfig = {},
+    events = {},
   }) {
     this.worker = worker;
 
     this.plan = plan;
-    this.planInputs = planInputs;
-    this.planOutputs = planOutputs;
+    this.planInputs = inputs;
+    this.planOutputs = outputs;
 
     this.originalModel = model;
 
@@ -54,6 +70,7 @@ export class PlanTrainer {
     this.epochs = epochs || 1;
     this.batchSize = batchSize;
     this.stepsPerEpoch = stepsPerEpoch;
+    this.clientConfig = clientConfig;
     this.events = events;
 
     this.logger = new Logger();
@@ -96,6 +113,13 @@ export class PlanTrainer {
 
   /**
    * Starts the training loop.
+   *
+   * @fires PlanTrainer#start
+   * @fires PlanTrainer#end
+   * @fires PlanTrainer#epochStart
+   * @fires PlanTrainer#epochEnd
+   * @fires PlanTrainer#batchStart
+   * @fires PlanTrainer#batchEnd
    */
   async start() {
     // Number of batches in data
@@ -104,14 +128,39 @@ export class PlanTrainer {
     // Copy model params to preserve original.
     let modelParams = this.originalModel.params.map((p) => p.clone());
 
+    /**
+     * `start` event.
+     * Triggered on training start.
+     * @event PlanTrainer#start
+     * @type {Object}
+     */
     this.observer.broadcast(PlanTrainer.EVENT_TRAINING_START, {});
 
     // Main training loop.
     for (let epoch = 0; epoch < this.epochs; epoch++) {
       this.epoch = epoch;
+      this.batchIdx = 0;
+
+      /**
+       * `epochStart` event.
+       * Triggered before epoch start.
+       * @event PlanTrainer#epochStart
+       * @type {Object}
+       * @property {number} epoch - Current epoch.
+       */
       this.observer.broadcast(PlanTrainer.EVENT_EPOCH_START, { epoch });
 
       for (let batchIdx = 0; batchIdx < numBatches; batchIdx++) {
+        this.batchIdx = batchIdx;
+
+        /**
+         * `batchStart` event.
+         * Triggered before batch start.
+         * @event PlanTrainer#batchStart
+         * @type {Object}
+         * @property {number} epoch - Current epoch.
+         * @property {number} batch - Current batch.
+         */
         this.observer.broadcast(PlanTrainer.EVENT_BATCH_START, {
           epoch,
           batch: batchIdx,
@@ -136,6 +185,7 @@ export class PlanTrainer {
         argData[PlanInputSpec.TYPE_DATA] = dataBatch;
         argData[PlanInputSpec.TYPE_TARGET] = targetBatch;
         argData[PlanInputSpec.TYPE_MODEL_PARAM] = modelParams;
+        argData[PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM] = this.clientConfig;
 
         // Execute the Plan
         const planArgs = PlanInputSpec.resolve(this.planInputs, argData);
@@ -177,8 +227,19 @@ export class PlanTrainer {
         dataBatch.dispose();
         targetBatch.dispose();
 
+        /**
+         * `batchEnd` event.
+         * Triggered after batch end.
+         * @event PlanTrainer#batchEnd
+         * @type {Object}
+         * @property {number} epoch - Current epoch.
+         * @property {number} batch - Current batch.
+         * @property {number} [loss] - Batch loss.
+         * @property {Object} [metrics] - Dictionary containing metrics (if any defined in the `outputs`).
+         */
         this.observer.broadcast(PlanTrainer.EVENT_BATCH_END, status);
 
+        // Process other browser events.
         await tf.nextFrame();
 
         // Limits number of steps per epoch
@@ -189,9 +250,20 @@ export class PlanTrainer {
           break;
       }
 
+      /**
+       * `epochEnd` event.
+       * Triggered after epoch end.
+       * @event PlanTrainer#epochEnd
+       * @property {number} epoch - Current epoch.
+       */
       this.observer.broadcast(PlanTrainer.EVENT_EPOCH_END, { epoch });
     }
 
+    /**
+     * `end` event.
+     * Triggered after training end.
+     * @event PlanTrainer#end
+     */
     this.observer.broadcast(PlanTrainer.EVENT_TRAINING_END, {});
   }
 }

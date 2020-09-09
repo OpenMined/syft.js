@@ -33,7 +33,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
 
   job.request();
 
-  job.on('accepted', async ({ model, clientConfig }) => {
+  job.on('accepted', async ({ model }) => {
     updateStatus('Accepted into cycle!');
 
     // Shuffle dataset.
@@ -45,17 +45,17 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     updateStatus('MNIST data shuffled.');
 
     const training = job.train('training_plan', {
-      planInputs: [
+      inputs: [
         new PlanInputSpec(PlanInputSpec.TYPE_DATA),
         new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
         new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
-        new PlanInputSpec(PlanInputSpec.TYPE_VALUE, 'lr', null, clientConfig.lr),
+        new PlanInputSpec(PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM, 'lr'),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W1', 0),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b1', 1),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W2', 2),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b2', 3),
       ],
-      planOutputs: [
+      outputs: [
         new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
         new PlanOutputSpec(PlanOutputSpec.TYPE_METRIC, 'accuracy'),
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W1', 0),
@@ -64,10 +64,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
       ],
       data,
-      target,
-      epochs: clientConfig.max_epochs || 1,
-      stepsPerEpoch: clientConfig.max_updates || null,
-      batchSize: clientConfig.batch_size,
+      target
     });
 
     training.on('batchEnd', updateUIAfterBatch);

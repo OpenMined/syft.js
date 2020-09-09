@@ -42,7 +42,7 @@
     "test:watch": "npm run lint && jest --watch",
     "version": "auto-changelog -p && git add CHANGELOG.md",
     "lint": "eslint .",
-    "doc": "documentation build --config documentation.yml src/syft.js src/syft-model.js src/job.js src/types/plan.js --shallow -f md -o API-REFERENCE.md"
+    "doc": "documentation build --config documentation.yml src/syft.js src/syft-model.js src/job.js src/plan-trainer.js src/types/plan.js --shallow -f md -o API-REFERENCE.md"
   },
   "browserslist": "> 0.25%, not dead",
   "husky": {

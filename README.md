@@ -77,10 +77,10 @@ The federated learning cycle implemented with syft.js would contain following st
 
 - Register into training cycle on PyGrid.
 - Download required model and Plans from PyGrid.
-- Execute the Plan with given model parameters and local user's data.
+- Execute the Plan with given model parameters and local user's data (multiple times) to create better model.
 - Submit difference between original and trained model parameters for aggregation.
 
-This whole cycle can be expressed in the following code:
+These steps can be expressed in the following code:
 
 ```javascript
 import * as tf from '@tensorflow/tfjs-core';
@@ -93,28 +93,29 @@ const modelVersion = '1.0.0';
 // if the model is protected with authentication token (optional)
 const authToken = '...';
 
-const worker = new Syft({ gridUrl, authToken, verbose: true });
-const job = await worker.newJob({ modelName, modelVersion });
-job.start();
+const worker = new Syft({ gridUrl, verbose: true });
+const job = await worker.newJob({ modelName, modelVersion, authToken });
+job.request();
 
 job.on('accepted', async ({ model, clientConfig }) => {
   const batchSize = clientConfig.batch_size;
   const lr = clientConfig.lr;
 
   // Load data.
-  const batches = LOAD_DATA(batchSize);
+  const [data, target] = LOAD_DATA();
+  const batches = MAKE_BATCHES(data, target, batchSize);
 
   // Load model parameters.
   let modelParams = model.params.map((p) => p.clone());
 
   // Main training loop.
-  for (let [data, labels] of batches) {
+  for (let [dataBatch, targetBatch] of batches) {
     // NOTE: this is just one possible example.
     // Plan name (e.g. 'training_plan'), its input arguments and outputs depends on FL configuration and actual Plan implementation.
     let updatedModelParams = await job.plans['training_plan'].execute(
       job.worker,
-      data,
-      labels,
+      dataBatch,
+      targetBatch,
       batchSize,
       lr,
       ...modelParams
@@ -139,6 +140,57 @@ job.on('rejected', ({ timeout }) => {
 job.on('error', (err) => {
   // Handle errors.
 });
+```
+
+The Plan execution and Model training can be implemented easier 
+using training helper that will do training loop for you 
+(model, batch size, etc. are automatically taken from `Job`):
+
+```javascript
+  // Main training loop.
+  const training = job.train('training_plan', {
+    inputs: [/* ... */],
+    outputs: [/* ... */],
+    data,
+    target,
+  });
+
+  training.on('end', async () => {
+      // Calculate & send model diff.
+      const modelDiff = await model.createSerializedDiff(modelParams);
+      await job.report(modelDiff);
+  });
+```
+
+`inputs` and `outputs` need to be specified using `PlanInputSpec` and `PlanOutputSpec` 
+and need to match with Plan's arguments and outputs.
+For example, if the Plan has following arguments and outputs:
+```
+loss, accuracy, modelParams1, modelParams2, modelParams3, modelParams4 = 
+    plan(dataBatch, targetBatch, batchSize, lr, modelParams1, modelParams2, modelParams3, modelParams4)
+```
+
+Corresponding `inputs`, `outputs` in job.train will be:
+```javascript
+const inputs = [
+    new PlanInputSpec(PlanInputSpec.TYPE_DATA),
+    new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
+    new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
+    new PlanInputSpec(PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM, 'lr'),
+    new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'param1', 0),
+    new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'param2', 1),
+    new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'param3', 2),
+    new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'param4', 3),
+];
+
+const outputs = [
+    new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
+    new PlanOutputSpec(PlanOutputSpec.TYPE_METRIC, 'accuracy'),
+    new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'param1', 0),
+    new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'param2', 1),
+    new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'param3', 2),
+    new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'param4', 3),
+];
 ```
 
 Note that syft.js doesn't handle user's data collection, data storage and loading.

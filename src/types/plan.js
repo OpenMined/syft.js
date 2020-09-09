@@ -47,17 +47,50 @@ export class Plan {
 
 /**
  * Object that describes Plan input.
+ * Parameters known to `PlanTrainer`
+ * (like training data, model parameters, batch size, etc.)
+ * are mapped into Plan arguments according to this object.
  *
- * @param type {string} Input argument type
- * @param name {string} Optional argument name
- * @param index {number} Optional argument index (to take from array)
- * @param value {*} Argument value
+ * @param {string} type - Input argument type.
+ * @param {string} [name] - Optional argument name.
+ * @param {number} [index] - Optional argument index (to take from array).
+ * @param {*} [value] - Argument value.
  */
 export class PlanInputSpec {
+  /**
+   * Represents training data (substituted with PlanTrainer's `data` batch)
+   * @constant
+   */
   static TYPE_DATA = 'data';
+
+  /**
+   * Represents training targets aka labels (substituted with PlanTrainer's `target` batch)
+   * @constant
+   */
   static TYPE_TARGET = 'target';
+
+  /**
+   * Represents batch size (substituted with PlanTrainer's `batchSize`).
+   * @constant
+   */
   static TYPE_BATCH_SIZE = 'batchSize';
+
+  /**
+   * Represents parameter from client config configured in FL model, `name` argument is required (substituted with paramter from PlanTrainer's `clientConfig`).
+   * @constant
+   */
+  static TYPE_CLIENT_CONFIG_PARAM = 'clientConfigParam';
+
+  /**
+   * Represents any value, `value` argument is required.
+   * @constant
+   */
   static TYPE_VALUE = 'value';
+
+  /**
+   * Represents model parameter (substituted with `SyftModel` contents).
+   * @constant
+   */
   static TYPE_MODEL_PARAM = 'modelParam';
 
   constructor(type, name = null, index = null, value = null) {
@@ -70,8 +103,9 @@ export class PlanInputSpec {
   /**
    * Creates list of Plan arguments according to specified `specs`.
    *
-   * @param specs {[PlanInputSpec]} Plan arguments specifications
-   * @param data {Object} Dictionary containing Plan arguments
+   * @private
+   * @param {[PlanInputSpec]} specs - Plan arguments specifications.
+   * @param {Object} data - Dictionary containing Plan arguments.
    * @returns {[]}
    */
   static resolve(specs, data) {
@@ -81,6 +115,8 @@ export class PlanInputSpec {
         args.push(spec.value);
       } else if (spec.index !== null) {
         args.push(data[spec.type][spec.index]);
+      } else if (spec.type === this.TYPE_CLIENT_CONFIG_PARAM) {
+        args.push(data[spec.type][spec.name]);
       } else {
         args.push(data[spec.type]);
       }
@@ -91,14 +127,29 @@ export class PlanInputSpec {
 
 /**
  * Object that describes Plan output.
+ * Values returned from Plan
+ * (like loss, accuracy, model parameters, etc.)
+ * are mapped into `PlanTrainer`'s internal state according to this object.
  *
- * @param type {string} Output variable type
- * @param name {string} Optional name
- * @param index {number} Optional index (to put into array)
+ * @param {string} type - Output variable type.
+ * @param {string} [name] - Optional name.
+ * @param {number} [index] - Optional index (to put into array).
  */
 export class PlanOutputSpec {
+  /**
+   * Represents loss value (maps to PlanTrainer's loss).
+   * @constant
+   */
   static TYPE_LOSS = 'loss';
+  /**
+   * Represents metric value, name is required (maps to PlanTrainer's metrics dictionary).
+   * @constant
+   */
   static TYPE_METRIC = 'metric';
+  /**
+   * Represents model parameter (maps to `SyftModel` parameters)
+   * @constant
+   */
   static TYPE_MODEL_PARAM = 'modelParam';
 
   constructor(type, name = null, index = null) {
@@ -110,8 +161,9 @@ export class PlanOutputSpec {
   /**
    * Creates dictionary of Plan output values according to `specs`.
    *
-   * @param specs {[PlanOutputSpec]} Specifications of Plan output variables
-   * @param data {[*]} Plan output (array)
+   * @private
+   * @param {[PlanOutputSpec]} specs - Specifications of Plan output variables.
+   * @param {[*]} data - Plan output.
    * @returns {Object}
    */
   static resolve(specs, data) {

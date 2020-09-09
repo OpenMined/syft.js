@@ -18,9 +18,11 @@ import ObjectRegistry from './object-registry';
  * const job = client.newJob({modelName: "mnist", modelVersion: "1.0.0"})
  * job.on('accepted', async ({model, clientConfig}) => {
  *   // Execute training
- *   const [...newParams] = await this.plans['...'].execute(...)
- *   const diff = await model.createSerializedDiff(newParams)
- *   await this.report(diff)
+ *   const training = this.train('...', { ... })
+ *   training.on('end', async () => {
+ *     const diff = await model.createSerializedDiffFromModel(training.currentModel)
+ *     await this.report(diff)
+ *   }
  * })
  * job.on('rejected', ({timeout}) => {
  *   // Retry later or stop

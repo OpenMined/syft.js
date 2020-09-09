@@ -121,6 +121,7 @@ export default class Job {
 
   /**
    * Starts the Job by executing following actions:
+   *  * Authenticates for given FL model.
    *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.
@@ -258,32 +259,41 @@ export default class Job {
   }
 
   /**
-   * Train the model against specified plan and using specified parameters.
+   * Trains the model against specified plan and using specified parameters.
+   * Returns `PlanTrainer` object to have a handle on training process.
    *
-   * @param trainingPlan {string} Training Plan name
-   * @param parameters {Object} Dictionary of training parameters
-   * @param parameters.planInputs {[PlanInputSpec]} List of training Plan input arguments
-   * @param parameters.planOutputs {[PlanOutputSpec]} List of training Plan outputs
-   * @param parameters.data {tf.Tensor} Tensor containing training data
-   * @param parameters.target {tf.Tensor} Tensor containing training targets (optional)
-   * @param parameters.epochs {number} Epochs to train
-   * @param parameters.batchSize {number} Batch size
-   * @param parameters.stepsPerEpoch {number} Max number of steps per epoch (optional)
-   * @param parameters.events {Object} List of event listeners
-   * @param parameters.events.start {CallableFunction} On training start listener
-   * @param parameters.events.end {CallableFunction} On training end listener
-   * @param parameters.events.epochStart {CallableFunction} On epoch start listener
-   * @param parameters.events.epochEnd {CallableFunction} On epoch end listener
-   * @param parameters.events.batchStart {CallableFunction} On batch start listener
-   * @param parameters.events.batchEnd {CallableFunction} On batch end listener
+   * @param {string} trainingPlan - Training Plan name.
+   * @param {Object} parameters - Dictionary of training parameters.
+   * @param {[PlanInputSpec]}  parameters.inputs - List of training Plan input arguments
+   * @param {[PlanOutputSpec]} parameters.outputs - List of training Plan outputs
+   * @param {tf.Tensor} parameters.data - Tensor containing training data
+   * @param {tf.Tensor} parameters.target - Tensor containing training targets
+   * @param {number} [parameters.epochs] - Epochs to train (if not specified, taken from Job)
+   * @param {number} [parameters.batchSize] - Batch size (if not specified, taken from Job)
+   * @param {number} [parameters.stepsPerEpoch] - Max number of steps per epoch (if not specified, taken from Job)
+   * @param {Object} [parameters.events] - List of event listeners
+   * @param {Function} [parameters.events.start] - On training start listener
+   * @param {Function} [parameters.events.end] - On training end listener
+   * @param {Function} [parameters.events.epochStart] - On epoch start listener
+   * @param {Function} [parameters.events.epochEnd] - On epoch end listener
+   * @param {Function} [parameters.events.batchStart] - On batch start listener
+   * @param {Function} [parameters.events.batchEnd] - On batch end listener
    * @returns {PlanTrainer}
    */
   train(trainingPlan, parameters) {
+    const trainingParams = {
+      clientConfig: this.clientConfig,
+      batchSize: this.clientConfig.batch_size,
+      epochs: this.clientConfig.max_epochs || 1,
+      stepsPerEpoch: this.clientConfig.max_updates || null,
+      ...parameters,
+    };
+
     const trainer = new PlanTrainer({
       worker: this.worker,
       plan: this.plans[trainingPlan],
       model: this.model,
-      ...parameters,
+      ...trainingParams,
     });
     trainer.start();
     return trainer;

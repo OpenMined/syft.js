@@ -46,7 +46,7 @@ describe('PlanTrainer', () => {
     const trainer = new PlanTrainer({
       worker,
       plan,
-      planInputs: [
+      inputs: [
         new PlanInputSpec(PlanInputSpec.TYPE_DATA),
         new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
         new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
@@ -56,7 +56,7 @@ describe('PlanTrainer', () => {
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W2', 2),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b2', 3),
       ],
-      planOutputs: [
+      outputs: [
         new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
         new PlanOutputSpec(PlanOutputSpec.TYPE_METRIC, 'accuracy'),
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W1', 0),
