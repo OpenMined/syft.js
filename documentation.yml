@@ -6,3 +6,12 @@ toc:
   - Job#error
   - SyftModel
   - Plan
+  - PlanTrainer
+  - PlanTrainer#start
+  - PlanTrainer#end
+  - PlanTrainer#epochStart
+  - PlanTrainer#epochEnd
+  - PlanTrainer#batchStart
+  - PlanTrainer#batchEnd
+  - PlanInputSpec
+  - PlanOutputSpec
