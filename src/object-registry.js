@@ -47,7 +47,7 @@ export default class ObjectRegistry {
   }
 
   /**
-   * Loads the objects from an existing ObjectRegistry and store them in this.objects
+   * Loads the objects from an existing ObjectRegistry and stores them in this.objects
    * @param {ObjectRegistry} objectRegistry
    */
   load(objectRegistry) {

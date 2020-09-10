@@ -6,14 +6,11 @@ import { createRandomBuffer } from './utils/random-buffer';
  */
 export class SpeedTest {
   /**
-   * @property {string} downloadUrl
-   * @property {string} uploadUrl
-   * @property {string} pingUrl
-   * @property {number} maxUploadSizeMb
-   * @property {number} maxTestTimeSec
-   * @property {number} bwAvgWindow - Defined in AvgCollector()
-   * @property {number} bwLowJitterThreshold - Defined in AvgCollector()
-   * @property {number} bwMaxLowJitterConsecutiveMeasures - Defined in AvgCollector()
+   * @param {string} downloadUrl
+   * @param {string} uploadUrl
+   * @param {string} pingUrl
+   * @param {number} maxUploadSizeMb
+   * @param {number} maxTestTimeSec
    */
   constructor({
     downloadUrl,
