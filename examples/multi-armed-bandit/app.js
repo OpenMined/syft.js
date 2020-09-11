@@ -15,7 +15,7 @@ const globalStyles = {
   paragraph: {
     fontFamily,
     lineHeight: 1.75,
-    fontSize: 18
+    fontSize: 18,
   },
   heading: {
     fontFamily,
@@ -25,8 +25,8 @@ const globalStyles = {
     letterSpacing: 2,
     marginTop: 0,
     marginBottom: 0,
-    fontSize: 24
-  }
+    fontSize: 24,
+  },
 };
 
 const Hero = ({ background, button }) => {
@@ -42,25 +42,25 @@ const Hero = ({ background, button }) => {
       padding: 40,
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
     },
     logo: {
       width: 200,
-      height: 'auto'
+      height: 'auto',
     },
     title: {
       color: 'white',
       marginTop: 40,
       width: 480,
-      textAlign: 'center'
+      textAlign: 'center',
     },
     description: {
       color: 'white',
       marginTop: 40,
       marginBottom: 0,
       width: 480,
-      textAlign: 'center'
-    }
+      textAlign: 'center',
+    },
   };
 
   return (
@@ -88,8 +88,8 @@ const Vision = ({ button }) => {
       padding: 40,
       maxWidth: 960,
       width: '90%',
-      margin: '0 auto'
-    }
+      margin: '0 auto',
+    },
   };
 
   return (
@@ -123,13 +123,13 @@ const Button = ({ background, icon, onClick }) => (
       transition: 'background 0.2s ease-in-out',
       cursor: 'pointer',
       '&:hover': {
-        background: background === 'blue' ? '#498B95' : '#DDD'
+        background: background === 'blue' ? '#498B95' : '#DDD',
       },
       '&:focus': {
         outline: 0,
         boxShadow: 0,
-        border: 0
-      }
+        border: 0,
+      },
     }}
     onClick={onClick}
   >
@@ -144,21 +144,21 @@ const Footer = () => {
   const styles = {
     wrapper: {
       background: '#333',
-      padding: 40
+      padding: 40,
     },
     container: {
       display: 'flex',
       justifyContent: 'space-between',
       width: 940,
-      margin: '0 auto'
+      margin: '0 auto',
     },
     logo: {
       width: 200,
-      height: 'auto'
+      height: 'auto',
     },
     social: {
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
     },
     socialIcon: {
       color: 'rgba(255, 255, 255, 0.5)',
@@ -166,9 +166,9 @@ const Footer = () => {
       fontSize: 24,
       marginLeft: 20,
       '&:hover': {
-        color: '#FFF'
-      }
-    }
+        color: '#FFF',
+      },
+    },
   };
   return (
     <div css={styles.wrapper}>
@@ -209,7 +209,13 @@ const Footer = () => {
   );
 };
 
-export default ({ isLoaded, config, onButtonClick, start }) => {
+export default ({
+  isLoaded,
+  config,
+  onButtonClick,
+  start,
+  DPUpdateHandler,
+}) => {
   useEffect(() => {
     start();
   }, []);
@@ -228,7 +234,7 @@ export default ({ isLoaded, config, onButtonClick, start }) => {
         css={{
           minHeight: '100vh',
           display: 'grid',
-          gridTemplateRows: 'auto 1fr auto'
+          gridTemplateRows: 'auto 1fr auto',
         }}
       >
         <Hero
@@ -237,6 +243,7 @@ export default ({ isLoaded, config, onButtonClick, start }) => {
         />
         <Vision button={config.buttonPosition === 'vision' ? button : null} />
         <Footer />
+        <input type="text" onChange={DPUpdateHandler} />
       </div>
     );
   }
@@ -247,7 +254,7 @@ export default ({ isLoaded, config, onButtonClick, start }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh'
+        minHeight: '100vh',
       }}
     >
       <i

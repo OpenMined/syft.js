@@ -16,9 +16,8 @@ const updateStatus = (message, ...args) =>
 // Define grid connection parameters
 const url = 'ws://localhost:5000';
 const modelName = 'bandit_th';
-const modelVersion = '1.1.1';
-const simulate = false;
-const dp_noise = 0.2;
+const modelVersion = '6.0.5';
+let dp_noise = sessionStorage['dp_noise'] || 0.2;
 
 // All possible UI options
 const allUIOptions = [
@@ -81,8 +80,14 @@ const submitPositiveResult = () => {
   }
 };
 
+const dpUpdatHandler = (e) => {
+  dp_noise = e.target.value;
+  console.log(e.target.value);
+  sessionStorage.setItem('dp_noise', e.target.value);
+};
+
 // When the user doesn't click the button...
-const submitNegativeResult = (config) => {
+const submitNegativeResult = () => {
   if (!hasSubmittedValue) {
     hasSubmittedValue = true;
     userActionPromiseResolve(false);
@@ -105,6 +110,7 @@ render(
     isLoaded={false}
     onButtonClick={submitPositiveResult}
     start={() => startFL(url, modelName, modelVersion)}
+    DPUpdateHandler={dpUpdatHandler}
   />,
   ROOT
 );
@@ -194,7 +200,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
       updateStatus(187, samplesFromBetaDist);
       let selectedOption = argMax(samplesFromBetaDist);
       updateStatus('Have the desired selected option', selectedOption);
-
       // Render that option
       hydrate(
         <App
@@ -202,6 +207,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
           config={allUIOptions[selectedOption]}
           onButtonClick={submitPositiveResult}
           start={() => startFL(url, modelName, modelVersion)}
+          DPUpdateHandler={dpUpdatHandler}
         />,
         ROOT
       );
@@ -212,16 +218,16 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
       let reward;
 
       const dp_sample = (dp_noise) => {
-        const val = binomial_sample(dp_noise);
+        const effectivelySimulate = binomial_sample(dp_noise);
         updateStatus(
-          'DP Noise | simulate? | effectivelySimulate',
-          simulate,
-          val
+          'DP Noise | dp_noise | effectivelySimulate',
+          dp_noise,
+          effectivelySimulate
         );
-        return val;
+        return effectivelySimulate;
       };
-      let dp_sample_value = dp_sample(dp_noise);
-      let effectivelySimulate = simulate ? 1 : dp_sample_value;
+      let dp_sample_value = dp_sample(sessionStorage['dp_noise'] || dp_noise);
+      let effectivelySimulate = dp_sample_value;
 
       if (!effectivelySimulate) {
         updateStatus('Waiting on user input...');
