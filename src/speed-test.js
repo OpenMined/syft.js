@@ -1,6 +1,17 @@
 import { createRandomBuffer } from './utils/random-buffer';
 
+/**
+ * SpeedTest is a class that contains the necessary components
+ * to measure download/upload speed, and ping.
+ */
 export class SpeedTest {
+  /**
+   * @param {string} downloadUrl
+   * @param {string} uploadUrl
+   * @param {string} pingUrl
+   * @param {number} maxUploadSizeMb
+   * @param {number} maxTestTimeSec
+   */
   constructor({
     downloadUrl,
     uploadUrl,
@@ -20,8 +31,18 @@ export class SpeedTest {
     this.bwMaxLowJitterConsecutiveMeasures = 5;
   }
 
+  /**
+   * Measures the time taken to make an XMLHttpRequest (xhr).
+   * Gets called before the request is sent, to set up values and tools to measure time.
+   * Returns a promise that gets updated when the request is sent and a response is received with no errors.
+   *  If the request is successful, then the value of the promise is the time that the request took (in seconds)
+   *  Else, the value is an Error
+   * @param {XMLHttpRequest} xhr - XMLHttpRequest
+   * @param {boolean} isUpload
+   */
   async meterXhr(xhr, isUpload = false) {
     return new Promise((resolve, reject) => {
+      // Set up the initial values to measure time
       let timeoutHandler = null,
         prevTime = 0,
         prevSize = 0,
@@ -34,17 +55,19 @@ export class SpeedTest {
 
       const req = isUpload ? xhr.upload : xhr;
 
+      // Update the value of the promise when the request is finished
       const finish = (error = null) => {
         if (timeoutHandler) {
           clearTimeout(timeoutHandler);
         }
 
-        // clean up
+        // Clean up
         req.onprogress = null;
         req.onload = null;
         req.onerror = null;
         xhr.abort();
 
+        // Return result
         if (!error) {
           resolve(avgCollector.getAvg());
         } else {
@@ -54,10 +77,9 @@ export class SpeedTest {
 
       req.onreadystatechange = () => {
         if (xhr.readyState === 1) {
-          // as soon as connection is opened
-          // set speed test timeout
+          // As soon as connection is opened, set speed test timeout
           timeoutHandler = setTimeout(finish, this.maxTestTimeSec * 1000);
-          // set initial time/size values
+          // Set initial time/size values
           if (!prevTime) {
             prevTime = Date.now() / 1000;
             prevSize = 0;
@@ -77,12 +99,13 @@ export class SpeedTest {
           return;
         }
 
+        // Update change in time and size as the request i in progress
         let deltaSize = size - prevSize,
           deltaTime = time - prevTime,
           speed = deltaSize / deltaTime;
 
         if (deltaTime === 0 || !Number.isFinite(speed)) {
-          // cap to 1Gbps
+          // Cap to 1Gbps
           speed = 1000;
         }
 
@@ -127,21 +150,24 @@ export class SpeedTest {
 
   async getPing() {
     return new Promise((resolve, reject) => {
+      // Set up values to measure ping
       const avgCollector = new AvgCollector({});
       let currXhr;
       let timeoutHandler;
 
+      // Update value of promise once test is finished
       const finish = (xhr, error = null) => {
         if (timeoutHandler) {
           clearTimeout(timeoutHandler);
         }
 
-        // clean up
+        // Clean up
         xhr.onprogress = null;
         xhr.onload = null;
         xhr.onerror = null;
         xhr.abort();
 
+        // Return result
         if (!error) {
           resolve(avgCollector.getAvg());
         } else {
