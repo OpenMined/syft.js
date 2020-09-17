@@ -13,18 +13,22 @@ export default class EventObserver {
    *
    * @param {string} type - Event type.
    * @param {Function} func - Event handler.
+   * @param {number|boolean} [expires] - Expire subscription after N invocations.
    */
-  subscribe(type, func) {
-    this.observers.push({ type, func });
+  subscribe(type, func, expires = false) {
+    this.observers.push({ type, func, expires });
   }
 
   /**
    * Unsubscribes an event from the event dictionary.
    *
-   * @param {string} type - Event type.
+   * @param {string} eventType - Event type.
+   * @param {Function} [func] - Event handler.
    */
-  unsubscribe(eventType) {
-    this.observers = this.observers.filter(({ type }) => eventType !== type);
+  unsubscribe(eventType, func) {
+    this.observers = this.observers.filter((i) => {
+      return eventType !== i.type && func !== i.func;
+    });
   }
 
   /**
@@ -35,9 +39,20 @@ export default class EventObserver {
    */
   broadcast(eventType, data) {
     this.observers.forEach((observer) => {
-      if (eventType === observer.type) {
-        return observer.func(data);
+      if (
+        eventType === observer.type &&
+        (observer.expires === false || observer.expires > 0)
+      ) {
+        if (typeof observer.expires === 'number') {
+          observer.expires--;
+        }
+        observer.func(data);
       }
+    });
+
+    // Remove expired subscriptions
+    this.observers = this.observers.filter((i) => {
+      return i.expires > 0 || i.expires === false;
     });
   }
 }

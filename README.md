@@ -142,6 +142,8 @@ job.on('error', (err) => {
 });
 ```
 
+### Model Training API
+
 The Plan execution and Model training can be implemented easier 
 using training helper that will do training loop for you 
 (model, batch size, etc. are automatically taken from `Job`):
@@ -193,7 +195,71 @@ const outputs = [
 ];
 ```
 
-Note that syft.js doesn't handle user's data collection, data storage and loading.
+### Stop & Resume
+`PlanTrainer` allows stopping and resuming the training using `stop` and `resume` methods:
+
+```javascript
+  // Main training loop.
+  const training = job.train('training_plan', {
+    inputs: [/* ... */],
+    outputs: [/* ... */],
+    data,
+    target,
+  });
+
+  training.on('start', () => {
+    // training is started!
+  });
+
+  training.on('stop', () => {
+    // training is stopped!
+  });
+
+  document.getElementById('stop-button').onclick = () => {
+    training.stop();
+  };
+
+  document.getElementById('resume-button').onclick = () => {
+    training.resume();
+  };
+```
+
+### Checkpointing
+
+`stop` method returns current training state as `PlanTrainerCheckpoint` object, 
+which can be serialized to JSON to restored from JSON later to continue the training:
+
+```javascript
+const checkpoint = await training.stop();
+const checkpointJson = await checkpoint.toJSON();
+localStorage.setItem('checkpoint', JSON.stringify(checkpointJson));
+
+// ... checkpoint can survive page reload ...
+
+const checkpointJsonString = localStorage.getItem('checkpoint');
+const checkpointJson = JSON.parse(checkpointJsonString);
+const checkpoint = PlanTrainerCheckpoint.fromJSON(worker, checkpointJson);
+    
+// Main training loop.
+const training = job.train('training_plan', {
+  // Pass checkpoint into train method to resume from it
+  // NOTE: checkpoint doesn't store Plan and training data, these still need to be supplied
+  checkpoint,
+  inputs: [/* ... */],
+  outputs: [/* ... */],
+  data,
+  target,
+});
+```
+
+Checkpoint can be created directly from `PlanTrainer` object 
+using `createCheckpoint` method and applied back using `applyCheckpoint`:
+```javascript
+const checkpoint = training.createCheckpoint();
+// ...
+training.applyCheckpoint(checkpoint);
+training.resume();
+```
 
 ### API Documentation
 

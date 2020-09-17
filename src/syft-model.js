@@ -42,6 +42,22 @@ export default class SyftModel {
   }
 
   /**
+   * Returns model serialized to protobuf.
+   *
+   * @return {Promise<ArrayBuffer>}
+   */
+  async toProtobuf() {
+    const placeholders = [],
+      tensors = [];
+    for (let i = 0; i < this.params.length; i++) {
+      placeholders.push(new Placeholder(i, [`#${i}`, `#state-${i}`]));
+      tensors.push(await TorchTensor.fromTfTensor(this.params[i]));
+    }
+    const state = new State(placeholders, tensors);
+    return serialize(this.worker, state);
+  }
+
+  /**
    * Calculates difference between 2 versions of the Model parameters
    * and returns serialized `diff` that can be submitted to PyGrid.
    *
