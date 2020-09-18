@@ -5,3 +5,4 @@ export * from './_constants';
 export { default as Syft } from './syft';
 export { default } from './syft';
 export { PlanInputSpec, PlanOutputSpec } from './types/plan';
+export { PlanTrainerCheckpoint } from './plan-trainer';

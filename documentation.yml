@@ -9,9 +9,11 @@ toc:
   - PlanTrainer
   - PlanTrainer#start
   - PlanTrainer#end
+  - PlanTrainer#stop
   - PlanTrainer#epochStart
   - PlanTrainer#epochEnd
   - PlanTrainer#batchStart
   - PlanTrainer#batchEnd
   - PlanInputSpec
   - PlanOutputSpec
+  - PlanTrainerCheckpoint

@@ -271,6 +271,7 @@ export default class Job {
    * @param {number} [parameters.epochs] - Epochs to train (if not specified, taken from Job)
    * @param {number} [parameters.batchSize] - Batch size (if not specified, taken from Job)
    * @param {number} [parameters.stepsPerEpoch] - Max number of steps per epoch (if not specified, taken from Job)
+   * @param {PlanTrainerCheckpoint} [parameters.checkpoint] - Checkpoint
    * @param {Object} [parameters.events] - List of event listeners
    * @param {Function} [parameters.events.start] - On training start listener
    * @param {Function} [parameters.events.end] - On training end listener
@@ -295,7 +296,11 @@ export default class Job {
       model: this.model,
       ...trainingParams,
     });
-    trainer.start();
+
+    // For convenience of assigning event handlers, start training in the next macrotask
+    setTimeout(() => {
+      trainer.start(typeof parameters.checkpoint !== 'undefined');
+    }, 0);
     return trainer;
   }
 }

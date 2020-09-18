@@ -1,29 +1,70 @@
 import * as tf from '@tensorflow/tfjs-core';
 import { Syft, PlanInputSpec, PlanOutputSpec } from '@openmined/syft.js';
 import { MnistData } from './mnist';
+import { retrieveCheckpoint, storeCheckpoint } from './checkpoint';
 
 const gridServer = document.getElementById('grid-server');
 const startButton = document.getElementById('start');
+const startFromCheckpointButton = document.getElementById('start-from-checkpoint');
+const stopButton = document.getElementById('stop-training');
+const stopAndSaveButton = document.getElementById('stop-training-and-save');
+const stopAndSaveMessage = document.getElementById('saved-checkpoint');
+const resumeFromTrainerButton = document.getElementById('resume-training-from-trainer');
+
 let mnist = null;
 
-startButton.onclick = () => {
+/**
+ * Keeps current training object.
+ * @type {PlanTrainer}
+ */
+let training = null;
+
+// Check for checkpoint
+const checkpoint = retrieveCheckpoint('checkpoint');
+if (checkpoint) {
+  startFromCheckpointButton.disabled = false;
+}
+
+const startClickHandler = (useCheckpoint = false) => {
   setFLUI();
   const modelName = document.getElementById('model-id').value;
   const modelVersion = document.getElementById('model-version').value;
   const authToken = document.getElementById('auth-token').value;
-  startFL(gridServer.value, modelName, modelVersion, authToken).catch((err) => {
+  startFL(
+    gridServer.value,
+    modelName,
+    modelVersion,
+    authToken,
+    useCheckpoint ? checkpoint : undefined
+  ).catch((err) => {
     updateStatus(`Error: ${err}`);
   });
-};
+}
+
+// Assign actions to buttons
+startButton.onclick = () => startClickHandler();
+startFromCheckpointButton.onclick = () => startClickHandler(true);
+stopButton.onclick = () => training.stop();
+resumeFromTrainerButton.onclick = () => training.resume();
+stopAndSaveButton.onclick = async () => {
+  const checkpoint = await training.stop();
+  console.log(checkpoint);
+  window.checkpoint = checkpoint;
+  await storeCheckpoint('checkpoint', checkpoint);
+  updateStatus('Checkpoint is saved in local storage');
+  stopAndSaveMessage.style.display = 'block';
+}
 
 /**
  * The main federated learning training routine
- * @param url PyGrid Url
- * @param modelName Federated learning model name hosted in PyGrid
- * @param modelVersion Federated learning model version
+ * @param {string} url - PyGrid Url
+ * @param {string} modelName - Federated learning model name hosted in PyGrid
+ * @param {string} modelVersion - Federated learning model version
+ * @param {string} [authToken] - Optional authentication token
+ * @param {PlanTrainerCheckpoint} [checkpoint] - Optional training checkpoint
  * @returns {Promise<void>}
  */
-const startFL = async (url, modelName, modelVersion, authToken = null) => {
+const startFL = async (url, modelName, modelVersion, authToken = null, checkpoint = null) => {
   const worker = new Syft({ url, verbose: true });
   const job = worker.newJob({ modelName, modelVersion, authToken });
 
@@ -44,7 +85,8 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
     const target = trainDataset.labels.gather(indices);
     updateStatus('MNIST data shuffled.');
 
-    const training = job.train('training_plan', {
+    training = job.train('training_plan', {
+      checkpoint,
       inputs: [
         new PlanInputSpec(PlanInputSpec.TYPE_DATA),
         new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
@@ -64,12 +106,30 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
       ],
       data,
-      target
+      target,
+    });
+
+    training.on('start', () => {
+      resumeFromTrainerButton.disabled = true;
+      stopButton.disabled = false;
+      stopAndSaveButton.disabled = false;
+      updateStatus('Training is started!');
     });
 
     training.on('batchEnd', updateUIAfterBatch);
 
+    training.on('stop', () => {
+      resumeFromTrainerButton.disabled = false;
+      stopButton.disabled = true;
+      stopAndSaveButton.disabled = true;
+      updateStatus('Training is stopped');
+    });
+
     training.on('end', async () => {
+      resumeFromTrainerButton.disabled = true;
+      stopButton.disabled = true;
+      stopAndSaveButton.disabled = true;
+
       // Free GPU memory.
       data.dispose();
       target.dispose();

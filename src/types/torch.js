@@ -80,6 +80,12 @@ export class TorchTensor {
     });
   }
 
+  /**
+   * Returns new `TorchTensor` created from `tf.Tensor`.
+   *
+   * @param {tf.Tensor} tensor - Tensor.
+   * @return {Promise<TorchTensor>}
+   */
   static async fromTfTensor(tensor) {
     const flat = tensor.flatten();
     const array = await flat.array();
