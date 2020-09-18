@@ -1,8 +1,10 @@
 import EventObserver from './events';
 import Logger from './logger';
-import * as tf from '@tensorflow/tfjs-core';
 import { PlanInputSpec, PlanOutputSpec } from './types/plan';
 import SyftModel from './syft-model';
+import { base64Encode, base64Decode } from './utils/base64';
+
+import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * Class that contains training loop logic.
@@ -11,10 +13,12 @@ import SyftModel from './syft-model';
  * @property {SyftModel} currentModel - Trained model.
  * @property {number} epoch - Current epoch.
  * @property {number} batchIdx - Current batch.
+ * @property {boolean} stopped - Is the training currently stopped.
  */
 export class PlanTrainer {
   static EVENT_TRAINING_START = 'start';
   static EVENT_TRAINING_END = 'end';
+  static EVENT_TRAINING_STOP = 'stop';
   static EVENT_EPOCH_START = 'epochStart';
   static EVENT_EPOCH_END = 'epochEnd';
   static EVENT_BATCH_START = 'batchStart';
@@ -34,9 +38,11 @@ export class PlanTrainer {
    * @param {number} parameters.batchSize - Batch size.
    * @param {number} [parameters.stepsPerEpoch] - Optional max number of steps in epoch.
    * @param {Object} [parameters.clientConfig] - Optional dictionary of additional client configuration parameters.
+   * @param {Object} [parameters.checkpoint] - Checkpoint.
    * @param {Object} [parameters.events] - Optional dictionary of events.
    * @param {Function} [parameters.events.start] - Training start event handler.
    * @param {Function} [parameters.events.end] - Training end event handler.
+   * @param {Function} [parameters.events.stop] - Training stop event handler.
    * @param {Function} [parameters.events.epochStart] - Training epoch start event handler.
    * @param {Function} [parameters.events.epochEnd] - Training epoch end event handler.
    * @param {Function} [parameters.events.batchStart] - Training batch start event handler.
@@ -54,6 +60,7 @@ export class PlanTrainer {
     batchSize,
     stepsPerEpoch = null,
     clientConfig = {},
+    checkpoint = null,
     events = {},
   }) {
     this.worker = worker;
@@ -78,14 +85,19 @@ export class PlanTrainer {
 
     // State
     this.currentModel = null;
-    this.epoch = null;
-    this.batchIdx = null;
+    this.epoch = 0;
+    this.batchIdx = 0;
+    this.stopped = false;
 
     // Register event handlers.
     if (events && typeof events === 'object') {
       for (let eventName of Object.keys(events)) {
         this.on(eventName, events[eventName]);
       }
+    }
+
+    if (checkpoint) {
+      this.applyCheckpoint(checkpoint);
     }
   }
 
@@ -101,6 +113,7 @@ export class PlanTrainer {
     let events = [
       PlanTrainer.EVENT_TRAINING_START,
       PlanTrainer.EVENT_TRAINING_END,
+      PlanTrainer.EVENT_TRAINING_STOP,
       PlanTrainer.EVENT_EPOCH_START,
       PlanTrainer.EVENT_EPOCH_END,
       PlanTrainer.EVENT_BATCH_START,
@@ -116,17 +129,29 @@ export class PlanTrainer {
    *
    * @fires PlanTrainer#start
    * @fires PlanTrainer#end
+   * @fires PlanTrainer#stop
    * @fires PlanTrainer#epochStart
    * @fires PlanTrainer#epochEnd
    * @fires PlanTrainer#batchStart
    * @fires PlanTrainer#batchEnd
    */
-  async start() {
+  async start(resume = false) {
+    let startEpoch = 0;
+    let startBatch = 0;
+    let startModel = this.originalModel;
+
+    if (this.stopped && resume) {
+      this.stopped = false;
+      startEpoch = this.epoch;
+      startBatch = this.batchIdx;
+      startModel = this.currentModel;
+    }
+
     // Number of batches in data
     const numBatches = Math.floor(this.data.shape[0] / this.batchSize);
 
     // Copy model params to preserve original.
-    let modelParams = this.originalModel.params.map((p) => p.clone());
+    let modelParams = startModel.params.map((p) => p.clone());
 
     /**
      * `start` event.
@@ -137,7 +162,7 @@ export class PlanTrainer {
     this.observer.broadcast(PlanTrainer.EVENT_TRAINING_START, {});
 
     // Main training loop.
-    for (let epoch = 0; epoch < this.epochs; epoch++) {
+    for (let epoch = startEpoch; epoch < this.epochs; epoch++) {
       this.epoch = epoch;
       this.batchIdx = 0;
 
@@ -149,8 +174,11 @@ export class PlanTrainer {
        * @property {number} epoch - Current epoch.
        */
       this.observer.broadcast(PlanTrainer.EVENT_EPOCH_START, { epoch });
+      if (this._isStopped()) {
+        return;
+      }
 
-      for (let batchIdx = 0; batchIdx < numBatches; batchIdx++) {
+      for (let batchIdx = startBatch; batchIdx < numBatches; batchIdx++) {
         this.batchIdx = batchIdx;
 
         /**
@@ -165,6 +193,9 @@ export class PlanTrainer {
           epoch,
           batch: batchIdx,
         });
+        if (this._isStopped()) {
+          return;
+        }
 
         // Slice a batch.
         // TODO: replace with Dataloader
@@ -246,8 +277,9 @@ export class PlanTrainer {
         if (
           typeof this.stepsPerEpoch === 'number' &&
           batchIdx >= this.stepsPerEpoch
-        )
+        ) {
           break;
+        }
       }
 
       /**
@@ -265,5 +297,154 @@ export class PlanTrainer {
      * @event PlanTrainer#end
      */
     this.observer.broadcast(PlanTrainer.EVENT_TRAINING_END, {});
+  }
+
+  /**
+   * @private
+   */
+  _isStopped() {
+    // Stop training
+    if (this.stopped) {
+      /**
+       * `stop` event.
+       * Triggered when training was stopped.
+       * @event PlanTrainer#stop
+       * @property {Object}
+       */
+      this.observer.broadcast(PlanTrainer.EVENT_TRAINING_STOP, {});
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Stops training loop and returns training checkpoint.
+   *
+   * @returns {Promise<PlanTrainerCheckpoint>}
+   */
+  stop() {
+    return new Promise((resolve) => {
+      this.observer.subscribe(
+        PlanTrainer.EVENT_TRAINING_STOP,
+        () => {
+          resolve(this.createCheckpoint());
+        },
+        1
+      );
+      this.stopped = true;
+    });
+  }
+
+  /**
+   * Resume stopped training process.
+   */
+  async resume() {
+    if (this.stopped) {
+      await this.start(true);
+    }
+  }
+
+  /**
+   * Creates checkpoint using current training state.
+   *
+   * @return {PlanTrainerCheckpoint}
+   */
+  createCheckpoint() {
+    return new PlanTrainerCheckpoint({
+      epochs: this.epochs,
+      stepsPerEpoch: this.stepsPerEpoch,
+      batchSize: this.batchSize,
+      clientConfig: this.clientConfig,
+      originalModel: this.originalModel,
+      epoch: this.epoch,
+      batch: this.batchIdx,
+      currentModel: this.currentModel,
+    });
+  }
+
+  /**
+   * Restores `PlanTrainer` state from checkpoint.
+   *
+   * @param {PlanTrainerCheckpoint} checkpoint
+   */
+  applyCheckpoint(checkpoint) {
+    // Set values from checkpoint
+    this.epochs = checkpoint.epochs;
+    this.epoch = checkpoint.epoch;
+    this.stepsPerEpoch = checkpoint.stepsPerEpoch;
+    this.batchIdx = checkpoint.batch;
+    this.batchSize = checkpoint.batchSize;
+    this.currentModel = checkpoint.currentModel;
+    this.clientConfig = checkpoint.clientConfig;
+
+    // Mark training as stopped
+    this.stopped = true;
+  }
+}
+
+/**
+ * Object that stores `PlanTrainer` state, to resume training from it.
+ *
+ * @param {Object} parameters - Dictionary of parameters
+ * @param {number} parameters.epochs - Total number of epochs
+ * @param {number} [parameters.stepsPerEpoch] - Max steps per epoch
+ * @param {number} parameters.batchSize - Batch size
+ * @param {Object} parameters.clientConfig - Client config
+ * @param {number} parameters.epoch - Current epoch
+ * @param {number} parameters.batch - Current batch number
+ * @param {SyftModel} parameters.currentModel - Current state of the Model
+ */
+export class PlanTrainerCheckpoint {
+  constructor({
+    epochs,
+    stepsPerEpoch,
+    batchSize,
+    clientConfig,
+    epoch,
+    batch,
+    currentModel,
+  }) {
+    this.epochs = epochs;
+    this.stepsPerEpoch = stepsPerEpoch;
+    this.batchSize = batchSize;
+    this.clientConfig = clientConfig;
+    this.epoch = epoch;
+    this.batch = batch;
+    this.currentModel = currentModel;
+  }
+
+  /**
+   * Returns `PlanTrainerCheckpoint` serialized to plain Object.
+   *
+   * @return {Promise<Object>}
+   */
+  async toJSON() {
+    return {
+      epochs: this.epochs,
+      stepsPerEpoch: this.stepsPerEpoch,
+      batchSize: this.batchSize,
+      clientConfig: this.clientConfig || {},
+      epoch: this.epoch,
+      batch: this.batch,
+      currentModelBase64: base64Encode(await this.currentModel.toProtobuf()),
+    };
+  }
+
+  /**
+   * Creates `PlanTrainerCheckpoint` from object.
+   *
+   * @param {Syft} worker - Syft Worker
+   * @param {Object} obj - Object containing checkpoint data
+   * @return {PlanTrainerCheckpoint}
+   */
+  static fromJSON(worker, obj) {
+    const currentModel = new SyftModel({
+      worker,
+      serializedModelParameters: base64Decode(obj.currentModelBase64),
+    });
+    return new PlanTrainerCheckpoint({
+      ...obj,
+      currentModel,
+    });
   }
 }
