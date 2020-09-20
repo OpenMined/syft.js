@@ -286,7 +286,8 @@ export default class GridAPIClient {
         reject(new Error('WS connection closed'));
       };
 
-      // We expect responses coming in same order as requests.
+      // Save response handler under specific request_id.
+      // We expect same request_id in the response.
       this.wsMessages[request_id] = onMessage;
 
       // Other events while waiting for response.
@@ -328,7 +329,7 @@ export default class GridAPIClient {
       this.logger.log('Message is not valid JSON!');
     }
 
-    // Call response handler
+    // Call response handler, it should be stored under request_id.
     const request_id = data.request_id;
     if (request_id && Object.hasOwnProperty.call(this.wsMessages, request_id)) {
       const handler = this.wsMessages[request_id];
