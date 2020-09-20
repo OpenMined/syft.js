@@ -13,6 +13,10 @@
         padding: 20px;
       }
 
+      input, button, textarea {
+        margin: 5px;
+      }
+
       #logo {
         width: 100px;
         margin-bottom: 20px;
@@ -110,7 +114,8 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.e30.Cn_0cSjCw1QKtcYDx_mYN_q9jO2KkpcUoiVbILm
       </p>
 
       <p>
-        <button id="start">Start FL Worker</button>
+        <button id="start" style="float: left">Start Training</button>
+        <button disabled id="start-from-checkpoint">Start from Saved Checkpoint</button>
       </p>
 
       <p>
@@ -122,6 +127,13 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.e30.Cn_0cSjCw1QKtcYDx_mYN_q9jO2KkpcUoiVbILm
     </form>
 
     <div id="fl-training" style="display: none">
+      <button disabled id="stop-training">Stop Training</button>
+      <button disabled id="resume-training-from-trainer">Resume Training</button>
+
+      <br>
+      <button disabled id="stop-training-and-save">Stop Training & Store Checkpoint</button>
+      <div style="display: none" id="saved-checkpoint">Try to reload the page and start from saved checkpoint!</div>
+
       <div style="display: table-row">
         <div style="display: table-cell">
           <div id="loss_graph"></div>
