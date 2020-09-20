@@ -232,7 +232,8 @@ which can be serialized to JSON to restored from JSON later to continue the trai
 ```javascript
 const checkpoint = await training.stop();
 const checkpointJson = await checkpoint.toJSON();
-localStorage.setItem('checkpoint', JSON.stringify(checkpointJson));
+const checkpointJsonString = JSON.stringify(checkpointJson);
+localStorage.setItem('checkpoint', checkpointJsonString);
 
 // ... checkpoint can survive page reload ...
 
