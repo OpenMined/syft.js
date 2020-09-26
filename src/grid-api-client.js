@@ -2,6 +2,8 @@ import Logger from './logger';
 import { SpeedTest } from './speed-test';
 import { GRID_ERROR } from './_errors';
 import EventObserver from './events';
+import { createRandomBuffer } from './utils/random-buffer';
+import { base64Encode } from './utils/base64';
 
 // Define the type of request (GET, POST) associated with each possible call
 const HTTP_PATH_VERB = {
@@ -36,7 +38,7 @@ export default class GridAPIClient {
     // Define all necessary components for both web socket and http
     this.ws = null;
     this.observer = new EventObserver();
-    this.wsMessageQueue = [];
+    this.wsMessages = {};
     this.logger = new Logger('grid', true);
     this.responseTimeout = 10000;
 
@@ -249,18 +251,16 @@ export default class GridAPIClient {
     if (!this.ws) {
       await this._initWs();
     }
-
-    const message = { type, data };
-    this.logger.log('Sending WS message', type);
+    const request_id = base64Encode(await createRandomBuffer(32));
+    const message = { request_id, type, data };
+    this.logger.log('Sending WS message', request_id, type);
 
     return new Promise((resolve, reject) => {
       this.ws.send(JSON.stringify(message));
 
       const cleanUp = () => {
         // Remove all handlers related to message.
-        this.wsMessageQueue = this.wsMessageQueue.filter(
-          (item) => item !== onMessage
-        );
+        delete this.wsMessages[request_id];
         this.observer.unsubscribe('ws-error', onError);
         this.observer.unsubscribe('ws-close', onClose);
         clearTimeout(timeoutHandler);
@@ -272,10 +272,6 @@ export default class GridAPIClient {
       }, this.responseTimeout);
 
       const onMessage = (data) => {
-        if (data.type !== message.type) {
-          this.logger.log('Received invalid response type, ignoring');
-          return false;
-        }
         cleanUp();
         resolve(data.data);
       };
@@ -290,8 +286,9 @@ export default class GridAPIClient {
         reject(new Error('WS connection closed'));
       };
 
-      // We expect responses coming in same order as requests.
-      this.wsMessageQueue.push(onMessage);
+      // Save response handler under specific request_id.
+      // We expect same request_id in the response.
+      this.wsMessages[request_id] = onMessage;
 
       // Other events while waiting for response.
       this.observer.subscribe('ws-error', onError);
@@ -332,12 +329,13 @@ export default class GridAPIClient {
       this.logger.log('Message is not valid JSON!');
     }
 
-    // Call response handlers (in order of requests),
-    // stopping at the first successful handler.
-    for (let handler of this.wsMessageQueue) {
-      if (handler(data) !== false) {
-        break;
-      }
+    // Call response handler, it should be stored under request_id.
+    const request_id = data.request_id;
+    if (request_id && Object.hasOwnProperty.call(this.wsMessages, request_id)) {
+      const handler = this.wsMessages[request_id];
+      handler(data);
+    } else {
+      this.logger.log('Message with unknown request_id');
     }
   }
 

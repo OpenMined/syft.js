@@ -479,13 +479,13 @@ Object that stores `PlanTrainer` state, to resume training from it.
 
 ### toJSON
 
-Returns PlanTrainerCheckpoint serialized to plain Object.
+Returns `PlanTrainerCheckpoint` serialized to plain Object.
 
 Returns **[Promise][78]&lt;[Object][71]>** 
 
 ### fromJSON
 
-Creates PlanTrainerCheckpoint from object.
+Creates `PlanTrainerCheckpoint` from object.
 
 #### Parameters
 
