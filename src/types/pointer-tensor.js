@@ -4,6 +4,9 @@
  * tensor, but instead of computing a tensor function (such as addition,
  * subtraction, etc.) locally, PointerTensor forwards the computation to
  * a remote machine as specified by self.locationId.
+ *
+ * Note that PointerTensor is currently not supported. Support for communication
+ * between workers comes from Protocol.
  */
 export default class PointerTensor {
   /**
