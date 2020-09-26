@@ -72,35 +72,32 @@ export class GridMock {
     );
   }
 
+  makeResponse(req, data) {
+    const response = {
+      type: req.type,
+      data,
+    };
+    if (req.request_id) {
+      response.request_id = req.request_id;
+    }
+    return JSON.stringify(response);
+  }
+
   messageHandler(socket, message) {
     const data = JSON.parse(message);
+
     this.wsMessagesHistory.push(data);
     switch (data.type) {
       case 'model-centric/authenticate':
-        socket.send(
-          JSON.stringify({
-            type: data.type,
-            data: this.authResponse,
-          })
-        );
+        socket.send(this.makeResponse(data, this.authResponse));
         break;
 
       case 'model-centric/cycle-request':
-        socket.send(
-          JSON.stringify({
-            type: data.type,
-            data: this.cycleResponse,
-          })
-        );
+        socket.send(this.makeResponse(data, this.cycleResponse));
         break;
 
       case 'model-centric/report':
-        socket.send(
-          JSON.stringify({
-            type: data.type,
-            data: this.reportResponse,
-          })
-        );
+        socket.send(this.makeResponse(data, this.reportResponse));
         break;
     }
   }
