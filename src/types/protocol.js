@@ -19,7 +19,7 @@ export default class Protocol {
    * @param {Array.<string>} tags - Tags for Protocol.
    * @param {string} description - Description for Protocol.
    * @param {Array.<Plan>} planAssigments - Array of Plans that Protocol should execute.
-   * @param {Array.<number>} workersResolved
+   * @param {*} workersResolved
    */
   constructor(id, tags, description, planAssigments, workersResolved) {
     this.id = id;
