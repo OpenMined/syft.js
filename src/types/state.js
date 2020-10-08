@@ -1,5 +1,4 @@
 import { protobuf, unbufferize } from '../protobuf';
-import { TorchTensor } from './torch';
 
 /**
  * State stores a list of tensors. In Syft.JS, State is used to
