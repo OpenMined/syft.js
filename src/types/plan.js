@@ -86,7 +86,7 @@ export class PlanInputSpec {
   static TYPE_BATCH_SIZE = 'batchSize';
 
   /**
-   * Represents parameter from client config configured in FL model, `name` argument is required (substituted with paramter from PlanTrainer's `clientConfig`).
+   * Represents parameter from client config configured in FL model, `name` argument is required (substituted with parameter from PlanTrainer's `clientConfig`).
    * @constant
    */
   static TYPE_CLIENT_CONFIG_PARAM = 'clientConfigParam';
@@ -125,6 +125,8 @@ export class PlanInputSpec {
         args.push(spec.value);
       } else if (spec.index !== null) {
         args.push(data[spec.type][spec.index]);
+      } else if (spec.name !== null) {
+        args.push(data[spec.type][spec.name]);
       } else if (spec.type === this.TYPE_CLIENT_CONFIG_PARAM) {
         args.push(data[spec.type][spec.name]);
       } else {

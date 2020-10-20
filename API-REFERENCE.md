@@ -72,6 +72,14 @@
     -   [toJSON][68]
     -   [fromJSON][69]
         -   [Parameters][70]
+-   [Dataset][71]
+    -   [Properties][72]
+    -   [Examples][73]
+-   [DataLoader][74]
+    -   [Parameters][75]
+    -   [Properties][76]
+    -   [Examples][77]
+    -   [iterator][78]
 
 ## Syft
 
@@ -79,10 +87,10 @@ Syft client for model-centric federated learning.
 
 ### Parameters
 
--   `options` **[Object][71]** 
-    -   `options.url` **[string][72]** Full URL to PyGrid app (`ws` and `http` schemas supported).
-    -   `options.verbose` **[boolean][73]** Whether to enable logging and allow unsecured PyGrid connection.
-    -   `options.peerConfig` **[Object][71]** [not implemented] WebRTC peer config used with RTCPeerConnection.
+-   `options` **[Object][79]** 
+    -   `options.url` **[string][80]** Full URL to PyGrid app (`ws` and `http` schemas supported).
+    -   `options.verbose` **[boolean][81]** Whether to enable logging and allow unsecured PyGrid connection.
+    -   `options.peerConfig` **[Object][79]** [not implemented] WebRTC peer config used with RTCPeerConnection.
 
 ### Examples
 
@@ -112,12 +120,12 @@ Instantiates the new Job with given options.
 
 #### Parameters
 
--   `options` **[Object][71]** 
-    -   `options.modelName` **[string][72]** FL Model name.
-    -   `options.modelVersion` **[string][72]** FL Model version.
-    -   `options.authToken` **[string][72]** FL Model authentication token.
+-   `options` **[Object][79]** 
+    -   `options.modelName` **[string][80]** FL Model name.
+    -   `options.modelVersion` **[string][80]** FL Model version.
+    -   `options.authToken` **[string][80]** FL Model authentication token.
 
-Returns **[Job][74]** 
+Returns **[Job][82]** 
 
 ## Job
 
@@ -125,9 +133,9 @@ Job represents a single training cycle done by the client.
 
 ### Properties
 
--   `plans` **[Object][71]&lt;[string][72], [Plan][75]>** Plans dictionary.
--   `protocols` **[Object][71]&lt;[string][72], Protocol>** [not implemented] Protocols dictionary.
--   `model` **[SyftModel][76]** Model.
+-   `plans` **[Object][79]&lt;[string][80], [Plan][83]>** Plans dictionary.
+-   `protocols` **[Object][79]&lt;[string][80], Protocol>** [not implemented] Protocols dictionary.
+-   `model` **[SyftModel][84]** Model.
 
 ### on
 
@@ -137,8 +145,8 @@ Available events: `accepted`, `rejected`, `error`.
 
 #### Parameters
 
--   `event` **[string][72]** Event name.
--   `handler` **[Function][77]** Event listener.
+-   `event` **[string][80]** Event name.
+-   `handler` **[Function][85]** Event listener.
 
 ### start
 
@@ -151,7 +159,7 @@ Starts the Job by executing following actions:
 -   Downloads the model, plans, protocols from PyGrid.
 -   Fires `accepted` event on success.
 
-Returns **[Promise][78]&lt;void>** 
+Returns **[Promise][86]&lt;void>** 
 
 ### request
 
@@ -160,7 +168,7 @@ Returns **[Promise][78]&lt;void>**
 
 Alias for `Job.start`
 
-Returns **[Promise][78]&lt;void>** 
+Returns **[Promise][86]&lt;void>** 
 
 ### report
 
@@ -168,9 +176,9 @@ Submits the model diff to PyGrid.
 
 #### Parameters
 
--   `diff` **[ArrayBuffer][79]** Serialized difference between original and trained model parameters.
+-   `diff` **[ArrayBuffer][87]** Serialized difference between original and trained model parameters.
 
-Returns **[Promise][78]&lt;void>** 
+Returns **[Promise][86]&lt;void>** 
 
 ### train
 
@@ -179,48 +187,48 @@ Returns `PlanTrainer` object to have a handle on training process.
 
 #### Parameters
 
--   `trainingPlan` **[string][72]** Training Plan name.
--   `parameters` **[Object][71]** Dictionary of training parameters.
-    -   `parameters.inputs` **\[[PlanInputSpec][80]]** List of training Plan input arguments
-    -   `parameters.outputs` **\[[PlanOutputSpec][81]]** List of training Plan outputs
+-   `trainingPlan` **[string][80]** Training Plan name.
+-   `parameters` **[Object][79]** Dictionary of training parameters.
+    -   `parameters.inputs` **\[[PlanInputSpec][88]]** List of training Plan input arguments
+    -   `parameters.outputs` **\[[PlanOutputSpec][89]]** List of training Plan outputs
     -   `parameters.data` **tf.Tensor** Tensor containing training data
     -   `parameters.target` **tf.Tensor** Tensor containing training targets
-    -   `parameters.epochs` **[number][82]?** Epochs to train (if not specified, taken from Job)
-    -   `parameters.batchSize` **[number][82]?** Batch size (if not specified, taken from Job)
-    -   `parameters.stepsPerEpoch` **[number][82]?** Max number of steps per epoch (if not specified, taken from Job)
-    -   `parameters.checkpoint` **[PlanTrainerCheckpoint][83]?** Checkpoint
-    -   `parameters.events` **[Object][71]?** List of event listeners
-        -   `parameters.events.start` **[Function][77]?** On training start listener
-        -   `parameters.events.end` **[Function][77]?** On training end listener
-        -   `parameters.events.epochStart` **[Function][77]?** On epoch start listener
-        -   `parameters.events.epochEnd` **[Function][77]?** On epoch end listener
-        -   `parameters.events.batchStart` **[Function][77]?** On batch start listener
-        -   `parameters.events.batchEnd` **[Function][77]?** On batch end listener
+    -   `parameters.epochs` **[number][90]?** Epochs to train (if not specified, taken from Job)
+    -   `parameters.batchSize` **[number][90]?** Batch size (if not specified, taken from Job)
+    -   `parameters.stepsPerEpoch` **[number][90]?** Max number of steps per epoch (if not specified, taken from Job)
+    -   `parameters.checkpoint` **[PlanTrainerCheckpoint][91]?** Checkpoint
+    -   `parameters.events` **[Object][79]?** List of event listeners
+        -   `parameters.events.start` **[Function][85]?** On training start listener
+        -   `parameters.events.end` **[Function][85]?** On training end listener
+        -   `parameters.events.epochStart` **[Function][85]?** On epoch start listener
+        -   `parameters.events.epochEnd` **[Function][85]?** On epoch end listener
+        -   `parameters.events.batchStart` **[Function][85]?** On batch start listener
+        -   `parameters.events.batchEnd` **[Function][85]?** On batch end listener
 
-Returns **[PlanTrainer][84]** 
+Returns **[PlanTrainer][92]** 
 
 ## Job#accepted
 
 `accepted` event.
 Triggered when PyGrid accepts the client into training cycle.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ### Properties
 
--   `model` **[SyftModel][76]** Instance of SyftModel.
--   `clientConfig` **[Object][71]** Client configuration returned by PyGrid.
+-   `model` **[SyftModel][84]** Instance of SyftModel.
+-   `clientConfig` **[Object][79]** Client configuration returned by PyGrid.
 
 ## Job#rejected
 
 `rejected` event.
 Triggered when PyGrid rejects the client.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ### Properties
 
--   `timeout` **([number][82] | null)** Time in seconds to retry. Empty when the FL model is not trainable anymore.
+-   `timeout` **([number][90] | null)** Time in seconds to retry. Empty when the FL model is not trainable anymore.
 
 ## Job#error
 
@@ -239,7 +247,7 @@ Model parameters as stored in the PyGrid.
 
 Returns model serialized to protobuf.
 
-Returns **[Promise][78]&lt;[ArrayBuffer][79]>** 
+Returns **[Promise][86]&lt;[ArrayBuffer][87]>** 
 
 ### createSerializedDiff
 
@@ -248,9 +256,9 @@ and returns serialized `diff` that can be submitted to PyGrid.
 
 #### Parameters
 
--   `updatedModelParams` **[Array][85]&lt;tf.Tensor>** Array of model parameters (tensors).
+-   `updatedModelParams` **[Array][93]&lt;tf.Tensor>** Array of model parameters (tensors).
 
-Returns **[Promise][78]&lt;[ArrayBuffer][79]>** Protobuf-serialized `diff`.
+Returns **[Promise][86]&lt;[ArrayBuffer][87]>** Protobuf-serialized `diff`.
 
 ### createSerializedDiffFromModel
 
@@ -259,9 +267,9 @@ and returns serialized `diff` that can be submitted to PyGrid.
 
 #### Parameters
 
--   `model` **[SyftModel][76]** Model to compare with.
+-   `model` **[SyftModel][84]** Model to compare with.
 
-Returns **[Promise][78]&lt;[ArrayBuffer][79]>** Protobuf-serialized `diff`.
+Returns **[Promise][86]&lt;[ArrayBuffer][87]>** Protobuf-serialized `diff`.
 
 ## Plan
 
@@ -276,10 +284,10 @@ The order, type and number of arguments must match to arguments defined in the P
 
 #### Parameters
 
--   `worker` **[Syft][86]** 
--   `data` **...(tf.Tensor | [number][82])** 
+-   `worker` **[Syft][94]** 
+-   `data` **...(tf.Tensor | [number][90])** 
 
-Returns **[Promise][78]&lt;[Array][85]&lt;tf.Tensor>>** 
+Returns **[Promise][86]&lt;[Array][93]&lt;tf.Tensor>>** 
 
 ## PlanTrainer
 
@@ -287,11 +295,11 @@ Class that contains training loop logic.
 
 ### Properties
 
--   `originalModel` **[SyftModel][76]** Original model.
--   `currentModel` **[SyftModel][76]** Trained model.
--   `epoch` **[number][82]** Current epoch.
--   `batchIdx` **[number][82]** Current batch.
--   `stopped` **[boolean][73]** Is the training currently stopped.
+-   `originalModel` **[SyftModel][84]** Original model.
+-   `currentModel` **[SyftModel][84]** Trained model.
+-   `epoch` **[number][90]** Current epoch.
+-   `batchIdx` **[number][90]** Current batch.
+-   `stopped` **[boolean][81]** Is the training currently stopped.
 
 ### on
 
@@ -301,8 +309,8 @@ Available events: `start`, `end`, `epochStart`, `epochEnd`, `batchStart`, `batch
 
 #### Parameters
 
--   `event` **[string][72]** Event name.
--   `handler` **[Function][77]** Event listener.
+-   `event` **[string][80]** Event name.
+-   `handler` **[Function][85]** Event listener.
 
 ### start
 
@@ -316,7 +324,7 @@ Starts the training loop.
 
 Stops training loop and returns training checkpoint.
 
-Returns **[Promise][78]&lt;[PlanTrainerCheckpoint][83]>** 
+Returns **[Promise][86]&lt;[PlanTrainerCheckpoint][91]>** 
 
 ### resume
 
@@ -326,7 +334,7 @@ Resume stopped training process.
 
 Creates checkpoint using current training state.
 
-Returns **[PlanTrainerCheckpoint][83]** 
+Returns **[PlanTrainerCheckpoint][91]** 
 
 ### applyCheckpoint
 
@@ -334,14 +342,14 @@ Restores `PlanTrainer` state from checkpoint.
 
 #### Parameters
 
--   `checkpoint` **[PlanTrainerCheckpoint][83]** 
+-   `checkpoint` **[PlanTrainerCheckpoint][91]** 
 
 ## PlanTrainer#start
 
 `start` event.
 Triggered on training start.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ## PlanTrainer#end
 
@@ -358,11 +366,11 @@ Triggered when training was stopped.
 `epochStart` event.
 Triggered before epoch start.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ### Properties
 
--   `epoch` **[number][82]** Current epoch.
+-   `epoch` **[number][90]** Current epoch.
 
 ## PlanTrainer#epochEnd
 
@@ -371,33 +379,33 @@ Triggered after epoch end.
 
 ### Properties
 
--   `epoch` **[number][82]** Current epoch.
+-   `epoch` **[number][90]** Current epoch.
 
 ## PlanTrainer#batchStart
 
 `batchStart` event.
 Triggered before batch start.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ### Properties
 
--   `epoch` **[number][82]** Current epoch.
--   `batch` **[number][82]** Current batch.
+-   `epoch` **[number][90]** Current epoch.
+-   `batch` **[number][90]** Current batch.
 
 ## PlanTrainer#batchEnd
 
 `batchEnd` event.
 Triggered after batch end.
 
-Type: [Object][71]
+Type: [Object][79]
 
 ### Properties
 
--   `epoch` **[number][82]** Current epoch.
--   `batch` **[number][82]** Current batch.
--   `loss` **[number][82]?** Batch loss.
--   `metrics` **[Object][71]?** Dictionary containing metrics (if any defined in the `outputs`).
+-   `epoch` **[number][90]** Current epoch.
+-   `batch` **[number][90]** Current batch.
+-   `loss` **[number][90]?** Batch loss.
+-   `metrics` **[Object][79]?** Dictionary containing metrics (if any defined in the `outputs`).
 
 ## PlanInputSpec
 
@@ -408,9 +416,9 @@ are mapped into Plan arguments according to this object.
 
 ### Parameters
 
--   `type` **[string][72]** Input argument type.
--   `name` **[string][72]?** Optional argument name. (optional, default `null`)
--   `index` **[number][82]?** Optional argument index (to take from array). (optional, default `null`)
+-   `type` **[string][80]** Input argument type.
+-   `name` **[string][80]?** Optional argument name. (optional, default `null`)
+-   `index` **[number][90]?** Optional argument index (to take from array). (optional, default `null`)
 -   `value` **any?** Argument value. (optional, default `null`)
 
 ### TYPE_DATA
@@ -427,7 +435,7 @@ Represents batch size (substituted with PlanTrainer's `batchSize`).
 
 ### TYPE_CLIENT_CONFIG_PARAM
 
-Represents parameter from client config configured in FL model, `name` argument is required (substituted with paramter from PlanTrainer's `clientConfig`).
+Represents parameter from client config configured in FL model, `name` argument is required (substituted with parameter from PlanTrainer's `clientConfig`).
 
 ### TYPE_VALUE
 
@@ -446,9 +454,9 @@ are mapped into `PlanTrainer`'s internal state according to this object.
 
 ### Parameters
 
--   `type` **[string][72]** Output variable type.
--   `name` **[string][72]?** Optional name. (optional, default `null`)
--   `index` **[number][82]?** Optional index (to put into array). (optional, default `null`)
+-   `type` **[string][80]** Output variable type.
+-   `name` **[string][80]?** Optional name. (optional, default `null`)
+-   `index` **[number][90]?** Optional index (to put into array). (optional, default `null`)
 
 ### TYPE_LOSS
 
@@ -468,20 +476,20 @@ Object that stores `PlanTrainer` state, to resume training from it.
 
 ### Parameters
 
--   `parameters` **[Object][71]** Dictionary of parameters
-    -   `parameters.epochs` **[number][82]** Total number of epochs
-    -   `parameters.stepsPerEpoch` **[number][82]?** Max steps per epoch
-    -   `parameters.batchSize` **[number][82]** Batch size
-    -   `parameters.clientConfig` **[Object][71]** Client config
-    -   `parameters.epoch` **[number][82]** Current epoch
-    -   `parameters.batch` **[number][82]** Current batch number
-    -   `parameters.currentModel` **[SyftModel][76]** Current state of the Model
+-   `parameters` **[Object][79]** Dictionary of parameters
+    -   `parameters.epochs` **[number][90]** Total number of epochs
+    -   `parameters.stepsPerEpoch` **[number][90]?** Max steps per epoch
+    -   `parameters.batchSize` **[number][90]** Batch size
+    -   `parameters.clientConfig` **[Object][79]** Client config
+    -   `parameters.epoch` **[number][90]** Current epoch
+    -   `parameters.batch` **[number][90]** Current batch number
+    -   `parameters.currentModel` **[SyftModel][84]** Current state of the Model
 
 ### toJSON
 
 Returns `PlanTrainerCheckpoint` serialized to plain Object.
 
-Returns **[Promise][78]&lt;[Object][71]>** 
+Returns **[Promise][86]&lt;[Object][79]>** 
 
 ### fromJSON
 
@@ -489,10 +497,81 @@ Creates `PlanTrainerCheckpoint` from object.
 
 #### Parameters
 
--   `worker` **[Syft][86]** Syft Worker
--   `obj` **[Object][71]** Object containing checkpoint data
+-   `worker` **[Syft][94]** Syft Worker
+-   `obj` **[Object][79]** Object containing checkpoint data
 
-Returns **[PlanTrainerCheckpoint][83]** 
+Returns **[PlanTrainerCheckpoint][91]** 
+
+## Dataset
+
+Abstract class for Dataset.
+`getItem` method and `length` getter must be defined in the child class.
+
+### Properties
+
+-   `getItem` **[Function][85]** Returns a sample
+-   `length` **[Number][90]** Length of the datasets
+
+### Examples
+
+```javascript
+class MyDataset extends Dataset {
+  constructor() {
+    super();
+    this.data = [1, 2, 3, 4, 5].map(i => tf.tensor(i));
+    this.labels = [0, 0, 1, 0, 1].map(i => tf.tensor(i));
+  }
+
+  getItem(index) {
+    return [this.data[index], this.labels[index]];
+  }
+
+  get length() {
+    return this.data.length;
+  }
+}
+
+const ds = new MyDataset();
+ds[0][0].print() // => Tensor 1
+ds[0][1].print() // => Tensor 0
+```
+
+## DataLoader
+
+DataLoader controls fetching the data from the Dataset,
+including shuffling and batching.
+Implements iterable protocol to iterate over data samples.
+
+Note: currently it only supports tf.Tensor data in the dataset,
+and collates batches using TFJS.
+
+### Parameters
+
+-   `parameters` **[Object][79]** 
+    -   `parameters.dataset` **[Dataset][95]** Dataset to load
+    -   `parameters.batchSize` **[Number][90]** Batch size for batching (optional, default `1`)
+    -   `parameters.shuffle` **[Boolean][81]** Shuffle the Dataset (optional, default `true`)
+    -   `parameters.dropLast` **[Boolean][81]** Skip the last chunk if it is smaller than the `batchSize` (optional, default `false`)
+
+### Properties
+
+-   `length` **[Number][90]** Data length.
+
+### Examples
+
+```javascript
+const loader = new DataLoader({dataset, batchSize: 32})
+consle.log('number of batches: ', loader.length)
+for (let batch of loader) {
+  // ...
+}
+```
+
+### iterator
+
+Iterator producing data batches.
+
+Returns **any** 
 
 [1]: #syft
 
@@ -634,34 +713,52 @@ Returns **[PlanTrainerCheckpoint][83]**
 
 [70]: #parameters-14
 
-[71]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[71]: #dataset
 
-[72]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+[72]: #properties-9
 
-[73]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+[73]: #examples-1
 
-[74]: #job
+[74]: #dataloader
 
-[75]: #plan
+[75]: #parameters-15
 
-[76]: #syftmodel
+[76]: #properties-10
 
-[77]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
+[77]: #examples-2
 
-[78]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+[78]: #iterator
 
-[79]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+[79]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
-[80]: #planinputspec
+[80]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[81]: #planoutputspec
+[81]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[82]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+[82]: #job
 
-[83]: #plantrainercheckpoint
+[83]: #plan
 
-[84]: #plantrainer
+[84]: #syftmodel
 
-[85]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[85]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function
 
-[86]: #syft
+[86]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+
+[87]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+
+[88]: #planinputspec
+
+[89]: #planoutputspec
+
+[90]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[91]: #plantrainercheckpoint
+
+[92]: #plantrainer
+
+[93]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+
+[94]: #syft
+
+[95]: #dataset

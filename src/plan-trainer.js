@@ -5,6 +5,7 @@ import SyftModel from './syft-model';
 import { base64Encode, base64Decode } from './utils/base64';
 
 import * as tf from '@tensorflow/tfjs-core';
+import { DataLoader } from './data';
 
 /**
  * Class that contains training loop logic.
@@ -32,10 +33,10 @@ export class PlanTrainer {
    * @param {[PlanInputSpec]} parameters.inputs - Plan input specification.
    * @param {[PlanOutputSpec]} parameters.outputs - Plan output specification.
    * @param {SyftModel} parameters.model - Model to train.
-   * @param {tf.Tensor} parameters.data - Training data.
-   * @param {tf.Tensor} parameters.target - Training labels.
+   * @param {DataLoader|tf.Tensor} parameters.data - DataLoader or plain tensor containing training data.
+   * @param {tf.Tensor} [parameters.target] - Training labels (optional if `data` is DataLoader).
    * @param {number} parameters.epochs - Number of epochs.
-   * @param {number} parameters.batchSize - Batch size.
+   * @param {number} [parameters.batchSize] - Batch size. Optional if `data` is DataLoader.
    * @param {number} [parameters.stepsPerEpoch] - Optional max number of steps in epoch.
    * @param {Object} [parameters.clientConfig] - Optional dictionary of additional client configuration parameters.
    * @param {Object} [parameters.checkpoint] - Checkpoint.
@@ -75,7 +76,7 @@ export class PlanTrainer {
     this.target = target;
 
     this.epochs = epochs || 1;
-    this.batchSize = batchSize;
+    this.batchSize = data instanceof DataLoader ? data.batchSize : batchSize;
     this.stepsPerEpoch = stepsPerEpoch;
     this.clientConfig = clientConfig;
     this.events = events;
@@ -147,9 +148,6 @@ export class PlanTrainer {
       startModel = this.currentModel;
     }
 
-    // Number of batches in data
-    const numBatches = Math.floor(this.data.shape[0] / this.batchSize);
-
     // Copy model params to preserve original.
     let modelParams = startModel.params.map((p) => p.clone());
 
@@ -164,7 +162,9 @@ export class PlanTrainer {
     // Main training loop.
     for (let epoch = startEpoch; epoch < this.epochs; epoch++) {
       this.epoch = epoch;
-      this.batchIdx = 0;
+      this.batchIdx = startBatch;
+      // Reset start batch after it is used
+      startBatch = 0;
 
       /**
        * `epochStart` event.
@@ -178,9 +178,8 @@ export class PlanTrainer {
         return;
       }
 
-      for (let batchIdx = startBatch; batchIdx < numBatches; batchIdx++) {
-        this.batchIdx = batchIdx;
-
+      let batch;
+      while ((batch = this._nextBatch()) !== undefined) {
         /**
          * `batchStart` event.
          * Triggered before batch start.
@@ -191,32 +190,23 @@ export class PlanTrainer {
          */
         this.observer.broadcast(PlanTrainer.EVENT_BATCH_START, {
           epoch,
-          batch: batchIdx,
+          batch: this.batchIdx,
         });
         if (this._isStopped()) {
           return;
         }
 
-        // Slice a batch.
-        // TODO: replace with Dataloader
-        const dataBatch = tf.slice(
-          this.data,
-          batchIdx * this.batchSize,
-          this.batchSize
-        );
-        const targetBatch = tf.slice(
-          this.target,
-          batchIdx * this.batchSize,
-          this.batchSize
-        );
-
         // Prepare data for Plan arguments
         let argData = {};
         argData[PlanInputSpec.TYPE_BATCH_SIZE] = this.batchSize;
-        argData[PlanInputSpec.TYPE_DATA] = dataBatch;
-        argData[PlanInputSpec.TYPE_TARGET] = targetBatch;
         argData[PlanInputSpec.TYPE_MODEL_PARAM] = modelParams;
         argData[PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM] = this.clientConfig;
+        if (this.data instanceof DataLoader) {
+          argData[PlanInputSpec.TYPE_DATA] = batch;
+        } else {
+          argData[PlanInputSpec.TYPE_DATA] = batch[0];
+          argData[PlanInputSpec.TYPE_TARGET] = batch[1];
+        }
 
         // Execute the Plan
         const planArgs = PlanInputSpec.resolve(this.planInputs, argData);
@@ -241,7 +231,7 @@ export class PlanTrainer {
         });
 
         // Populate loss/metrics into status.
-        const status = { epoch, batch: batchIdx };
+        const status = { epoch, batch: this.batchIdx };
         if (Object.hasOwnProperty.call(output, PlanOutputSpec.TYPE_LOSS)) {
           status['loss'] = await output[PlanOutputSpec.TYPE_LOSS].array();
         }
@@ -255,8 +245,7 @@ export class PlanTrainer {
         }
 
         // Free mem.
-        dataBatch.dispose();
-        targetBatch.dispose();
+        batch.map((item) => item.dispose());
 
         /**
          * `batchEnd` event.
@@ -276,10 +265,12 @@ export class PlanTrainer {
         // Limits number of steps per epoch
         if (
           typeof this.stepsPerEpoch === 'number' &&
-          batchIdx >= this.stepsPerEpoch
+          this.batchIdx >= this.stepsPerEpoch
         ) {
           break;
         }
+
+        this.batchIdx++;
       }
 
       /**
@@ -315,6 +306,46 @@ export class PlanTrainer {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Returns the next batch of data from DataLoader or tensor.
+   * @return {tf.Tensor[]|undefined}
+   * @private
+   */
+  _nextBatch() {
+    if (this.data instanceof DataLoader) {
+      if (!this.dataIterator) {
+        this.dataIterator = this.data[Symbol.iterator]();
+      }
+
+      // Stop if current batch is larger than data length
+      if (this.batchIdx >= this.data.length) {
+        return undefined;
+      }
+
+      return this.dataIterator.next().value;
+    } else {
+      // Number of batches in data
+      const numBatches = Math.floor(this.data.shape[0] / this.batchSize);
+      // Stop if current batch is larger than data length
+      if (this.batchIdx >= numBatches) {
+        return undefined;
+      }
+
+      // Slice a batch.
+      const dataBatch = tf.slice(
+        this.data,
+        this.batchIdx * this.batchSize,
+        this.batchSize
+      );
+      const targetBatch = tf.slice(
+        this.target,
+        this.batchIdx * this.batchSize,
+        this.batchSize
+      );
+      return [dataBatch, targetBatch];
+    }
   }
 
   /**

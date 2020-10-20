@@ -17,3 +17,5 @@ toc:
   - PlanInputSpec
   - PlanOutputSpec
   - PlanTrainerCheckpoint
+  - Dataset
+  - DataLoader
