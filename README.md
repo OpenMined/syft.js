@@ -262,6 +262,56 @@ training.applyCheckpoint(checkpoint);
 training.resume();
 ```
 
+### Dataset / DataLoader API
+One way to provide training data into `PlanTrainer` is 
+to prepare and pass `data` and `target` parameters as plain `tf.Tensor`'s. 
+Another way is to use `Dataset` and `DataLoader` classes, 
+which are simplified version of PyTorch's implementation. 
+
+`Dataset` class needs to be extended to implement element-wise access to the data. 
+Resulting dataset is used with `DataLoader` that handles shuffling and batching of dataset elements.  
+The `DataLoader` can passed as `data` parameter into the `PlanTrainer`.
+
+```javascript
+class MyDataset extends data.Dataset {
+  
+  constructor() {
+    super();
+    // this.data = ...;
+    // this.target = ...;
+  }
+
+  getItem(index) {
+    return [
+      this.data[index],
+      this.target[index]
+    ];
+  }
+
+  get length() {
+    return this.data.length;
+  }
+}
+
+const dataset = new MyDataset();
+const dl = new DataLoader({dataset, batchSize: 64, shuffle: true});
+
+// Use with PlanTrainer
+const training = job.train('training_plan', {
+    inputs: [/* ... */],
+    outputs: [/* ... */],
+    data: dl
+});
+
+// Or use with custom training loop
+for (const [data, target] of dl) {
+  // ...
+}
+```
+
+MNIST example has implementation of MNIST dataset based on `Dataset` class 
+and `DataLoader` usage and additionally introduces data transformations using `Transform`.
+
 ### API Documentation
 
 See [API Documentation](API-REFERENCE.md) for complete reference.

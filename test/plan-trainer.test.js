@@ -1,9 +1,14 @@
 import { PlanOutputSpec, PlanInputSpec } from '../src/types/plan';
 import { PlanTrainer, PlanTrainerCheckpoint } from '../src/plan-trainer';
 import SyftModel from '../src/syft-model';
-import * as tf from '@tensorflow/tfjs-core';
+import { DataLoader, Dataset } from '../src/data';
 import { protobuf, unserialize } from '../src/protobuf';
 import Syft from '../src/syft';
+import { base64Encode } from '../src/utils/base64';
+
+import * as tf from '@tensorflow/tfjs-core';
+
+// Import test data
 import {
   MNIST_BATCH_SIZE,
   MNIST_LR,
@@ -14,12 +19,27 @@ import {
   MNIST_LOSS,
   MNIST_ACCURACY
 } from './data/dummy';
-import { base64Encode } from '../src/utils/base64';
+
+// Dummy dataset that slices provided tensors into samples by 1st dimension
+class TensorDataset extends Dataset {
+  constructor(...tensors) {
+    super();
+    this.tensors = tensors;
+  }
+
+  getItem(idx) {
+    return this.tensors.map(t => t.slice(idx, 1).squeeze());
+  }
+
+  get length() {
+    return this.tensors[0].shape[0];
+  }
+}
 
 describe('PlanTrainer', () => {
   let worker, plan, data, target, lr,
     batchSize, model, referenceUpdatedModel,
-    planInputSpec, planOutputSpec;
+    planInputSpec, planInputWithLoaderSpec, planOutputSpec, loader;
 
   beforeEach(() => {
     // Dummy worker
@@ -45,15 +65,23 @@ describe('PlanTrainer', () => {
       worker,
       serializedModelParameters: MNIST_UPD_MODEL_PARAMS
     });
-    planInputSpec = [
-      new PlanInputSpec(PlanInputSpec.TYPE_DATA),
-      new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
+    let commonInputSpec = [
       new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
       new PlanInputSpec(PlanInputSpec.TYPE_VALUE, 'lr', null, lr),
       new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W1', 0),
       new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b1', 1),
       new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W2', 2),
       new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b2', 3),
+    ];
+    planInputSpec = [
+      new PlanInputSpec(PlanInputSpec.TYPE_DATA),
+      new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
+      ...commonInputSpec
+    ];
+    planInputWithLoaderSpec = [
+      new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 0),
+      new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 1),
+      ...commonInputSpec
     ];
     planOutputSpec = [
       new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
@@ -63,6 +91,8 @@ describe('PlanTrainer', () => {
       new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W2', 2),
       new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
     ];
+    const dataset = new TensorDataset(data, target);
+    loader = new DataLoader({dataset, batchSize, shuffle: false});
   });
 
   test('can be executed (MNIST example)', async (done) => {
@@ -77,6 +107,47 @@ describe('PlanTrainer', () => {
       target,
       epochs: 1,
       batchSize,
+      stepsPerEpoch: 1
+    });
+
+    // ensure all assertions are executed
+    expect.assertions(4 + referenceUpdatedModel.params.length);
+
+    trainer.on(PlanTrainer.EVENT_BATCH_END, ({epoch, batch, loss, metrics}) => {
+      expect(epoch).toStrictEqual(0);
+      expect(batch).toStrictEqual(0);
+      expect(loss).toStrictEqual(MNIST_LOSS);
+      expect(metrics['accuracy']).toStrictEqual(MNIST_ACCURACY);
+
+      for (let i = 0; i < referenceUpdatedModel.params.length; i++) {
+        // Check that resulting model params are close to pysyft reference
+        let diff = referenceUpdatedModel.params[i].sub(trainer.currentModel.params[i]);
+        expect(
+          diff
+            .abs()
+            .sum()
+            .arraySync()
+        ).toBeLessThan(1e-7);
+      }
+    });
+
+    trainer.on(PlanTrainer.EVENT_TRAINING_END, () => {
+      done();
+    });
+
+    trainer.start();
+  });
+
+  test('can be executed with dataloader (MNIST example)', async (done) => {
+    // create trainer
+    const trainer = new PlanTrainer({
+      worker,
+      plan,
+      inputs: planInputWithLoaderSpec,
+      outputs: planOutputSpec,
+      model,
+      data: loader,
+      epochs: 1,
       stepsPerEpoch: 1
     });
 

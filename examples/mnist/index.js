@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs-core';
-import { Syft, PlanInputSpec, PlanOutputSpec } from '@openmined/syft.js';
-import { MnistData } from './mnist';
+import { Syft, PlanInputSpec, PlanOutputSpec, data } from '@openmined/syft.js';
+import { MnistDataset } from './mnist-dataset';
 import { retrieveCheckpoint, storeCheckpoint } from './checkpoint';
 
 const gridServer = document.getElementById('grid-server');
@@ -10,8 +10,6 @@ const stopButton = document.getElementById('stop-training');
 const stopAndSaveButton = document.getElementById('stop-training-and-save');
 const stopAndSaveMessage = document.getElementById('saved-checkpoint');
 const resumeFromTrainerButton = document.getElementById('resume-training-from-trainer');
-
-let mnist = null;
 
 /**
  * Keeps current training object.
@@ -48,8 +46,6 @@ stopButton.onclick = () => training.stop();
 resumeFromTrainerButton.onclick = () => training.resume();
 stopAndSaveButton.onclick = async () => {
   const checkpoint = await training.stop();
-  console.log(checkpoint);
-  window.checkpoint = checkpoint;
   await storeCheckpoint('checkpoint', checkpoint);
   updateStatus('Checkpoint is saved in local storage');
   stopAndSaveMessage.style.display = 'block';
@@ -69,27 +65,29 @@ const startFL = async (url, modelName, modelVersion, authToken = null, checkpoin
   const job = worker.newJob({ modelName, modelVersion, authToken });
 
   // Load MNIST data.
-  await loadMnistDataset();
-  const trainDataset = mnist.getTrainData();
+  const transform = new data.transform.core.Compose([
+    new data.transform.tfjs.ToTensor({type: 'float32'}, {type: 'int32'}),
+    new data.transform.tfjs.Normalize({mean: [0.1307 * 255], std: [0.3081 * 255]}),
+    new data.transform.tfjs.OneHot(null, {depth: 10, squeeze: true}),
+  ]);
+  const mnistDataset = new MnistDataset({train: true, transform});
+  await mnistDataset.load();
 
   job.request();
 
-  job.on('accepted', async ({ model }) => {
+  job.on('accepted', async ({ clientConfig, model }) => {
     updateStatus('Accepted into cycle!');
 
-    // Shuffle dataset.
-    // TODO replace with Dataloader API
-    updateStatus('Shuffling MNIST data...');
-    const indices = Array.from(tf.util.createShuffledIndices(trainDataset.xs.shape[0]));
-    const data = trainDataset.xs.gather(indices);
-    const target = trainDataset.labels.gather(indices);
-    updateStatus('MNIST data shuffled.');
+    const mnistLoader = new data.DataLoader({
+      dataset: mnistDataset,
+      batchSize: clientConfig.batch_size,
+    });
 
     training = job.train('training_plan', {
       checkpoint,
       inputs: [
-        new PlanInputSpec(PlanInputSpec.TYPE_DATA),
-        new PlanInputSpec(PlanInputSpec.TYPE_TARGET),
+        new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 0),
+        new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 1),
         new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
         new PlanInputSpec(PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM, 'lr'),
         new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W1', 0),
@@ -105,8 +103,7 @@ const startFL = async (url, modelName, modelVersion, authToken = null, checkpoin
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W2', 2),
         new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
       ],
-      data,
-      target,
+      data: mnistLoader,
     });
 
     training.on('start', () => {
@@ -129,10 +126,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null, checkpoin
       resumeFromTrainerButton.disabled = true;
       stopButton.disabled = true;
       stopAndSaveButton.disabled = true;
-
-      // Free GPU memory.
-      data.dispose();
-      target.dispose();
 
       // TODO protocol execution
       // job.protocols['secure_aggregation'].execute();
@@ -168,18 +161,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null, checkpoin
   job.on('error', (err) => {
     updateStatus(`Error: ${err.message}`);
   });
-};
-
-/**
- * Loads MNIST dataset into global variable `mnist`.
- */
-const loadMnistDataset = async () => {
-  if (!mnist) {
-    updateStatus('Loading MNIST data...');
-    mnist = new MnistData();
-    await mnist.load();
-    updateStatus('MNIST data loaded.');
-  }
 };
 
 /**
