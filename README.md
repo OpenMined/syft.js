@@ -358,7 +358,7 @@ Now, you will need to install following packages:
   NOTE: If you are running PyGrid with docker-compose, you'll need to [build docker images](https://github.com/OpenMined/PyGrid/#13---build-your-own-images-optional)
   from the latest `dev` branch.
 
-- Syft.js with MNIST demo. Check out the latest `master` branch of syft.js with MNIST demo app included:
+- Syft.js with MNIST demo. Check out the latest `dev` branch of syft.js with MNIST demo app included:
   ```bash
   cd ~/fl-demo
   git clone https://github.com/OpenMined/syft.js
@@ -453,11 +453,11 @@ Please check [open issues](https://github.com/OpenMined/syft.js/issues) as a sta
 
 Bug reports and feature suggestions are welcomed as well.
 
-The workflow is usual for github, the `master` branch is considered stable:
+The workflow is usual for github, the `master` branch is considered stable and the `dev` branch is actively under development:
 
-1. Star, fork, and clone the repo.
-1. Create new branch for your changes.
-1. Push changes in your fork.
+1. Star, fork, and clone the `syft.js` repository.
+1. Create a new branch for changes from `dev`.
+1. Push changes to this branch.
 1. Submit a PR to OpenMined/syft.js.
 1. PR is reviewed and accepted.
 
