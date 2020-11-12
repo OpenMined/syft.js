@@ -69,7 +69,7 @@ As a developer, there are few steps to building your own secure federated learni
 1. :tada: Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
 1. :lock: Securely aggregate trained user models in PyGrid.
 
-**:notebook: The entire workflow and process is described in greater detail in the [Web & Mobile Federated Learning project roadmap](https://github.com/OpenMined/Roadmap/blob/master/web_and_mobile_team/projects/federated_learning.md).**
+**:notebook: The entire workflow and process is described in greater detail in the [Web & Mobile Federated Learning project roadmap](https://github.com/OpenMined/Roadmap/blob/master/federated_learning/projects/model_centric_fl.md).**
 
 Syft.js provides minimalistic API to communicate with federated learning PyGrid endpoints
 and execute PySyft's Plans in a browser.
