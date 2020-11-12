@@ -64,7 +64,7 @@ In this case library classes will be available under `syft` global object.
 
 As a developer, there are few steps to building your own secure federated learning system upon the OpenMined infrastructure:
 
-1. :robot: [Develop ML model and training procedure](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2001%20-%20Create%20Plan.ipynb) (aka `Plan` in PySyft terminology) using [PySyft](https://github.com/OpenMined/PySyft).
+1. :robot: [Develop ML model and training procedure](https://github.com/OpenMined/PyGrid/blob/dev/examples/model-centric/01-Create-plan.ipynb) (aka `Plan` in PySyft terminology) using PySyft.
 1. :earth_americas: Host model and Plans on [PyGrid](https://github.com/OpenMined/PyGrid), which will deal with all the federated learning components of your pipeline.
 1. :tada: Execute the training on the variety of end-user devices using the client library (syft.js, [SwiftSyft](https://github.com/OpenMined/SwiftSyft), [KotlinSyft](https://github.com/OpenMined/KotlinSyft), [PySyft](https://github.com/OpenMined/PySyft)).
 1. :lock: Securely aggregate trained user models in PyGrid.
@@ -349,14 +349,12 @@ conda activate syft
 Now, you will need to install following packages:
 
 - PySyft. Follow
-  [PySyft installation guide](https://github.com/OpenMined/PySyft/blob/master/INSTALLATION.md)
-  to install the latest `master` branch of PySyft.
+  [PySyft installation guide](https://github.com/OpenMined/PySyft/blob/syft_0.2.x/INSTALLATION.md)
+  to install the latest 0.2.x branch of PySyft.
 
 - PyGrid.
-  Follow [PyGrid documentation](https://github.com/OpenMined/PyGrid/#start-grid-platform-locally)
+  Follow [PyGrid documentation](https://github.com/OpenMined/PyGrid#getting-started)
   to install the latest `dev` branch of PyGrid.
-  NOTE: If you are running PyGrid with docker-compose, you'll need to [build docker images](https://github.com/OpenMined/PyGrid/#13---build-your-own-images-optional)
-  from the latest `dev` branch.
 
 - Syft.js with MNIST demo. Check out the latest `dev` branch of syft.js with MNIST demo app included:
   ```bash
@@ -373,34 +371,32 @@ Now, you will need to install following packages:
 Syft.js connects to PyGrid to pick up the model and training Plan.
 For the demo to work, we need to populate that data into PyGrid.
 
-##### Run PyGrid
+##### Run PyGrid Node
 
-There're two possible ways to start PyGrid:
+See [Getting Started](https://github.com/OpenMined/PyGrid#getting-started) for details. 
+It is possible to start PyGrid Node using docker or using console script.
 
-- Run `./dev_server.sh` script in the PyGrid root folder.
-- Run `docker-compose up --build` in the PyGrid root folder.
-
-Here we assume you don't need to change default PyGrid configuration and it listens
+We assume you don't need to change default PyGrid Node configuration and it listens
 on the `localhost:5000`. If you need to use different host/port,
 PyGrid URL will need to be adjusted accordingly in further steps.
 
 ##### Create Model & Plan
 
-After PyGrid is running, the next step is to create the model and training plan and host them in PyGrid.
-PySyft tutorials include [MNIST example jupyter notebooks](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl) that guide you through this process.
+After PyGrid is running, the next step is to create the model and training plan and host them in PyGrid. 
+[MNIST example jupyter notebooks](https://github.com/OpenMined/PyGrid/tree/dev/examples/model-centric) guide you through this process.
 
-Fire up jupyter notebook in PySyft root folder:
+Fire up jupyter notebook in PyGrid root folder:
 
 ```bash
-cd ~/fl-demo/PySyft
+cd ~/fl-demo/PyGrid
 jupyter notebook --notebook-dir=$(pwd)
 ```
 
-In the console, you should see URL you should open, or the browser will open automatically. After this, navigate to `examples/tutorials/model-centric-fl` and [run the first notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2001%20-%20Create%20Plan.ipynb). At this point, you can pull down the model and training plan with syft.js. However, if you'd like to see how to execute the plan using the PySyft FL worker, [try running the second notebook](https://github.com/OpenMined/PySyft/blob/master/examples/tutorials/model-centric-fl/Part%2002%20-%20Execute%20Plan.ipynb).
+In the console, you should see URL you should open, or the browser will open automatically. After this, navigate to `examples/model-centric` and [run the first notebook](https://github.com/OpenMined/PyGrid/blob/dev/examples/model-centric/01-Create-plan.ipynb). At this point, you can pull down the model and training plan with syft.js. However, if you'd like to see how to execute the plan using the PySyft FL worker, [try running the second notebook](https://github.com/OpenMined/PyGrid/blob/dev/examples/model-centric/02-ExecutePlan.ipynb).
 
-##### PyGrid Clean-up
+##### PyGrid Node Clean-up
 
-In case you need to reset PyGrid database to blank state, stop the process with `Ctrl+C` and remove `databaseGateway.db` file in PyGrid.
+In case you need to reset PyGrid Node database to blank state, stop the process with `Ctrl+C` and remove `databaseGateway.db` file in PyGrid.
 Or, if you used docker-compose, stop and re-start it using `docker-compose up --force-recreate` command.
 
 #### Starting the Demo
@@ -445,7 +441,7 @@ Syft.js was tested with Chrome and Firefox browsers.
 
 ## Support
 
-For support in using this library, please join the **#lib_syft_js** Slack channel. If you’d like to follow along with any code changes to the library, please join the **#code_syftjs** Slack channel. [Click here to join our Slack community!](https://slack.openmined.org)
+For support in using this library, please join the **#lib_syftjs** Slack channel. If you’d like to follow along with any code changes to the library, please join the **#code_syftjs** Slack channel. [Click here to join our Slack community!](https://slack.openmined.org)
 
 ## Contributing
 
@@ -463,7 +459,7 @@ The workflow is usual for github, the `master` branch is considered stable and t
 
 Read the [contribution guide](https://github.com/OpenMined/.github/blob/master/CONTRIBUTING.md) as a good starting place.
 Additionally, we welcome you to the [slack](http://slack.openmined.org/) for queries related to the library and contribution in general.
-The Slack channel `#lib_syft_js` is specific to syft.js development. See you there!
+The Slack channel `#lib_syftjs` is specific to syft.js development. See you there!
 
 ## Contributors
 
