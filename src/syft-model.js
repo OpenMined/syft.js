@@ -2,7 +2,7 @@ import { unserialize, protobuf, serialize } from './protobuf';
 import { State } from './types/state';
 import { TorchTensor } from './types/torch';
 import { Placeholder } from './types/placeholder';
-import { MODEL_LOAD_FAILED } from './_errors';
+import { ModelLoadFailedError } from './_errors';
 
 /**
  * Model parameters as stored in the PyGrid.
@@ -33,7 +33,7 @@ export default class SyftModel {
         );
         this.params = state.getTfTensors();
       } catch (e) {
-        throw new Error(MODEL_LOAD_FAILED(e.message));
+        throw new ModelLoadFailedError(e.message);
       }
     }
     if (modelParameters) {

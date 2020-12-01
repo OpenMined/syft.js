@@ -1,6 +1,6 @@
 import { getPbId, unbufferize } from '../protobuf';
 import ObjectRegistry from '../object-registry';
-import { NOT_ENOUGH_ARGS } from '../_errors';
+import { NotEnoughArgsError } from '../_errors';
 
 /**
  * Role encapsulates a list of ComputationActions that are executed in a Plan.
@@ -98,7 +98,7 @@ export class Role {
 
     // If the number of arguments supplied does not match the number of arguments required
     if (data.length !== argsLength)
-      throw new Error(NOT_ENOUGH_ARGS(data.length, argsLength));
+      throw new NotEnoughArgsError(data.length, argsLength);
 
     // Add each argument to local scope
     data.forEach((datum, i) => {
