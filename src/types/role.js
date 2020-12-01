@@ -40,7 +40,7 @@ export class Role {
   }
 
   /**
-   * Reconstruct a Role object from the protobuf message.
+   * Reconstructs a Role object from the protobuf message.
    * Note that this method might take a worker-specific argument in the future.
    *
    * @static

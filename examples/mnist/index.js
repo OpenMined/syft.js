@@ -1,134 +1,147 @@
 import * as tf from '@tensorflow/tfjs-core';
-import { Syft } from '@openmined/syft.js';
-import { MnistData } from './mnist';
+import { Syft, PlanInputSpec, PlanOutputSpec, data } from '@openmined/syft.js';
+import { MnistDataset } from './mnist-dataset';
+import { retrieveCheckpoint, storeCheckpoint } from './checkpoint';
 
 const gridServer = document.getElementById('grid-server');
 const startButton = document.getElementById('start');
-let mnist = null;
+const startFromCheckpointButton = document.getElementById('start-from-checkpoint');
+const stopButton = document.getElementById('stop-training');
+const stopAndSaveButton = document.getElementById('stop-training-and-save');
+const stopAndSaveMessage = document.getElementById('saved-checkpoint');
+const resumeFromTrainerButton = document.getElementById('resume-training-from-trainer');
 
-startButton.onclick = () => {
+/**
+ * Keeps current training object.
+ * @type {PlanTrainer}
+ */
+let training = null;
+
+// Check for checkpoint
+const checkpoint = retrieveCheckpoint('checkpoint');
+if (checkpoint) {
+  startFromCheckpointButton.disabled = false;
+}
+
+const startClickHandler = (useCheckpoint = false) => {
   setFLUI();
   const modelName = document.getElementById('model-id').value;
   const modelVersion = document.getElementById('model-version').value;
   const authToken = document.getElementById('auth-token').value;
-  startFL(gridServer.value, modelName, modelVersion, authToken).catch((err) => {
+  startFL(
+    gridServer.value,
+    modelName,
+    modelVersion,
+    authToken,
+    useCheckpoint ? checkpoint : undefined
+  ).catch((err) => {
     updateStatus(`Error: ${err}`);
   });
-};
+}
+
+// Assign actions to buttons
+startButton.onclick = () => startClickHandler();
+startFromCheckpointButton.onclick = () => startClickHandler(true);
+stopButton.onclick = () => training.stop();
+resumeFromTrainerButton.onclick = () => training.resume();
+stopAndSaveButton.onclick = async () => {
+  const checkpoint = await training.stop();
+  await storeCheckpoint('checkpoint', checkpoint);
+  updateStatus('Checkpoint is saved in local storage');
+  stopAndSaveMessage.style.display = 'block';
+}
 
 /**
  * The main federated learning training routine
- * @param url PyGrid Url
- * @param modelName Federated learning model name hosted in PyGrid
- * @param modelVersion Federated learning model version
+ * @param {string} url - PyGrid Url
+ * @param {string} modelName - Federated learning model name hosted in PyGrid
+ * @param {string} modelVersion - Federated learning model version
+ * @param {string} [authToken] - Optional authentication token
+ * @param {PlanTrainerCheckpoint} [checkpoint] - Optional training checkpoint
  * @returns {Promise<void>}
  */
-const startFL = async (url, modelName, modelVersion, authToken = null) => {
-  const worker = new Syft({ url, authToken, verbose: true });
-  const job = worker.newJob({ modelName, modelVersion });
+const startFL = async (url, modelName, modelVersion, authToken = null, checkpoint = null) => {
+  const worker = new Syft({ url, verbose: true });
+  const job = worker.newJob({ modelName, modelVersion, authToken });
 
-  job.start();
+  // Load MNIST data.
+  const transform = new data.transform.core.Compose([
+    new data.transform.tfjs.ToTensor({type: 'float32'}, {type: 'int32'}),
+    new data.transform.tfjs.Normalize({mean: [0.1307 * 255], std: [0.3081 * 255]}),
+    new data.transform.tfjs.OneHot(null, {depth: 10, squeeze: true}),
+  ]);
+  const mnistDataset = new MnistDataset({train: true, transform});
+  await mnistDataset.load();
 
-  job.on('accepted', async ({ model, clientConfig }) => {
+  job.request();
+
+  job.on('accepted', async ({ clientConfig, model }) => {
     updateStatus('Accepted into cycle!');
 
-    // Load MNIST data
-    await loadMnistDataset();
-    const trainDataset = mnist.getTrainData();
-    const data = trainDataset.xs;
-    const targets = trainDataset.labels;
+    const mnistLoader = new data.DataLoader({
+      dataset: mnistDataset,
+      batchSize: clientConfig.batch_size,
+    });
 
-    // Prepare randomized indices for data batching.
-    const indices = Array.from({ length: data.shape[0] }, (v, i) => i);
-    tf.util.shuffle(indices);
+    training = job.train('training_plan', {
+      checkpoint,
+      inputs: [
+        new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 0),
+        new PlanInputSpec(PlanInputSpec.TYPE_DATA, null, 1),
+        new PlanInputSpec(PlanInputSpec.TYPE_BATCH_SIZE),
+        new PlanInputSpec(PlanInputSpec.TYPE_CLIENT_CONFIG_PARAM, 'lr'),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W1', 0),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b1', 1),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'W2', 2),
+        new PlanInputSpec(PlanInputSpec.TYPE_MODEL_PARAM, 'b2', 3),
+      ],
+      outputs: [
+        new PlanOutputSpec(PlanOutputSpec.TYPE_LOSS),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_METRIC, 'accuracy'),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W1', 0),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b1', 1),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'W2', 2),
+        new PlanOutputSpec(PlanOutputSpec.TYPE_MODEL_PARAM, 'b2', 3),
+      ],
+      data: mnistLoader,
+    });
 
-    // Prepare train parameters.
-    const batchSize = clientConfig.batch_size;
-    const lr = clientConfig.lr;
-    const numBatches = Math.ceil(data.shape[0] / batchSize);
+    training.on('start', () => {
+      resumeFromTrainerButton.disabled = true;
+      stopButton.disabled = false;
+      stopAndSaveButton.disabled = false;
+      updateStatus('Training is started!');
+    });
 
-    // Calculate total number of model updates
-    // in case none of these options specified, we fallback to one loop
-    // though all batches.
-    const maxEpochs = clientConfig.max_epochs || 1;
-    const maxUpdates = clientConfig.max_updates || maxEpochs * numBatches;
-    const numUpdates = Math.min(maxUpdates, maxEpochs * numBatches);
+    training.on('batchEnd', updateUIAfterBatch);
 
-    // Copy model to train it.
-    let modelParams = [];
-    for (let param of model.params) {
-      modelParams.push(param.clone());
-    }
+    training.on('stop', () => {
+      resumeFromTrainerButton.disabled = false;
+      stopButton.disabled = true;
+      stopAndSaveButton.disabled = true;
+      updateStatus('Training is stopped');
+    });
 
-    // Main training loop.
-    for (let update = 0, batch = 0, epoch = 0; update < numUpdates; update++) {
-      // Slice a batch.
-      const chunkSize = Math.min(batchSize, data.shape[0] - batch * batchSize);
-      const indicesBatch = indices.slice(
-        batch * batchSize,
-        batch * batchSize + chunkSize
-      );
-      const dataBatch = data.gather(indicesBatch);
-      const targetBatch = targets.gather(indicesBatch);
+    training.on('end', async () => {
+      resumeFromTrainerButton.disabled = true;
+      stopButton.disabled = true;
+      stopAndSaveButton.disabled = true;
 
-      // Execute the plan and get updated model params back.
-      let [loss, acc, ...updatedModelParams] = await job.plans[
-        'training_plan'
-      ].execute(
-        job.worker,
-        dataBatch,
-        targetBatch,
-        chunkSize,
-        lr,
-        ...modelParams
-      );
+      // TODO protocol execution
+      // job.protocols['secure_aggregation'].execute();
 
-      // Use updated model params in the next cycle.
-      for (let i = 0; i < modelParams.length; i++) {
-        modelParams[i].dispose();
-        modelParams[i] = updatedModelParams[i];
+      // Calc model diff.
+      const modelDiff = await model.createSerializedDiffFromModel(training.currentModel);
+
+      // Report diff.
+      await job.report(modelDiff);
+      updateStatus('Cycle is done!');
+
+      // Try again.
+      if (doRepeat()) {
+        setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
       }
-
-      await updateUIAfterBatch({
-        epoch,
-        batch,
-        accuracy: await acc.array(),
-        loss: await loss.array(),
-      });
-
-      batch++;
-
-      // Check if we're out of batches (end of epoch).
-      if (batch === numBatches) {
-        batch = 0;
-        epoch++;
-      }
-
-      // Free GPU memory.
-      acc.dispose();
-      loss.dispose();
-      dataBatch.dispose();
-      targetBatch.dispose();
-    }
-
-    // Free GPU memory.
-    data.dispose();
-    targets.dispose();
-
-    // TODO protocol execution
-    // job.protocols['secure_aggregation'].execute();
-
-    // Calc model diff.
-    const modelDiff = await model.createSerializedDiff(modelParams);
-
-    // Report diff.
-    await job.report(modelDiff);
-    updateStatus('Cycle is done!');
-
-    // Try again.
-    if (doRepeat()) {
-      setTimeout(startFL, 1000, url, modelName, modelVersion, authToken);
-    }
+    });
   });
 
   job.on('rejected', ({ timeout }) => {
@@ -148,18 +161,6 @@ const startFL = async (url, modelName, modelVersion, authToken = null) => {
   job.on('error', (err) => {
     updateStatus(`Error: ${err.message}`);
   });
-};
-
-/**
- * Loads MNIST dataset into global variable `mnist`.
- */
-const loadMnistDataset = async () => {
-  if (!mnist) {
-    updateStatus('Loading MNIST data...');
-    mnist = new MnistData();
-    await mnist.load();
-    updateStatus('MNIST data loaded.');
-  }
 };
 
 /**
@@ -198,15 +199,14 @@ const setFLUI = () => {
  * @param batch
  * @param accuracy
  * @param loss
- * @returns {Promise<void>}
  */
-const updateUIAfterBatch = async ({ epoch, batch, accuracy, loss }) => {
+const updateUIAfterBatch = ({ epoch, batch, loss, metrics }) => {
+  const accuracy = metrics['accuracy'];
   console.log(
     `Epoch: ${epoch}, Batch: ${batch}, Accuracy: ${accuracy}, Loss: ${loss}`
   );
   Plotly.extendTraces('loss_graph', { y: [[loss]] }, [0]);
   Plotly.extendTraces('acc_graph', { y: [[accuracy]] }, [0]);
-  await tf.nextFrame();
 };
 
 const doRepeat = () => document.getElementById('worker-repeat').checked;

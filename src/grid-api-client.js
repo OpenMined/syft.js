@@ -2,7 +2,10 @@ import Logger from './logger';
 import { SpeedTest } from './speed-test';
 import { GRID_ERROR } from './_errors';
 import EventObserver from './events';
+import { createRandomBuffer } from './utils/random-buffer';
+import { base64Encode } from './utils/base64';
 
+// Define the type of request (GET, POST) associated with each possible call
 const HTTP_PATH_VERB = {
   'model-centric/get-plan': 'GET',
   'model-centric/get-model': 'GET',
@@ -12,8 +15,13 @@ const HTTP_PATH_VERB = {
   'model-centric/authenticate': 'POST',
 };
 
+/**
+ * GridAPIClient defines the possible API calls that can be made to PyGrid from a client perspective
+ * Operations include get-plan, get-model, get-protocol, cycle-request, report and authenticate
+ */
 export default class GridAPIClient {
   constructor({ url, allowInsecureUrl = false }) {
+    // Choose between web socket or http protocol
     this.transport = url.match(/^ws/i) ? 'ws' : 'http';
     if (this.transport === 'ws') {
       this.wsUrl = url;
@@ -26,9 +34,11 @@ export default class GridAPIClient {
       this.wsUrl = this.wsUrl.replace('ws', 'wss');
       this.httpUrl = this.httpUrl.replace('http', 'https');
     }
+
+    // Define all necessary components for both web socket and http
     this.ws = null;
     this.observer = new EventObserver();
-    this.wsMessageQueue = [];
+    this.wsMessages = {};
     this.logger = new Logger('grid', true);
     this.responseTimeout = 10000;
 
@@ -37,6 +47,13 @@ export default class GridAPIClient {
     this._handleWsClose = this._handleWsClose.bind(this);
   }
 
+  /**
+   * Authenticates a connection to the grid
+   * using a particular token associated with a model name and version
+   * @param {string} modelName
+   * @param {string} modelVersion
+   * @param {string} authToken
+   */
   async authenticate(modelName, modelVersion, authToken) {
     this.logger.log(
       `Authenticating against ${modelName} ${modelVersion} with ${authToken}...`
@@ -51,6 +68,15 @@ export default class GridAPIClient {
     return response;
   }
 
+  /**
+   * Requests to join an active federated learning cycle in PyGrid
+   * @param {string} workerId
+   * @param {string} modelName
+   * @param {string} modelVersion
+   * @param {number} ping
+   * @param {number} download
+   * @param {number} upload
+   */
   requestCycle(workerId, modelName, modelVersion, ping, download, upload) {
     this.logger.log(
       `[WID: ${workerId}] Requesting cycle for model ${modelName} v.${modelVersion} [${ping}, ${download}, ${upload}]...`
@@ -113,6 +139,12 @@ export default class GridAPIClient {
     );
   }
 
+  /**
+   * Submits a report indicating the difference between the model parameters from workerID and original PyGrid parameters
+   * @param {string} workerId
+   * @param {string} requestKey
+   * @param {string} diff - a base64 encoded string difference between current and original model parameters in PyGrid
+   */
   async submitReport(workerId, requestKey, diff) {
     this.logger.log(
       `[WID: ${workerId}, KEY: ${requestKey}] Submitting report...`
@@ -150,7 +182,7 @@ export default class GridAPIClient {
     });
 
     const ping = await speedTest.getPing();
-    // start tests altogether
+    // Start tests altogether
     const [download, upload] = await Promise.all([
       speedTest.getDownloadSpeed(),
       speedTest.getUploadSpeed(),
@@ -219,18 +251,16 @@ export default class GridAPIClient {
     if (!this.ws) {
       await this._initWs();
     }
-
-    const message = { type, data };
-    this.logger.log('Sending WS message', type);
+    const request_id = base64Encode(await createRandomBuffer(32));
+    const message = { request_id, type, data };
+    this.logger.log('Sending WS message', request_id, type);
 
     return new Promise((resolve, reject) => {
       this.ws.send(JSON.stringify(message));
 
       const cleanUp = () => {
         // Remove all handlers related to message.
-        this.wsMessageQueue = this.wsMessageQueue.filter(
-          (item) => item !== onMessage
-        );
+        delete this.wsMessages[request_id];
         this.observer.unsubscribe('ws-error', onError);
         this.observer.unsubscribe('ws-close', onClose);
         clearTimeout(timeoutHandler);
@@ -242,10 +272,6 @@ export default class GridAPIClient {
       }, this.responseTimeout);
 
       const onMessage = (data) => {
-        if (data.type !== message.type) {
-          this.logger.log('Received invalid response type, ignoring');
-          return false;
-        }
         cleanUp();
         resolve(data.data);
       };
@@ -260,8 +286,9 @@ export default class GridAPIClient {
         reject(new Error('WS connection closed'));
       };
 
-      // We expect responses coming in same order as requests.
-      this.wsMessageQueue.push(onMessage);
+      // Save response handler under specific request_id.
+      // We expect same request_id in the response.
+      this.wsMessages[request_id] = onMessage;
 
       // Other events while waiting for response.
       this.observer.subscribe('ws-error', onError);
@@ -281,12 +308,12 @@ export default class GridAPIClient {
         resolve();
       };
       ws.onerror = (event) => {
-        // couldn't connect
+        // Couldn't connect and error is returned
         this._handleWsError(event);
         reject(new Error(event));
       };
       ws.onclose = (event) => {
-        // couldn't connect
+        // Couldn't connect and connection closed
         this._handleWsClose(event);
         reject(new Error('WS connection closed during connect'));
       };
@@ -302,12 +329,13 @@ export default class GridAPIClient {
       this.logger.log('Message is not valid JSON!');
     }
 
-    // Call response handlers (in order of requests),
-    // stopping at the first successful handler.
-    for (let handler of this.wsMessageQueue) {
-      if (handler(data) !== false) {
-        break;
-      }
+    // Call response handler, it should be stored under request_id.
+    const request_id = data.request_id;
+    if (request_id && Object.hasOwnProperty.call(this.wsMessages, request_id)) {
+      const handler = this.wsMessages[request_id];
+      handler(data);
+    } else {
+      this.logger.log('Message with unknown request_id');
     }
   }
 

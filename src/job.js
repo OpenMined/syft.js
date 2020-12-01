@@ -5,6 +5,7 @@ import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
 import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
 import SyftModel from './syft-model';
 import Logger from './logger';
+import { PlanTrainer } from './plan-trainer';
 
 /**
  * Job represents a single training cycle done by the client.
@@ -80,7 +81,7 @@ export default class Job {
     );
     this.model = new SyftModel({
       worker: this.worker,
-      modelData,
+      serializedModelParameters: modelData,
     });
 
     // Load all plans
@@ -120,6 +121,7 @@ export default class Job {
 
   /**
    * Starts the Job by executing following actions:
+   *  * Authenticates for given FL model.
    *  * Meters connection speed to PyGrid (if requested by PyGrid).
    *  * Registers into training cycle on PyGrid.
    *  * Retrieves cycle and client parameters.
@@ -233,6 +235,16 @@ export default class Job {
   }
 
   /**
+   * Alias for `Job.start`
+   *
+   * @see Job.start
+   * @returns {Promise<void>}
+   */
+  async request() {
+    return this.start();
+  }
+
+  /**
    * Submits the model diff to PyGrid.
    *
    * @param {ArrayBuffer} diff - Serialized difference between original and trained model parameters.
@@ -244,5 +256,51 @@ export default class Job {
       this.cycleParams.request_key,
       base64Encode(diff)
     );
+  }
+
+  /**
+   * Trains the model against specified plan and using specified parameters.
+   * Returns `PlanTrainer` object to have a handle on training process.
+   *
+   * @param {string} trainingPlan - Training Plan name.
+   * @param {Object} parameters - Dictionary of training parameters.
+   * @param {[PlanInputSpec]}  parameters.inputs - List of training Plan input arguments
+   * @param {[PlanOutputSpec]} parameters.outputs - List of training Plan outputs
+   * @param {tf.Tensor} parameters.data - Tensor containing training data
+   * @param {tf.Tensor} parameters.target - Tensor containing training targets
+   * @param {number} [parameters.epochs] - Epochs to train (if not specified, taken from Job)
+   * @param {number} [parameters.batchSize] - Batch size (if not specified, taken from Job)
+   * @param {number} [parameters.stepsPerEpoch] - Max number of steps per epoch (if not specified, taken from Job)
+   * @param {PlanTrainerCheckpoint} [parameters.checkpoint] - Checkpoint
+   * @param {Object} [parameters.events] - List of event listeners
+   * @param {Function} [parameters.events.start] - On training start listener
+   * @param {Function} [parameters.events.end] - On training end listener
+   * @param {Function} [parameters.events.epochStart] - On epoch start listener
+   * @param {Function} [parameters.events.epochEnd] - On epoch end listener
+   * @param {Function} [parameters.events.batchStart] - On batch start listener
+   * @param {Function} [parameters.events.batchEnd] - On batch end listener
+   * @returns {PlanTrainer}
+   */
+  train(trainingPlan, parameters) {
+    const trainingParams = {
+      clientConfig: this.clientConfig,
+      batchSize: this.clientConfig.batch_size,
+      epochs: this.clientConfig.max_epochs || 1,
+      stepsPerEpoch: this.clientConfig.max_updates || null,
+      ...parameters,
+    };
+
+    const trainer = new PlanTrainer({
+      worker: this.worker,
+      plan: this.plans[trainingPlan],
+      model: this.model,
+      ...trainingParams,
+    });
+
+    // For convenience of assigning event handlers, start training in the next macrotask
+    setTimeout(() => {
+      trainer.start(typeof parameters.checkpoint !== 'undefined');
+    }, 0);
+    return trainer;
   }
 }
