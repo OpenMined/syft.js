@@ -4,7 +4,8 @@
   "description": "A Javascript Syft worker in the browser",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
-  "browser": "dist/index.js",
+  "browser": "dist/index.min.js",
+  "browserFull": "dist/index.js",
   "files": [
     "dist/*",
     "*.md"
@@ -99,6 +100,7 @@
     "rollup": "^2.22.2",
     "rollup-plugin-filesize": "^9.0.2",
     "rollup-plugin-peer-deps-external": "^2.2.3",
+    "rollup-plugin-terser": "7.0.2",
     "syft-proto": "github:openmined/syft-proto#v0.4.9"
   }
 }

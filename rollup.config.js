@@ -4,6 +4,7 @@ import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import filesize from 'rollup-plugin-filesize';
+import { terser } from 'rollup-plugin-terser';
 
 import pkg from './package.json';
 
@@ -21,6 +22,12 @@ export default {
   output: [
     {
       file: pkg.browser,
+      format: 'umd',
+      ...sharedOutput,
+      plugins: [terser()],
+    },
+    {
+      file: pkg.browserFull,
       format: 'umd',
       ...sharedOutput,
     },
