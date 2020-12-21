@@ -1,4 +1,4 @@
-import { NO_DETAILER, PROTOBUF_UNSERIALIZE_FAILED } from '../_errors';
+import { NoDetailerError, ProtobufUnserializeFailedError } from '../_errors';
 import { initMappings, PB_TO_UNBUFFERIZER } from './mapping';
 import { protobuf } from 'syft-proto';
 import Long from 'long';
@@ -57,7 +57,7 @@ export const unbufferize = (worker, pbObj) => {
 
   const unbufferizer = PB_TO_UNBUFFERIZER[pbType];
   if (typeof unbufferizer === 'undefined') {
-    throw new Error(NO_DETAILER(pbType.name));
+    throw new NoDetailerError(pbType.name);
   }
   return unbufferizer(worker, pbObj);
 };
@@ -80,7 +80,7 @@ export const unserialize = (worker, bin, pbType) => {
   try {
     pbObj = pbType.decode(buff);
   } catch (e) {
-    throw new Error(PROTOBUF_UNSERIALIZE_FAILED(pbType.name, e.message));
+    throw new ProtobufUnserializeFailedError(pbType.name, e.message);
   }
   return unbufferize(worker, pbObj);
 };
