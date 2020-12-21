@@ -3,7 +3,7 @@ import PointerTensor from './pointer-tensor';
 import { Placeholder, PlaceholderId } from './placeholder';
 import * as tf from '@tensorflow/tfjs-core';
 import { TorchParameter, TorchTensor } from './torch';
-import { CANNOT_FIND_COMMAND, MISSING_VARIABLE } from '../_errors';
+import { CannotFindCommandError, MissingVariableError } from '../_errors';
 
 /**
  * ComputationAction describes mathematical operations performed on tensors.
@@ -124,12 +124,12 @@ export class ComputationAction {
       // Resolve "self" if it's present
       self = getTensorByRef(this.target);
       if (!self) {
-        throw new Error(MISSING_VARIABLE());
+        throw new MissingVariableError();
       }
     }
 
     if (!haveValuesForAllArgs(args)) {
-      throw new Error(MISSING_VARIABLE());
+      throw new MissingVariableError();
     }
 
     const resolvedArgs = pullTensorsFromArgs(args);
@@ -138,7 +138,7 @@ export class ComputationAction {
     // If target exists, check if target contains the specific function and return computed results
     if (self) {
       if (!(functionName in self)) {
-        throw new Error(CANNOT_FIND_COMMAND(`tensor.${functionName}`));
+        throw new CannotFindCommandError(`tensor.${functionName}`);
       } else {
         return self[functionName](...resolvedArgs);
       }
@@ -146,7 +146,7 @@ export class ComputationAction {
 
     // Else, check if tfjs contains the specific function and return computed results
     if (!(functionName in tf)) {
-      throw new Error(CANNOT_FIND_COMMAND(functionName));
+      throw new CannotFindCommandError(functionName);
     } else {
       return tf[functionName](...resolvedArgs, ...Object.values(this.kwargs));
     }
