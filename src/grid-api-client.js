@@ -1,6 +1,6 @@
 import Logger from './logger';
 import { SpeedTest } from './speed-test';
-import { GRID_ERROR } from './_errors';
+import { GridError } from './_errors';
 import EventObserver from './events';
 import { createRandomBuffer } from './utils/random-buffer';
 import { base64Encode } from './utils/base64';
@@ -241,7 +241,7 @@ export default class GridAPIClient {
       } catch (e) {
         // not JSON
       }
-      throw new Error(GRID_ERROR(error));
+      throw new GridError(error);
     }
 
     return response[type]();

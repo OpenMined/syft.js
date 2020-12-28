@@ -1,29 +1,86 @@
-export const NO_DETAILER = (d) =>
-  `Serialized object contains type that may exist in PySyft, but is not currently supported in syft.js. Please file a feature request (https://github.com/OpenMined/syft.js/issues) for type ${d}.`;
+export class NoDetailerError extends Error {
+  constructor(d) {
+    super(
+      `Serialized object contains type that may exist in PySyft, but is not currently supported in syft.js. Please file a feature request (https://github.com/OpenMined/syft.js/issues) for type ${d}.`
+    );
+    this.name = 'NoDetailerError';
+  }
+}
 
-export const NOT_ENOUGH_ARGS = (passed, expected) =>
-  `You have passed ${passed} argument(s) when the plan requires ${expected} argument(s).`;
+export class NotEnoughArgsError extends Error {
+  constructor(passed, expected) {
+    super(
+      `You have passed ${passed} argument(s) when the plan requires ${expected} argument(s).`
+    );
+    this.name = 'NotEnoughArgsError';
+  }
+}
 
-export const MISSING_VARIABLE = () =>
-  `Command requires variable that is missing.`;
+export class MissingVariableError extends Error {
+  constructor() {
+    super(`Command requires variable that is missing.`);
+    this.name = 'MissingVariableError';
+  }
+}
 
-export const NO_PLAN = `The operation you're attempting to run requires a plan before being called.`;
+export class NoPlanError extends Error {
+  constructor() {
+    super(
+      `The operation you're attempting to run requires a plan before being called.`
+    );
+    this.name = 'NoPlanError';
+  }
+}
 
-export const PLAN_ALREADY_COMPLETED = (name, id) =>
-  `You have already executed the plan named "${name}" with id "${id}".`;
+export class PlanAlreadyCompletedError extends Error {
+  constructor(name, id) {
+    super(
+      `You have already executed the plan named "${name}" with id "${id}".`
+    );
+    this.name = 'PlanAlreadyCompletedError';
+  }
+}
 
-export const CANNOT_FIND_COMMAND = (command) =>
-  `Command ${command} not found in in TensorFlow.js.`;
+export class CannotFindCommandError extends Error {
+  constructor(command) {
+    super(`Command ${command} not found in in TensorFlow.js.`);
+    this.name = 'CannotFindCommandError';
+  }
+}
 
-export const GRID_UNKNOWN_CYCLE_STATUS = (status) =>
-  `Unknown cycle status: ${status}`;
+export class GridUnknownCycleStatusError extends Error {
+  constructor(status) {
+    super(`Unknown cycle status: ${status}`);
+    this.name = 'GridUnknownCycleStatusError';
+  }
+}
 
-export const GRID_ERROR = (status) => `Grid error: ${status}`;
+export class GridError extends Error {
+  constructor(status) {
+    super(`Grid error: ${status}`);
+    this.name = 'GridError';
+  }
+}
 
-export const MODEL_LOAD_FAILED = (status) => `Failed to load Model: ${status}`;
+export class ModelLoadFailedError extends Error {
+  constructor(status) {
+    super(`Failed to load Model: ${status}`);
+    this.name = 'ModelLoadFailedError';
+  }
+}
 
-export const PLAN_LOAD_FAILED = (planName, status) =>
-  `Failed to load '${planName}' Plan: ${status}`;
+export class PlanLoadFailedError extends Error {
+  constructor(planName, status) {
+    super(`Failed to load '${planName}' Plan: ${status}`);
+    this.name = 'PlanLoadFailedError';
+  }
+}
 
-export const PROTOBUF_UNSERIALIZE_FAILED = (pbType, status) =>
-  `Failed to unserialize binary protobuf data into ${pbType}: ${status}`;
+export class ProtobufUnserializeFailedError extends Error {
+  constructor(pbType, status) {
+    super(
+      `Failed to unserialize binary protobuf data into ${pbType}: ${status}`
+    );
+    this.name = 'ProtobufUnserializeFailedError';
+  }
+}

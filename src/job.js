@@ -2,7 +2,7 @@ import EventObserver from './events';
 import { protobuf, unserialize } from './protobuf';
 import { base64Encode } from './utils/base64';
 import { CYCLE_STATUS_ACCEPTED, CYCLE_STATUS_REJECTED } from './_constants';
-import { GRID_UNKNOWN_CYCLE_STATUS, PLAN_LOAD_FAILED } from './_errors';
+import { GridUnknownCycleStatusError, PlanLoadFailedError } from './_errors';
 import SyftModel from './syft-model';
 import Logger from './logger';
 import { PlanTrainer } from './plan-trainer';
@@ -99,7 +99,7 @@ export default class Job {
           protobuf.syft_proto.execution.v1.Plan
         );
       } catch (e) {
-        throw new Error(PLAN_LOAD_FAILED(planName, e.message));
+        throw new PlanLoadFailedError(planName, e.message);
       }
     }
 
@@ -183,7 +183,7 @@ export default class Job {
           cycleParams.status
         )
       ) {
-        throw new Error(GRID_UNKNOWN_CYCLE_STATUS(cycleParams.status));
+        throw new GridUnknownCycleStatusError(cycleParams.status);
       }
     } catch (error) {
       /**
