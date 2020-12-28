@@ -26,7 +26,7 @@ export default {
       ...sharedOutput,
       // We need `keep_fnames` to not brake tensor deserialization
       // See: https://github.com/OpenMined/syft.js/issues/210
-      plugins: [terser({keep_fnames: true})],
+      plugins: [terser({ keep_fnames: true })],
     },
     {
       file: pkg.browserFull,
