@@ -24,7 +24,9 @@ export default {
       file: pkg.browser,
       format: 'umd',
       ...sharedOutput,
-      plugins: [terser()],
+      // We need `keep_fnames` to not brake tensor deserialization
+      // See: https://github.com/OpenMined/syft.js/issues/210
+      plugins: [terser({keep_fnames: true})],
     },
     {
       file: pkg.browserFull,
