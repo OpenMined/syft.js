@@ -181,7 +181,7 @@ describe('PlanTrainer', () => {
       done();
     });
 
-    jest.setTimeout(30000);
+    jest.setTimeout(60000);
     trainer.start();
   });
 
@@ -244,7 +244,7 @@ describe('PlanTrainer', () => {
     expect.assertions(assertions);
 
     trainer.start();
-  }, 60000);
+  }, 200000);
 
   test('can be continued from checkpoint', async (done) => {
     // create trainer
@@ -321,6 +321,6 @@ describe('PlanTrainer', () => {
     expect.assertions(assertions);
 
     trainer.start();
-  }, 60000);
+  }, 200000);
 
 });

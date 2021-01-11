@@ -583,6 +583,6 @@ describe('Syft', () => {
       job2.on('error', onError);
 
       return Promise.all([job1Promise, job2Promise]);
-    }, 40000);
+    }, 200000);
   });
 });
