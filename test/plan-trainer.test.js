@@ -36,6 +36,10 @@ class TensorDataset extends Dataset {
   }
 }
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 describe('PlanTrainer', () => {
   let worker, plan, data, target, lr,
     batchSize, model, referenceUpdatedModel,
@@ -116,7 +120,7 @@ describe('PlanTrainer', () => {
     trainer.on(PlanTrainer.EVENT_BATCH_END, ({epoch, batch, loss, metrics}) => {
       expect(epoch).toStrictEqual(0);
       expect(batch).toStrictEqual(0);
-      expect(loss).toStrictEqual(MNIST_LOSS);
+      expect(Math.abs(MNIST_LOSS - loss)).toBeLessThan(1e-6);
       expect(metrics['accuracy']).toStrictEqual(MNIST_ACCURACY);
 
       for (let i = 0; i < referenceUpdatedModel.params.length; i++) {
@@ -157,12 +161,13 @@ describe('PlanTrainer', () => {
     trainer.on(PlanTrainer.EVENT_BATCH_END, ({epoch, batch, loss, metrics}) => {
       expect(epoch).toStrictEqual(0);
       expect(batch).toStrictEqual(0);
-      expect(loss).toStrictEqual(MNIST_LOSS);
+      expect(Math.abs(MNIST_LOSS - loss)).toBeLessThan(1e-6);
       expect(metrics['accuracy']).toStrictEqual(MNIST_ACCURACY);
 
       for (let i = 0; i < referenceUpdatedModel.params.length; i++) {
         // Check that resulting model params are close to pysyft reference
         let diff = referenceUpdatedModel.params[i].sub(trainer.currentModel.params[i]);
+        
         expect(
           diff
             .abs()
@@ -176,6 +181,7 @@ describe('PlanTrainer', () => {
       done();
     });
 
+    jest.setTimeout(30000);
     trainer.start();
   });
 
@@ -238,7 +244,7 @@ describe('PlanTrainer', () => {
     expect.assertions(assertions);
 
     trainer.start();
-  }, 20000);
+  }, 60000);
 
   test('can be continued from checkpoint', async (done) => {
     // create trainer
@@ -293,7 +299,7 @@ describe('PlanTrainer', () => {
       trainer2.on('batchStart', () => {
         expect(trainer2.epoch).toBe(2);
         for (let i = 0; i < trainer2.currentModel.params.length; i++) {
-          expect(trainer2.currentModel.params[i].equal(checkpoint.currentModel.params[i]).all().arraySync()).toBe(1);
+          expect(trainer2.currentModel.params[i].equal(checkpoint.currentModel.params[i]).dataSync().every((val, i, arr) => val === arr[0] && val === 1)).toBe(true);
         }
       });
 
@@ -315,6 +321,6 @@ describe('PlanTrainer', () => {
     expect.assertions(assertions);
 
     trainer.start();
-  }, 20000);
+  }, 60000);
 
 });

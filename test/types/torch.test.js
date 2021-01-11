@@ -1,6 +1,10 @@
 import { TorchParameter, TorchTensor, TorchSize } from '../../src/types/torch';
 import * as tf from '@tensorflow/tfjs-core';
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 describe('TorchTensor', () => {
   test('can be properly constructed', () => {
     const chain = new TorchTensor(
@@ -36,9 +40,8 @@ describe('TorchTensor', () => {
     expect(
       tf
         .equal(obj.toTfTensor(), tfTensor)
-        .all()
-        .dataSync()[0]
-    ).toBe(1);
+        .dataSync().every((val, i, arr) => val === arr[0] && val === 1)
+    ).toBe(true);
 
     expect(obj.chain).toBe(chain);
     expect(obj.gradChain).toBe(grad);

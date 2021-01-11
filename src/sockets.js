@@ -22,7 +22,7 @@ export default class Sockets {
     onOpen,
     onClose,
     onMessage,
-    keepAliveTimeout = 20000,
+    keepAliveTimeout = 200000,
   }) {
     this.logger = new Logger();
     const socket = new WebSocket(url);

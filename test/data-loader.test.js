@@ -1,11 +1,17 @@
 import { DataLoader, Dataset } from '../src/data';
 import * as tf from '@tensorflow/tfjs-core';
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 class TestDataset extends Dataset {
   constructor() {
     super();
     // make tensors 0,1,2,3,...
-    this.data = [...Array(10).keys()].map(i => tf.tensor(i));
+    tf.ready().then(() => {
+      this.data = [...Array(10).keys()].map(i => tf.tensor(i));
+    });
   }
 
   getItem(idx) {

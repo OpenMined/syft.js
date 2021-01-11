@@ -25,9 +25,15 @@ jobs:
     - name: Check code style
       run: |
         npx prettier -c .
-    - name: Test with npm
+    - name: Test with npm (tfjs 2 with WASM backend)
       run: |
         npm run test
+    - name: Test with npm (tfjs 2 with CPU backend)
+      run: |
+        npm run test:tf2cpu
+    - name: Test with npm (tfjs 1)
+      run: |
+        npm run test:tf1
     - name: Test code coverage
       run: |
         codecov

@@ -12,6 +12,10 @@ import {
 import * as tf from '@tensorflow/tfjs-core';
 import { protobuf, unserialize } from '../src/protobuf';
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 describe('Syft', () => {
   test('can construct', () => {
     const syft = new Syft({
@@ -579,6 +583,6 @@ describe('Syft', () => {
       job2.on('error', onError);
 
       return Promise.all([job1Promise, job2Promise]);
-    }, 20000);
+    }, 40000);
   });
 });
