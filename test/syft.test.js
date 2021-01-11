@@ -316,7 +316,7 @@ describe('Syft', () => {
         console.log('ERROR', err);
         expect(err).toBe(undefined);
       });
-    }, 20000);
+    }, 200000);
 
     test('Missing FL model', async (done) => {
       const syft = new Syft({
