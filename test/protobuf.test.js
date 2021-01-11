@@ -8,6 +8,10 @@ import { TorchTensor } from '../src/types/torch';
 import * as tf from '@tensorflow/tfjs-core';
 import { Placeholder } from '../src/types/placeholder';
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 describe('Protobuf', () => {
   test('can unserialize an ObjectMessage', () => {
     const obj = unserialize(
@@ -72,9 +76,8 @@ describe('Protobuf', () => {
     expect(
       tf
         .equal(unserState.tensors[0].toTfTensor(), tensors[0].toTfTensor())
-        .all()
-        .dataSync()[0]
-    ).toBe(1);
+        .dataSync().every((val, i, arr) => val === arr[0] && val === 1)
+    ).toBe(true);
   });
 
   test('can serialize TorchTensor', async () => {
@@ -103,9 +106,8 @@ describe('Protobuf', () => {
     expect(
       tf
         .equal(unserTorchTensor.toTfTensor(), tensor)
-        .all()
-        .dataSync()[0]
-    ).toBe(1);
+        .dataSync().every((val, i, arr) => val === arr[0] && val === 1)
+    ).toBe(true);
     expect(unserTorchTensor.tags).toStrictEqual(torchTensor.tags);
     expect(unserTorchTensor.description).toStrictEqual(torchTensor.description);
   });
@@ -136,9 +138,8 @@ describe('Protobuf', () => {
     expect(
       tf
         .equal(unserTorchTensor.toTfTensor(), tensor)
-        .all()
-        .dataSync()[0]
-    ).toBe(1);
+        .dataSync().every((val, i, arr) => val === arr[0] && val === 1)
+    ).toBe(true);
     expect(unserTorchTensor.tags).toStrictEqual(torchTensor.tags);
     expect(unserTorchTensor.description).toStrictEqual(torchTensor.description);
   });

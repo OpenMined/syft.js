@@ -23,6 +23,10 @@ import {
 import { ComputationAction } from '../../src/types/computation-action';
 import { Role } from '../../src/types/role';
 
+beforeAll(async () => {
+  await tf.ready();
+})
+
 describe('State', () => {
   test('can be properly constructed', () => {
     const ph = new Placeholder(123);
@@ -85,9 +89,8 @@ describe('Plan', () => {
     expect(
       tf
         .equal(result[0], expected)
-        .all()
-        .dataSync()[0]
-    ).toBe(1);
+        .dataSync().every((val, i, arr) => val === arr[0] && val === 1)
+    ).toBe(true);
   });
 
   test('invalid args shape throws corresponding error', async () => {
@@ -148,7 +151,7 @@ describe('Plan', () => {
     expect(loss).toBeInstanceOf(tf.Tensor);
     expect(acc).toBeInstanceOf(tf.Tensor);
     expect(updModelParams).toHaveLength(refUpdModelParams.length);
-    expect(loss.arraySync()).toStrictEqual(MNIST_LOSS);
+    expect(Math.abs(MNIST_LOSS - loss.arraySync())).toBeLessThan(1e-6);
     expect(acc.arraySync()).toStrictEqual(MNIST_ACCURACY);
 
     for (let i = 0; i < refUpdModelParams.length; i++) {
