@@ -139,6 +139,7 @@ describe('PlanTrainer', () => {
       done();
     });
 
+    jest.setTimeout(60000);
     trainer.start();
   });
 
