@@ -47,11 +47,11 @@ yarn add @openmined/syft.js @tensorflow/tfjs-core
 ```
 
 If you're not using a package manager, you will be able to include Syft.js within a `<script>` tag.
-In this case library classes will be available under `syft` global object.
+In this case [library classes](API-REFERENCE.md) will be available under `syft` global object.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2.5/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@openmined/syft.js@latest/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@openmined/syft.js@latest/dist/index.min.js"></script>
 
 <script type="text/javascript">
   // Create syft worker
