@@ -15,7 +15,7 @@
     "@emotion/core": "^10.0.28",
     "@fortawesome/fontawesome-free": "^5.13.1",
     "@openmined/syft.js": "github:openmined/syft.js",
-    "jstat": "^1.9.3",
+    "jstat": "^1.9.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
