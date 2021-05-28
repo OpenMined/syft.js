@@ -13,7 +13,7 @@
   "license": "",
   "dependencies": {
     "@emotion/core": "^10.0.28",
-    "@fortawesome/fontawesome-free": "^5.13.1",
+    "@fortawesome/fontawesome-free": "^5.15.3",
     "@openmined/syft.js": "github:openmined/syft.js",
     "jstat": "^1.9.3",
     "react": "^16.13.1",
