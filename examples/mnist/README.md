@@ -11,3 +11,14 @@ with [PyGrid](https://github.com/OpenMined/pygrid) to train a plan on local data
 4. And then execute `npm start`
 
 This will launch a web browser running the file `index.js`. Every time you make changes to this file, the server will automatically re-compile your code and refresh the page. No need to start and stop. :)
+
+## Development
+
+This MNIST example is setup to use a remote copy of the syft.js repo (see the `syft.js/examples/mnist/package.json` dependencies param). In order to circumvent this and test changes to syft.js using the MNIST example, we can establish a link to our local copy of syft.js instead:
+
+```
+$ cd <syft.js>/
+$ npm link
+$ cd <syft.js>/examples/mnist
+$ npm link @openmined/syft.js
+```
